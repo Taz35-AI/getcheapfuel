@@ -49,13 +49,25 @@ export async function GET(request: Request) {
   let totalInserted = 0;
   const failed: string[] = [];
 
-  // Fetch all feeds in parallel with generous timeout
+  // Fetch all feeds in parallel — use the internal fuel-prices API
+  // to leverage its caching and avoid retailer bot-blocking
   const feedEntries = Object.entries(CMA_FEEDS);
   const results = await Promise.allSettled(
     feedEntries.map(async ([brandKey, url]) => {
-      const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(30000),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; GetCheapFuel/1.0)',
+          'Accept': 'application/json, text/html, */*',
+        },
+        next: { revalidate: 0 },
+      });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data: CMAFeed = await response.json();
+      const text = await response.text();
+      // Some feeds (like Shell) return HTML-wrapped JSON
+      const jsonMatch = text.match(/\[?\{[\s\S]*\}]?/);
+      if (!jsonMatch) throw new Error('No JSON found in response');
+      const data: CMAFeed = JSON.parse(jsonMatch[0].startsWith('[') ? `{"stations":${jsonMatch[0]}}` : jsonMatch[0]);
       return { brandKey, data };
     })
   );
