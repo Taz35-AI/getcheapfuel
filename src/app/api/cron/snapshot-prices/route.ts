@@ -50,8 +50,9 @@ export async function GET(request: Request) {
   const failed: string[] = [];
 
   // Fetch all feeds in parallel with generous timeout
+  const feedEntries = Object.entries(CMA_FEEDS);
   const results = await Promise.allSettled(
-    Object.entries(CMA_FEEDS).map(async ([brandKey, url]) => {
+    feedEntries.map(async ([brandKey, url]) => {
       const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data: CMAFeed = await response.json();
@@ -59,9 +60,10 @@ export async function GET(request: Request) {
     })
   );
 
-  for (const result of results) {
+  for (let idx = 0; idx < results.length; idx++) {
+    const result = results[idx];
     if (result.status === 'rejected') {
-      failed.push('unknown');
+      failed.push(feedEntries[idx][0]);
       continue;
     }
 
