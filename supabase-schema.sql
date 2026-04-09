@@ -83,3 +83,36 @@ create policy "Allow public reads" on price_history
 
 -- Auto-delete snapshots older than 90 days (run periodically or via pg_cron)
 -- delete from price_history where snapshot_date < current_date - interval '90 days';
+
+-- ============================================
+-- Fuel spending tracker with email sync
+-- ============================================
+create table fuel_logs (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  station_name text not null,
+  fuel_type text not null check (fuel_type in ('E10', 'E5', 'B7', 'SDV')),
+  litres numeric not null,
+  total_cost numeric not null,
+  price_per_litre numeric not null,
+  odometer numeric,
+  notes text,
+  logged_at timestamptz not null default now(),
+  created_at timestamptz default now()
+);
+
+create index idx_fuel_logs_email on fuel_logs (email, logged_at desc);
+
+alter table fuel_logs enable row level security;
+
+create policy "Users read own logs" on fuel_logs
+  for select using (true);
+
+create policy "Users insert own logs" on fuel_logs
+  for insert with check (true);
+
+create policy "Users delete own logs" on fuel_logs
+  for delete using (true);
+
+create policy "Users update own logs" on fuel_logs
+  for update using (true);

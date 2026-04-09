@@ -7,6 +7,7 @@ import FuelFilter from '@/components/FuelFilter';
 import StationList from '@/components/StationList';
 import FuelCalculator from '@/components/FuelCalculator';
 import FillUpAdvice from '@/components/FillUpAdvice';
+import FuelTracker from '@/components/FuelTracker';
 import ComparisonTable from '@/components/ComparisonTable';
 import RoutePlanner from '@/components/RoutePlanner';
 import InstallPrompt from '@/components/InstallPrompt';
@@ -85,6 +86,7 @@ export default function Home() {
   const [compareOpen, setCompareOpen] = useState(false);
   const [routeOpen, setRouteOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [trackerOpen, setTrackerOpen] = useState(false);
 
   const toggleCompare = useCallback((id: string) => {
     setCompareIds(prev => {
@@ -320,6 +322,15 @@ export default function Home() {
                   <path d="M13.73 21a2 2 0 01-3.46 0" />
                 </svg>
               </button>
+              <button
+                onClick={() => setTrackerOpen(true)}
+                className="p-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                title="Fuel Spending Tracker"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                </svg>
+              </button>
               <div className="flex items-center gap-1.5">
                 <label className="text-xs text-gray-500">Map:</label>
                 {(['dark', 'bright', 'positron', 'liberty'] as MapStyle[]).map(style => (
@@ -410,6 +421,15 @@ export default function Home() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.73 21a2 2 0 01-3.46 0" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setTrackerOpen(true)}
+                className="p-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                title="Fuel Spending Tracker"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
                 </svg>
               </button>
               <select
@@ -555,6 +575,10 @@ export default function Home() {
       <NotificationManager
         open={notifOpen}
         onClose={() => setNotifOpen(false)}
+      />
+      <FuelTracker
+        open={trackerOpen}
+        onClose={() => setTrackerOpen(false)}
       />
       <InstallPrompt />
 
