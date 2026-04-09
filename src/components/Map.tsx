@@ -35,6 +35,7 @@ interface MapProps {
   mapStyle: keyof typeof MAP_STYLES;
   isFavourite: (id: string) => boolean;
   onToggleFavourite: (id: string) => void;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 function getPriceColor(price: number | null | undefined): string {
@@ -363,6 +364,7 @@ export default function Map({
   mapStyle,
   isFavourite,
   onToggleFavourite,
+  userLocation,
 }: MapProps) {
   const mapRef = useRef<MapRef>(null);
   const [popupStation, setPopupStation] = useState<FuelStation | null>(null);
@@ -424,6 +426,20 @@ export default function Map({
     >
       <NavigationControl position="bottom-right" showCompass visualizePitch />
       <GeolocateControl position="bottom-right" trackUserLocation />
+
+      {userLocation && (
+        <Marker
+          longitude={userLocation.lng}
+          latitude={userLocation.lat}
+          anchor="center"
+        >
+          <div className="relative flex items-center justify-center">
+            <div className="absolute w-8 h-8 rounded-full bg-blue-500/20 animate-ping" />
+            <div className="absolute w-6 h-6 rounded-full bg-blue-500/20" />
+            <div className="w-3.5 h-3.5 rounded-full bg-blue-600 border-2 border-white shadow-lg" />
+          </div>
+        </Marker>
+      )}
 
       {showFuel &&
         stations.map(station => (

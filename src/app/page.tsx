@@ -518,6 +518,7 @@ export default function Home() {
             mapStyle={mapStyle}
             isFavourite={isFavourite}
             onToggleFavourite={toggleFavourite}
+            userLocation={userLocation}
           />
         </div>
       </div>
