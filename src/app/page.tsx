@@ -15,32 +15,47 @@ import { useFavourites } from '@/hooks/useFavourites';
 import Link from 'next/link';
 import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  name: 'GetCheapFuel',
-  url: 'https://getcheapfuel.co.uk',
-  description:
-    'Find the cheapest petrol, diesel, and EV charging near you across the UK. Real-time prices from 7,500+ fuel stations.',
-  applicationCategory: 'UtilitiesApplication',
-  operatingSystem: 'Any',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'GBP',
-  },
-  aggregateRating: undefined,
-  author: {
-    '@type': 'Organization',
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
     name: 'GetCheapFuel',
     url: 'https://getcheapfuel.co.uk',
-    email: 'support@getcheapfuel.co.uk',
+    description:
+      'Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes and find the best deals. Real data from 7,500+ stations.',
+    applicationCategory: 'UtilitiesApplication',
+    operatingSystem: 'Any',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'GBP',
+    },
+    featureList: [
+      'Real-time petrol and diesel prices from 13 UK retailers',
+      'EV charging station finder',
+      'Fuel cost calculator',
+      'Route planner',
+      'Station comparison tool',
+      'Price alerts',
+    ],
+    author: {
+      '@type': 'Organization',
+      name: 'GetCheapFuel',
+      url: 'https://getcheapfuel.co.uk',
+      email: 'support@getcheapfuel.co.uk',
+    },
+    areaServed: {
+      '@type': 'Country',
+      name: 'United Kingdom',
+    },
   },
-  areaServed: {
-    '@type': 'Country',
-    name: 'United Kingdom',
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'GetCheapFuel',
+    url: 'https://getcheapfuel.co.uk',
   },
-};
+];
 
 const Map = dynamic(() => import('@/components/Map'), { ssr: false });
 

@@ -11,10 +11,9 @@ export const contentType = 'image/png'
 
 export default async function Image() {
   const logoData = await readFile(
-    join(process.cwd(), 'public', 'icons', 'logo.png'),
-    'base64'
+    join(process.cwd(), 'public', 'icons', 'logo.png')
   )
-  const logoSrc = `data:image/png;base64,${logoData}`
+  const logoSrc = Uint8Array.from(logoData).buffer
 
   return new ImageResponse(
     (
@@ -26,49 +25,53 @@ export default async function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%)',
+          background: '#111827',
           fontFamily: 'sans-serif',
         }}
       >
-        <img src={logoSrc} height="120" style={{ marginBottom: 30 }} />
+        {/* @ts-expect-error Satori accepts ArrayBuffer for img src */}
+        <img src={logoSrc} width="400" style={{ marginBottom: 32 }} />
         <div
           style={{
-            fontSize: 48,
+            fontSize: 56,
             fontWeight: 800,
-            color: '#111827',
+            color: '#ffffff',
             textAlign: 'center',
             lineHeight: 1.2,
-            maxWidth: 900,
+            maxWidth: 950,
           }}
         >
-          Compare Cheap Petrol, Diesel
+          Cheap Petrol, Diesel &
         </div>
         <div
           style={{
-            fontSize: 48,
+            fontSize: 56,
             fontWeight: 800,
-            color: '#111827',
+            color: '#22c55e',
             textAlign: 'center',
             lineHeight: 1.2,
           }}
         >
-          & EV Charging Prices
+          EV Charging Prices
         </div>
         <div
           style={{
-            fontSize: 24,
-            color: '#16a34a',
-            fontWeight: 600,
-            marginTop: 20,
+            fontSize: 28,
+            color: '#9ca3af',
+            fontWeight: 500,
+            marginTop: 24,
           }}
         >
           Real data from 7,500+ UK stations
         </div>
         <div
           style={{
-            fontSize: 20,
-            color: '#6b7280',
-            marginTop: 12,
+            fontSize: 22,
+            color: '#4b5563',
+            marginTop: 16,
+            padding: '8px 24px',
+            border: '2px solid #374151',
+            borderRadius: 100,
           }}
         >
           getcheapfuel.co.uk

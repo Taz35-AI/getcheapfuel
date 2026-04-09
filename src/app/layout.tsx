@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s | GetCheapFuel",
   },
   description:
-    "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Real data from 7,500+ stations.",
+    "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes and find the best deals. Real data from 7,500+ stations.",
   keywords: [
     "cheap petrol UK",
     "cheap diesel UK",
@@ -36,6 +36,9 @@ export const metadata: Metadata = {
     "petrol station finder",
     "UK fuel prices",
     "save money on fuel",
+    "fuel cost calculator",
+    "fuel route planner UK",
+    "compare petrol station prices",
   ],
   manifest: "/site.webmanifest",
   icons: {
@@ -53,13 +56,13 @@ export const metadata: Metadata = {
     siteName: "GetCheapFuel",
     title: "GetCheapFuel - Cheap Petrol, Diesel & EV Charging Prices UK",
     description:
-      "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Real data from 7,500+ stations.",
+      "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes and find the best deals. Real data from 7,500+ stations.",
   },
   twitter: {
     card: "summary_large_image",
     title: "GetCheapFuel - Cheap Petrol, Diesel & EV Charging Prices UK",
     description:
-      "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Real data from 7,500+ stations.",
+      "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes and find the best deals. Real data from 7,500+ stations.",
   },
   alternates: {
     canonical: "https://getcheapfuel.co.uk",
@@ -93,10 +96,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} h-full`}>
+    <html lang="en-GB" className={`${geistSans.variable} h-full`}>
       <body className="h-full font-sans">
         {children}
         <CookieConsent />
+        <noscript>
+          <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
+            <h1>GetCheapFuel - Compare Cheap Petrol, Diesel &amp; EV Charging Prices UK</h1>
+            <p>Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes and find the best deals. Real data from 7,500+ fuel stations.</p>
+            <h2>Features</h2>
+            <ul>
+              <li>Real-time petrol and diesel prices from 13 major UK retailers</li>
+              <li>EV charging station locations and connector types</li>
+              <li>Fuel cost calculator</li>
+              <li>Route planner to find cheap fuel on your journey</li>
+              <li>Compare prices across stations side by side</li>
+              <li>Price alerts and favourites</li>
+            </ul>
+            <p>Please enable JavaScript to use GetCheapFuel.</p>
+            <p>Contact: <a href="mailto:support@getcheapfuel.co.uk">support@getcheapfuel.co.uk</a></p>
+          </div>
+        </noscript>
         <script
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js')})}`,
