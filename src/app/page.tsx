@@ -6,6 +6,7 @@ import SearchBar from '@/components/SearchBar';
 import FuelFilter from '@/components/FuelFilter';
 import StationList from '@/components/StationList';
 import FuelCalculator from '@/components/FuelCalculator';
+import FillUpAdvice from '@/components/FillUpAdvice';
 import ComparisonTable from '@/components/ComparisonTable';
 import RoutePlanner from '@/components/RoutePlanner';
 import InstallPrompt from '@/components/InstallPrompt';
@@ -424,6 +425,13 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Fill up advice banner */}
+      {userLocation && (
+        <div className="flex-shrink-0 px-3 py-1.5 md:px-4 md:py-2 bg-white border-b border-gray-100">
+          <FillUpAdvice fuelType={selectedFuels.find(f => f !== 'EV') || 'E10'} />
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex-1 flex relative overflow-hidden">
