@@ -12,7 +12,35 @@ import RoutePlanner from '@/components/RoutePlanner';
 import InstallPrompt from '@/components/InstallPrompt';
 import NotificationManager from '@/components/NotificationManager';
 import { useFavourites } from '@/hooks/useFavourites';
+import Link from 'next/link';
 import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'GetCheapFuel',
+  url: 'https://getcheapfuel.co.uk',
+  description:
+    'Find the cheapest petrol, diesel, and EV charging near you across the UK. Real-time prices from 7,500+ fuel stations.',
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'Any',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'GBP',
+  },
+  aggregateRating: undefined,
+  author: {
+    '@type': 'Organization',
+    name: 'GetCheapFuel',
+    url: 'https://getcheapfuel.co.uk',
+    email: 'support@getcheapfuel.co.uk',
+  },
+  areaServed: {
+    '@type': 'Country',
+    name: 'United Kingdom',
+  },
+};
 
 const Map = dynamic(() => import('@/components/Map'), { ssr: false });
 
@@ -164,12 +192,17 @@ export default function Home() {
 
   return (
     <div className="h-screen flex flex-col bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Header */}
       <header className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm z-10">
         <div className="px-3 py-2 md:px-4 md:py-3">
-          {/* Row 1: Logo + Search */}
-          <div className="flex items-center gap-2 md:gap-4 mb-2 md:mb-3">
+          {/* Mobile: 2 rows | Desktop: single row */}
+          <div className="flex items-center gap-2 md:gap-4">
             <div className="flex-shrink-0">
+              <h1 className="sr-only">GetCheapFuel - Compare Cheap Petrol, Diesel & EV Charging Prices UK</h1>
               <img
                 src="/icons/logo.png"
                 alt="GetCheapFuel - UK Fuel & EV Prices"
@@ -183,11 +216,10 @@ export default function Home() {
                 isLocating={isLocating}
               />
             </div>
-          </div>
-          {/* Row 2: Filters + Controls */}
-          <div className="flex flex-wrap items-center gap-2 md:gap-4">
-            <FuelFilter selected={selectedFuels} onChange={setSelectedFuels} />
-            <div className="flex items-center gap-1.5 md:gap-3 ml-auto">
+            {/* Desktop: filters + controls inline */}
+            <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+              <FuelFilter selected={selectedFuels} onChange={setSelectedFuels} />
+              <div className="flex items-center gap-3">
               <select
                 value={radius}
                 onChange={(e) => setRadius(Number(e.target.value))}
@@ -258,17 +290,7 @@ export default function Home() {
                   <path d="M13.73 21a2 2 0 01-3.46 0" />
                 </svg>
               </button>
-              {/* Map style: dropdown on mobile, buttons on desktop */}
-              <select
-                value={mapStyle}
-                onChange={(e) => setMapStyle(e.target.value as MapStyle)}
-                className="md:hidden text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-700 capitalize"
-              >
-                {(['dark', 'bright', 'positron', 'liberty'] as MapStyle[]).map(style => (
-                  <option key={style} value={style} className="capitalize">{style}</option>
-                ))}
-              </select>
-              <div className="hidden md:flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5">
                 <label className="text-xs text-gray-500">Map:</label>
                 {(['dark', 'bright', 'positron', 'liberty'] as MapStyle[]).map(style => (
                   <button
@@ -284,6 +306,91 @@ export default function Home() {
                   </button>
                 ))}
               </div>
+              </div>
+            </div>
+          </div>
+          {/* Mobile only: Filters + Controls row */}
+          <div className="flex md:hidden flex-wrap items-center gap-2 mt-2">
+            <FuelFilter selected={selectedFuels} onChange={setSelectedFuels} />
+            <div className="flex items-center gap-1.5 ml-auto">
+              <select
+                value={radius}
+                onChange={(e) => setRadius(Number(e.target.value))}
+                className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-700"
+              >
+                <option value={5}>5 km</option>
+                <option value={10}>10 km</option>
+                <option value={20}>20 km</option>
+                <option value={50}>50 km</option>
+              </select>
+              <button
+                onClick={() => setShowFavouritesOnly(!showFavouritesOnly)}
+                className={`p-1.5 rounded-lg transition-colors ${showFavouritesOnly ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                title="Favourites"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill={showFavouritesOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setCalcOpen(true)}
+                className="p-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                title="Fuel Calculator"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="2" width="16" height="20" rx="2" />
+                  <line x1="8" y1="6" x2="16" y2="6" />
+                  <line x1="8" y1="10" x2="10" y2="10" />
+                  <line x1="14" y1="10" x2="16" y2="10" />
+                  <line x1="8" y1="14" x2="10" y2="14" />
+                  <line x1="14" y1="14" x2="16" y2="14" />
+                  <line x1="8" y1="18" x2="16" y2="18" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setRouteOpen(true)}
+                className="p-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                title="Route Planner"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                </svg>
+              </button>
+              {compareIds.size > 0 && (
+                <button
+                  onClick={() => setCompareOpen(true)}
+                  className="p-1.5 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors relative"
+                  title="Compare stations"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                  </svg>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-600 text-white text-[10px] font-bold flex items-center justify-center">
+                    {compareIds.size}
+                  </span>
+                </button>
+              )}
+              <button
+                onClick={() => setNotifOpen(true)}
+                className="p-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                title="Price Alerts"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 01-3.46 0" />
+                </svg>
+              </button>
+              <select
+                value={mapStyle}
+                onChange={(e) => setMapStyle(e.target.value as MapStyle)}
+                className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-700 capitalize"
+              >
+                {(['dark', 'bright', 'positron', 'liberty'] as MapStyle[]).map(style => (
+                  <option key={style} value={style} className="capitalize">{style}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -419,6 +526,16 @@ export default function Home() {
         onClose={() => setNotifOpen(false)}
       />
       <InstallPrompt />
+
+      {/* Footer */}
+      <footer className="flex-shrink-0 bg-gray-50 border-t border-gray-200 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-gray-500">
+          <span>&copy; {new Date().getFullYear()} GetCheapFuel</span>
+          <Link href="/privacy" className="hover:text-gray-700 hover:underline">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-gray-700 hover:underline">Terms of Service</Link>
+          <a href="mailto:support@getcheapfuel.co.uk" className="hover:text-gray-700 hover:underline">Contact</a>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -145,6 +145,9 @@ export default function StationList({
             ? haversineDistance(userLocation.lat, userLocation.lng, charger.latitude, charger.longitude)
             : null;
           const maxPower = Math.max(...charger.connections.map(c => c.powerKW), 0);
+          const operatorName = charger.operator !== 'Unknown' ? charger.operator : null;
+          const speedLabel = maxPower >= 50 ? 'Rapid' : maxPower >= 22 ? 'Fast' : maxPower >= 7 ? 'Standard' : null;
+          const speedColor = maxPower >= 50 ? 'bg-green-100 text-green-700' : maxPower >= 22 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600';
           return (
             <div key={charger.id} className="px-4 py-3 border-b border-gray-100 hover:bg-purple-50 transition-colors">
               <div className="flex items-start justify-between">
@@ -156,18 +159,22 @@ export default function StationList({
                     >
                       EV
                     </span>
-                    <span className="font-semibold text-sm text-gray-900">{charger.operator}</span>
+                    <span className="font-semibold text-sm text-gray-900">{charger.title}</span>
                     {dist != null && (
                       <span className="text-xs text-gray-400">{dist.toFixed(1)} km</span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500 truncate mt-0.5">{charger.title}</div>
-                  <div className="text-xs text-gray-400 truncate">{charger.address}</div>
+                  {operatorName && (
+                    <div className="text-xs text-gray-500 mt-0.5">by {operatorName}</div>
+                  )}
+                  <div className="text-xs text-gray-400 truncate mt-0.5">
+                    {charger.address}{charger.postcode ? `, ${charger.postcode}` : ''}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                   <div className="text-right">
-                    <div className="text-sm font-bold" style={{ color: FUEL_COLORS.EV }}>{maxPower}kW</div>
-                    <div className="text-xs text-gray-400">max</div>
+                    <div className="text-sm font-bold" style={{ color: FUEL_COLORS.EV }}>{maxPower > 0 ? `${maxPower}kW` : '—'}</div>
+                    {speedLabel && <div className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${speedColor}`}>{speedLabel}</div>}
                   </div>
                   <button
                     onClick={() => onToggleFavourite(charger.id)}
@@ -180,14 +187,23 @@ export default function StationList({
                 </div>
               </div>
               <div className="flex flex-wrap gap-1 mt-2">
-                {charger.connections.map((conn, i) => (
-                  <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                    {conn.type} ({conn.powerKW}kW)
-                  </span>
-                ))}
+                {charger.connections.map((conn, i) => {
+                  const connLabel = conn.type !== 'Unknown' ? conn.type : 'Connector';
+                  const qty = conn.quantity > 1 ? ` x${conn.quantity}` : '';
+                  return (
+                    <span key={i} className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded">
+                      {connLabel}{conn.powerKW > 0 ? ` ${conn.powerKW}kW` : ''}{qty}
+                    </span>
+                  );
+                })}
               </div>
-              {charger.usageCost && (
-                <div className="text-xs text-gray-500 mt-1">{charger.usageCost}</div>
+              {charger.usageCost ? (
+                <div className="text-xs text-green-600 font-medium mt-1">{charger.usageCost}</div>
+              ) : (
+                <div className="text-xs text-gray-400 italic mt-1">Check operator app for pricing</div>
+              )}
+              {!charger.isOperational && (
+                <div className="text-xs text-red-500 font-medium mt-1">Currently unavailable</div>
               )}
             </div>
           );

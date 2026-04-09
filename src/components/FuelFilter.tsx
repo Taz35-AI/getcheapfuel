@@ -11,8 +11,8 @@ interface FuelFilterProps {
 const ALL_FUELS: { key: FuelType; short: string; full: string }[] = [
   { key: 'E10', short: 'E10', full: 'Unleaded (E10)' },
   { key: 'E5', short: 'E5', full: 'Premium (E5)' },
-  { key: 'B7', short: 'B7', full: 'Diesel (B7)' },
-  { key: 'SDV', short: 'SDV', full: 'Super Diesel' },
+  { key: 'B7', short: 'Diesel', full: 'Diesel (B7)' },
+  { key: 'SDV', short: 'S.Diesel', full: 'Super Diesel' },
   { key: 'EV', short: 'EV', full: 'EV Charging' },
 ];
 

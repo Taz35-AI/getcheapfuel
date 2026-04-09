@@ -167,9 +167,9 @@ function EVMarker({
           }}
         >
           <div style={{ fontSize: '9px', opacity: 0.9, letterSpacing: '0.3px' }}>
-            {charger.operator.substring(0, 12)}
+            {(charger.operator !== 'Unknown' ? charger.operator : charger.title).substring(0, 14)}
           </div>
-          {label} {maxPower}kW
+          {label} {maxPower > 0 ? `${maxPower}kW` : ''}
         </div>
         <div
           style={{
@@ -293,46 +293,48 @@ function EVPopupContent({ charger, isFav, onToggleFav }: { charger: EVCharger; i
   return (
     <div className="min-w-[220px]">
       <div className="font-bold text-base text-gray-900">{charger.title}</div>
-      <div className="text-sm font-semibold mt-0.5" style={{ color: FUEL_COLORS.EV }}>
-        {charger.operator}
-      </div>
+      {charger.operator !== 'Unknown' && (
+        <div className="text-sm font-semibold mt-0.5" style={{ color: FUEL_COLORS.EV }}>
+          {charger.operator}
+        </div>
+      )}
       <div className="text-xs text-gray-500 mt-0.5 mb-3">
         {charger.address}
-        <br />
-        {charger.postcode}
+        {charger.postcode && <><br />{charger.postcode}</>}
       </div>
       <div className="space-y-1">
         {charger.connections.map((conn, i) => (
           <div key={i} className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">{conn.type}</span>
+            <span className="text-gray-600">{conn.type !== 'Unknown' ? conn.type : 'Connector'}</span>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900">{conn.powerKW}kW</span>
-              <span className="text-gray-400">x{conn.quantity}</span>
+              {conn.powerKW > 0 && <span className="font-bold text-gray-900">{conn.powerKW}kW</span>}
+              {conn.quantity > 1 && <span className="text-gray-400">x{conn.quantity}</span>}
             </div>
           </div>
         ))}
       </div>
-      {charger.usageCost && (
-        <div className="text-xs text-gray-600 mt-2">
-          <strong>Cost:</strong> {charger.usageCost}
+      {charger.usageCost ? (
+        <div className="text-xs text-green-600 font-medium mt-2">
+          {charger.usageCost}
+        </div>
+      ) : (
+        <div className="text-xs text-gray-400 italic mt-2">Check operator app for pricing</div>
+      )}
+      {!charger.isOperational && (
+        <div className="text-xs font-medium mt-2 text-red-500">
+          Currently unavailable
         </div>
       )}
-      <div
-        className="text-xs font-medium mt-2"
-        style={{ color: charger.isOperational ? '#22c55e' : '#ef4444' }}
-      >
-        {charger.isOperational ? 'Operational' : 'Not operational'}
-      </div>
       <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100">
         <FavouriteButton id={charger.id} isFav={isFav} onToggle={onToggleFav} />
         <ShareButton
-          title={charger.operator}
-          text={`${charger.operator} — ${charger.title}`}
+          title={charger.title}
+          text={`${charger.title}${charger.operator !== 'Unknown' ? ` — ${charger.operator}` : ''}`}
           lat={charger.latitude}
           lng={charger.longitude}
         />
       </div>
-      <DirectionButtons lat={charger.latitude} lng={charger.longitude} label={`${charger.operator} ${charger.postcode}`} />
+      <DirectionButtons lat={charger.latitude} lng={charger.longitude} label={`${charger.title} ${charger.postcode}`} />
     </div>
   );
 }

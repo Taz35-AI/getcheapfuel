@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import CookieConsent from "@/components/CookieConsent";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,9 +16,27 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "GetCheapFuel - UK Fuel & EV Prices",
-  description: "Find the cheapest petrol, diesel, and EV charging near you across the UK. Real-time prices from 7,500+ stations.",
-  keywords: "fuel prices, petrol prices, diesel prices, EV charging, UK, cheap fuel, petrol station",
+  metadataBase: new URL("https://getcheapfuel.co.uk"),
+  title: {
+    default: "GetCheapFuel - Cheap Petrol, Diesel & EV Charging Prices UK",
+    template: "%s | GetCheapFuel",
+  },
+  description:
+    "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Real data from 7,500+ stations.",
+  keywords: [
+    "cheap petrol UK",
+    "cheap diesel UK",
+    "fuel prices near me",
+    "petrol prices today",
+    "diesel prices today",
+    "EV charging near me",
+    "EV charging prices UK",
+    "cheapest fuel station",
+    "fuel price comparison",
+    "petrol station finder",
+    "UK fuel prices",
+    "save money on fuel",
+  ],
   manifest: "/site.webmanifest",
   icons: {
     icon: [
@@ -27,10 +46,44 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
+  openGraph: {
+    type: "website",
+    locale: "en_GB",
+    url: "https://getcheapfuel.co.uk",
+    siteName: "GetCheapFuel",
+    title: "GetCheapFuel - Cheap Petrol, Diesel & EV Charging Prices UK",
+    description:
+      "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Real data from 7,500+ stations.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GetCheapFuel - Cheap Petrol, Diesel & EV Charging Prices UK",
+    description:
+      "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Real data from 7,500+ stations.",
+  },
+  alternates: {
+    canonical: "https://getcheapfuel.co.uk",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "GetCheapFuel",
+  },
+  other: {
+    "geo.region": "GB",
+    "geo.placename": "United Kingdom",
+    "contact": "support@getcheapfuel.co.uk",
   },
 };
 
@@ -43,6 +96,7 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} h-full`}>
       <body className="h-full font-sans">
         {children}
+        <CookieConsent />
         <script
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js')})}`,
