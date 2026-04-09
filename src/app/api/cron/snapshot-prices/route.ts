@@ -47,56 +47,65 @@ export async function GET(request: Request) {
   const supabase = getServiceClient();
   const today = new Date().toISOString().split('T')[0];
   let totalInserted = 0;
-  let errors = 0;
+  const failed: string[] = [];
 
-  for (const [brandKey, url] of Object.entries(CMA_FEEDS)) {
-    try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
-      if (!response.ok) {
-        errors++;
-        continue;
-      }
+  // Fetch all feeds in parallel with generous timeout
+  const results = await Promise.allSettled(
+    Object.entries(CMA_FEEDS).map(async ([brandKey, url]) => {
+      const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data: CMAFeed = await response.json();
-      const rows: {
-        station_id: string;
-        brand: string;
-        fuel_type: string;
-        price: number;
-        snapshot_date: string;
-      }[] = [];
+      return { brandKey, data };
+    })
+  );
 
-      for (const station of data.stations || []) {
-        const stationId = `${brandKey}-${station.site_id}`;
-        for (const fuel of FUEL_TYPES) {
-          const price = station.prices?.[fuel];
-          if (price != null && price > 0) {
-            rows.push({
-              station_id: stationId,
-              brand: station.brand || brandKey,
-              fuel_type: fuel,
-              price,
-              snapshot_date: today,
-            });
-          }
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      failed.push('unknown');
+      continue;
+    }
+
+    const { brandKey, data } = result.value;
+    const rows: {
+      station_id: string;
+      brand: string;
+      fuel_type: string;
+      price: number;
+      snapshot_date: string;
+    }[] = [];
+
+    for (const station of data.stations || []) {
+      const stationId = `${brandKey}-${station.site_id}`;
+      for (const fuel of FUEL_TYPES) {
+        const price = station.prices?.[fuel];
+        if (price != null && price > 0) {
+          rows.push({
+            station_id: stationId,
+            brand: station.brand || brandKey,
+            fuel_type: fuel,
+            price,
+            snapshot_date: today,
+          });
         }
       }
+    }
 
-      if (rows.length > 0) {
-        // Upsert to handle re-runs on the same day
+    if (rows.length > 0) {
+      // Upsert in batches of 1000 to avoid payload limits
+      for (let i = 0; i < rows.length; i += 1000) {
+        const batch = rows.slice(i, i + 1000);
         const { error } = await supabase
           .from('price_history')
-          .upsert(rows, { onConflict: 'station_id,fuel_type,snapshot_date' });
+          .upsert(batch, { onConflict: 'station_id,fuel_type,snapshot_date' });
 
         if (error) {
-          console.error(`Failed to insert ${brandKey}:`, error.message);
-          errors++;
+          console.error(`Failed to insert ${brandKey} batch:`, error.message);
+          failed.push(brandKey);
+          break;
         } else {
-          totalInserted += rows.length;
+          totalInserted += batch.length;
         }
       }
-    } catch {
-      console.error(`Failed to fetch ${brandKey}`);
-      errors++;
     }
   }
 
@@ -110,6 +119,7 @@ export async function GET(request: Request) {
     success: true,
     date: today,
     inserted: totalInserted,
-    errors,
+    feeds: Object.keys(CMA_FEEDS).length,
+    failed,
   });
 }
