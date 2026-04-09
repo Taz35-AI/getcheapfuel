@@ -60,6 +60,7 @@ export default function FuelTracker({ open, onClose }: FuelTrackerProps) {
     }
   }, []);
 
+
   // Fetch logs when synced
   const fetchLogs = useCallback(async () => {
     if (!email) return;

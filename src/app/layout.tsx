@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import CookieConsent from "@/components/CookieConsent";
 import "./globals.css";
 
@@ -99,6 +100,7 @@ export default function RootLayout({
     <html lang="en-GB" className={`${geistSans.variable} h-full`}>
       <body className="h-full font-sans">
         {children}
+        <Analytics />
         <CookieConsent />
         <noscript>
           <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>

@@ -328,7 +328,10 @@ export default function Home() {
                 title="Fuel Spending Tracker"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                  <path d="M3 22V5a2 2 0 012-2h8a2 2 0 012 2v17" />
+                  <path d="M15 10h2a2 2 0 012 2v2a2 2 0 002 2h0" />
+                  <path d="M21 10V8a2 2 0 00-2-2h-1" />
+                  <rect x="6" y="7" width="6" height="5" rx="1" />
                 </svg>
               </button>
               <div className="flex items-center gap-1.5">
@@ -429,7 +432,10 @@ export default function Home() {
                 title="Fuel Spending Tracker"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                  <path d="M3 22V5a2 2 0 012-2h8a2 2 0 012 2v17" />
+                  <path d="M15 10h2a2 2 0 012 2v2a2 2 0 002 2h0" />
+                  <path d="M21 10V8a2 2 0 00-2-2h-1" />
+                  <rect x="6" y="7" width="6" height="5" rx="1" />
                 </svg>
               </button>
               <select
