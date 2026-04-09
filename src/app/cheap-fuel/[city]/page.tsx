@@ -2,6 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { UK_CITIES } from '@/lib/cities';
+import { fetchAllStations, getStationsNear, haversineDistance } from '@/lib/fuel-data';
+
+// Rebuild 3 times a day (every 8 hours)
+export const revalidate = 28800;
 
 export async function generateStaticParams() {
   return UK_CITIES.map(city => ({ city: city.slug }));
@@ -33,6 +37,15 @@ export async function generateMetadata({
   };
 }
 
+type FuelKey = 'E10' | 'E5' | 'B7' | 'SDV';
+
+const FUEL_LABELS: Record<FuelKey, string> = {
+  E10: 'Unleaded (E10)',
+  E5: 'Premium (E5)',
+  B7: 'Diesel (B7)',
+  SDV: 'Super Diesel',
+};
+
 export default async function CityPage({
   params,
 }: {
@@ -41,6 +54,53 @@ export default async function CityPage({
   const { city: slug } = await params;
   const city = UK_CITIES.find(c => c.slug === slug);
   if (!city) notFound();
+
+  // Fetch real fuel data (cached, revalidates every 8 hours)
+  const allStations = await fetchAllStations(28800);
+  const radiusKm = 16; // ~10 miles
+  const nearbyStations = getStationsNear(allStations, city.lat, city.lng, radiusKm);
+
+  // Calculate price stats
+  interface FuelStat {
+    fuel: FuelKey;
+    label: string;
+    cheapestPrice: number;
+    cheapestBrand: string;
+    cheapestDist: string;
+    avgPrice: string;
+    highestPrice: number;
+    stationCount: number;
+    top5: { brand: string; price: number; address: string; dist: string }[];
+  }
+
+  const fuelKeys: FuelKey[] = ['E10', 'E5', 'B7', 'SDV'];
+  const stats: FuelStat[] = fuelKeys.map((fuel): FuelStat | null => {
+    const withPrice = nearbyStations
+      .filter(s => s.prices[fuel] != null)
+      .sort((a, b) => (a.prices[fuel] ?? 999) - (b.prices[fuel] ?? 999));
+    if (withPrice.length === 0) return null;
+
+    const prices = withPrice.map(s => s.prices[fuel]!);
+    const cheapest = withPrice[0];
+    const cheapestDist = haversineDistance(city.lat, city.lng, cheapest.latitude, cheapest.longitude) * 0.6214;
+
+    return {
+      fuel,
+      label: FUEL_LABELS[fuel],
+      cheapestPrice: prices[0],
+      cheapestBrand: cheapest.brand,
+      cheapestDist: cheapestDist.toFixed(1),
+      avgPrice: (prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(1),
+      highestPrice: prices[prices.length - 1],
+      stationCount: withPrice.length,
+      top5: withPrice.slice(0, 5).map(s => ({
+        brand: s.brand,
+        price: s.prices[fuel]!,
+        address: s.postcode || s.address,
+        dist: (haversineDistance(city.lat, city.lng, s.latitude, s.longitude) * 0.6214).toFixed(1),
+      })),
+    };
+  }).filter((s): s is FuelStat => s !== null);
 
   const nearbyCities = UK_CITIES.filter(c => c.slug !== city.slug)
     .map(c => ({
@@ -92,7 +152,7 @@ export default async function CityPage({
           Cheap Petrol & Diesel in {city.name}
         </h1>
         <p className="text-lg text-gray-600 mb-8">
-          Compare live fuel prices from stations across {city.name} and the {city.region} area.
+          Compare live fuel prices from {nearbyStations.length} stations within 10 miles of {city.name}.
           Find the cheapest petrol, diesel, and EV charging near you.
         </p>
 
@@ -107,23 +167,67 @@ export default async function CityPage({
           View {city.name} Fuel Prices Map
         </Link>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Fuel Prices in {city.name} Today
-          </h2>
-          <div className="prose prose-gray max-w-none text-gray-700 space-y-3">
-            <p>
-              GetCheapFuel shows real-time petrol and diesel prices from major fuel stations
-              in {city.name}, including Asda, Tesco, Sainsbury&apos;s, Morrisons, BP, Shell,
-              Esso, and Jet. Prices are updated daily directly from each retailer.
-            </p>
-            <p>
-              With a population of {city.population} people, {city.name} has dozens of fuel
-              stations competing on price. Use our map to find the cheapest option near you and
-              save money on every fill-up.
-            </p>
-          </div>
-        </section>
+        {/* Live price summary cards */}
+        {stats.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Fuel Prices in {city.name} Today
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              {stats.map(s => (
+                <div key={s.fuel} className="border border-gray-200 rounded-xl p-4">
+                  <div className="text-sm font-medium text-gray-500 mb-1">{s.label}</div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-green-600">{s.cheapestPrice.toFixed(1)}p</span>
+                    <span className="text-sm text-gray-400">cheapest</span>
+                  </div>
+                  <div className="text-sm text-gray-700 mt-1">
+                    at <span className="font-semibold">{s.cheapestBrand}</span>
+                    <span className="text-gray-400"> &middot; {s.cheapestDist} mi away</span>
+                  </div>
+                  <div className="flex gap-4 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                    <span>Avg: <span className="font-semibold text-gray-700">{s.avgPrice}p</span></span>
+                    <span>Highest: <span className="font-semibold text-gray-700">{s.highestPrice.toFixed(1)}p</span></span>
+                    <span>{s.stationCount} stations</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Top 5 cheapest stations tables */}
+        {stats.filter(s => s.top5.length > 0).map(s => (
+          <section key={s.fuel} className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              Cheapest {s.label} in {city.name}
+            </h3>
+            <div className="overflow-hidden border border-gray-200 rounded-xl">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left px-4 py-2.5 font-medium text-gray-600">#</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-gray-600">Station</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-gray-600">Postcode</th>
+                    <th className="text-right px-4 py-2.5 font-medium text-gray-600">Price</th>
+                    <th className="text-right px-4 py-2.5 font-medium text-gray-600">Distance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {s.top5.map((station, i) => (
+                    <tr key={i} className={i === 0 ? 'bg-green-50' : i % 2 === 0 ? 'bg-gray-50/50' : ''}>
+                      <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
+                      <td className="px-4 py-2.5 font-medium text-gray-900">{station.brand}</td>
+                      <td className="px-4 py-2.5 text-gray-500">{station.address}</td>
+                      <td className="px-4 py-2.5 text-right font-bold text-gray-900">{station.price.toFixed(1)}p</td>
+                      <td className="px-4 py-2.5 text-right text-gray-500">{station.dist} mi</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ))}
 
         <section className="mb-10">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -147,6 +251,24 @@ export default async function CityPage({
               <span>Tap a station for directions via Google Maps or Waze</span>
             </li>
           </ol>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            About Fuel Prices in {city.name}
+          </h2>
+          <div className="prose prose-gray max-w-none text-gray-700 space-y-3">
+            <p>
+              GetCheapFuel shows real-time petrol and diesel prices from major fuel stations
+              in {city.name}, including Asda, Tesco, Sainsbury&apos;s, Morrisons, BP, Shell,
+              Esso, and Jet. Prices are updated daily directly from each retailer.
+            </p>
+            <p>
+              With a population of {city.population} people, {city.name} has {nearbyStations.length} fuel
+              stations within 10 miles competing on price. Use our map to find the cheapest option near you and
+              save money on every fill-up.
+            </p>
+          </div>
         </section>
 
         <section className="mb-10">

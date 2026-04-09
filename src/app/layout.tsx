@@ -12,8 +12,6 @@ const geistSans = Geist({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export const metadata: Metadata = {
@@ -23,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s | GetCheapFuel",
   },
   description:
-    "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes and find the best deals. Real data from 7,500+ stations.",
+    "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes, track your fuel spending and find the best deals. Real data from 7,500+ stations.",
   keywords: [
     "cheap petrol UK",
     "cheap diesel UK",
@@ -40,6 +38,8 @@ export const metadata: Metadata = {
     "fuel cost calculator",
     "fuel route planner UK",
     "compare petrol station prices",
+    "fuel spending tracker",
+    "track fuel costs",
   ],
   manifest: "/site.webmanifest",
   icons: {
@@ -57,13 +57,22 @@ export const metadata: Metadata = {
     siteName: "GetCheapFuel",
     title: "GetCheapFuel - Cheap Petrol, Diesel & EV Charging Prices UK",
     description:
-      "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes and find the best deals. Real data from 7,500+ stations.",
+      "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes, track your fuel spending and find the best deals. Real data from 7,500+ stations.",
+    images: [
+      {
+        url: "https://getcheapfuel.co.uk/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "GetCheapFuel - Compare Cheap Petrol, Diesel & EV Charging Prices UK",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "GetCheapFuel - Cheap Petrol, Diesel & EV Charging Prices UK",
     description:
-      "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes and find the best deals. Real data from 7,500+ stations.",
+      "Find the cheapest fuel and save money. Compare petrol, diesel and EV charging prices near you across the UK. Calculate fuel costs, plan routes, track your fuel spending and find the best deals. Real data from 7,500+ stations.",
+    images: ["https://getcheapfuel.co.uk/opengraph-image.png"],
   },
   alternates: {
     canonical: "https://getcheapfuel.co.uk",
