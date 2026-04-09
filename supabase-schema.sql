@@ -53,3 +53,33 @@ create policy "Allow delete alerts" on price_alerts
 -- Allow toggling alerts
 create policy "Allow update alerts" on price_alerts
   for update using (true);
+
+-- ============================================
+-- Daily price snapshots for 30-day trend charts
+-- ============================================
+create table price_history (
+  id bigint generated always as identity primary key,
+  station_id text not null,
+  brand text not null,
+  fuel_type text not null check (fuel_type in ('E10', 'E5', 'B7', 'SDV')),
+  price numeric not null,
+  snapshot_date date not null default current_date,
+  created_at timestamptz default now(),
+  unique (station_id, fuel_type, snapshot_date)
+);
+
+-- Index for fast lookups: station + fuel type over date range
+create index idx_price_history_lookup
+  on price_history (station_id, fuel_type, snapshot_date desc);
+
+-- Index for cleanup of old data
+create index idx_price_history_date on price_history (snapshot_date);
+
+-- RLS: allow anonymous reads, only service role can write
+alter table price_history enable row level security;
+
+create policy "Allow public reads" on price_history
+  for select using (true);
+
+-- Auto-delete snapshots older than 90 days (run periodically or via pg_cron)
+-- delete from price_history where snapshot_date < current_date - interval '90 days';

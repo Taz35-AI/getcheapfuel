@@ -2,6 +2,7 @@
 
 import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
 import { FUEL_LABELS, FUEL_COLORS } from '@/lib/types';
+import PriceTrendChart from './PriceTrendChart';
 
 interface StationListProps {
   stations: FuelStation[];
@@ -136,6 +137,13 @@ export default function StationList({
                     </div>
                   ))}
               </div>
+              {primaryFuel && station.prices[primaryFuel] != null && (
+                <PriceTrendChart
+                  stationId={station.id}
+                  fuelType={primaryFuel}
+                  color={FUEL_COLORS[primaryFuel]}
+                />
+              )}
             </div>
           );
         })}

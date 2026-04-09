@@ -13,6 +13,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
 import { FUEL_COLORS } from '@/lib/types';
 import ShareButton from './ShareButton';
+import PriceTrendChart from './PriceTrendChart';
 
 // Free vector tile styles from OpenFreeMap - no API key needed
 const MAP_STYLES = {
@@ -243,6 +244,8 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
     { key: 'SDV', label: 'Super Diesel' },
   ] as const;
 
+  const chartFuel = fuels.find(f => station.prices[f.key] != null);
+
   return (
     <div className="min-w-[200px]">
       <div className="font-bold text-base text-gray-900">{station.brand}</div>
@@ -270,6 +273,13 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
             );
           })}
       </div>
+      {chartFuel && (
+        <PriceTrendChart
+          stationId={station.id}
+          fuelType={chartFuel.key}
+          color={FUEL_COLORS[chartFuel.key]}
+        />
+      )}
       {station.lastUpdated && (
         <div className="text-[10px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
           Updated: {station.lastUpdated}
