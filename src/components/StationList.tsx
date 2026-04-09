@@ -99,7 +99,7 @@ export default function StationList({
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm text-gray-900">{station.brand}</span>
                     {dist != null && (
-                      <span className="text-xs text-gray-400">{dist.toFixed(1)} km</span>
+                      <span className="text-xs text-gray-400">{(dist * 0.6214).toFixed(1)} mi</span>
                     )}
                   </div>
                   <div className="text-xs text-gray-500 truncate mt-0.5">{station.address}</div>
@@ -169,7 +169,7 @@ export default function StationList({
                     </span>
                     <span className="font-semibold text-sm text-gray-900">{charger.title}</span>
                     {dist != null && (
-                      <span className="text-xs text-gray-400">{dist.toFixed(1)} km</span>
+                      <span className="text-xs text-gray-400">{(dist * 0.6214).toFixed(1)} mi</span>
                     )}
                   </div>
                   {operatorName && (

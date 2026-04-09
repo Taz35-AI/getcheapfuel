@@ -226,7 +226,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {/* Header */}
-      <header className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm z-10">
+      <header className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm z-50">
         <div className="px-3 py-2 md:px-4 md:py-3">
           {/* Mobile: 2 rows | Desktop: single row */}
           <div className="flex items-center gap-2 md:gap-4">
@@ -254,10 +254,10 @@ export default function Home() {
                 onChange={(e) => setRadius(Number(e.target.value))}
                 className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-700"
               >
-                <option value={5}>5 km</option>
-                <option value={10}>10 km</option>
-                <option value={20}>20 km</option>
-                <option value={50}>50 km</option>
+                <option value={5}>3 mi</option>
+                <option value={10}>6 mi</option>
+                <option value={20}>12 mi</option>
+                <option value={50}>30 mi</option>
               </select>
               {/* Tool buttons */}
               <button
@@ -347,10 +347,10 @@ export default function Home() {
                 onChange={(e) => setRadius(Number(e.target.value))}
                 className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-700"
               >
-                <option value={5}>5 km</option>
-                <option value={10}>10 km</option>
-                <option value={20}>20 km</option>
-                <option value={50}>50 km</option>
+                <option value={5}>3 mi</option>
+                <option value={10}>6 mi</option>
+                <option value={20}>12 mi</option>
+                <option value={50}>30 mi</option>
               </select>
               <button
                 onClick={() => setShowFavouritesOnly(!showFavouritesOnly)}

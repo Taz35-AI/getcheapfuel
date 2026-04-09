@@ -88,8 +88,8 @@ export default function PrivacyPage() {
               <strong>Open Charge Map</strong> &mdash; EV charger location data.
             </li>
             <li>
-              <strong>CMA (Competition and Markets Authority)</strong> &mdash; UK fuel price
-              data.
+              <strong>UK fuel retailers</strong> &mdash; fuel price data sourced directly
+              from retailers.
             </li>
           </ul>
           <p className="mt-2">

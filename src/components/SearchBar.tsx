@@ -80,7 +80,7 @@ export default function SearchBar({ onLocationSelect, onUseMyLocation, isLocatin
           </div>
         )}
         {showResults && results.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[1000] max-h-60 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-60 overflow-y-auto">
             {results.map((result, i) => (
               <button
                 key={i}

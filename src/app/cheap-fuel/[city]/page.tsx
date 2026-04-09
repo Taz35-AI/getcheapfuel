@@ -115,8 +115,7 @@ export default async function CityPage({
             <p>
               GetCheapFuel shows real-time petrol and diesel prices from major fuel stations
               in {city.name}, including Asda, Tesco, Sainsbury&apos;s, Morrisons, BP, Shell,
-              Esso, and Jet. Prices are sourced directly from the UK Competition and Markets
-              Authority (CMA) open data feeds, updated daily by each retailer.
+              Esso, and Jet. Prices are updated daily directly from each retailer.
             </p>
             <p>
               With a population of {city.population} people, {city.name} has dozens of fuel
@@ -196,7 +195,7 @@ export default async function CityPage({
           <p className="text-sm text-gray-600">
             GetCheapFuel is a free fuel price comparison tool for the UK. We show real-time
             petrol, diesel, and EV charging prices from 7,500+ stations across the country.
-            Our data comes directly from the CMA open data feeds — the same prices you see at
+            Prices come directly from the retailers — the same prices you see at
             the pump. No sign-up needed.
           </p>
         </section>

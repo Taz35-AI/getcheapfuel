@@ -41,7 +41,7 @@ export default function TermsPage() {
           <p>
             GetCheapFuel is a free fuel and EV charging price comparison tool for the United
             Kingdom. We aggregate publicly available price data from the Competition and
-            Markets Authority (CMA) and EV charger data from Open Charge Map to help users
+            UK fuel retailers and EV charger data from Open Charge Map to help users
             find the cheapest fuel and charging options near them.
           </p>
         </section>
@@ -79,7 +79,7 @@ export default function TermsPage() {
           <p>
             All content, design, and code on GetCheapFuel is owned by us or our licensors. You
             may not reproduce, distribute, or create derivative works without our written
-            permission. Fuel price data is sourced from the CMA under open data terms. EV
+            permission. Fuel price data is sourced directly from UK retailers under open data terms. EV
             charger data is provided by Open Charge Map under the Open Data Commons Open
             Database License.
           </p>
