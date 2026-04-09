@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import SearchBar from '@/components/SearchBar';
 import FuelFilter from '@/components/FuelFilter';
 import StationList from '@/components/StationList';
-import CheapestCard from '@/components/CheapestCard';
 import FuelCalculator from '@/components/FuelCalculator';
 import ComparisonTable from '@/components/ComparisonTable';
 import RoutePlanner from '@/components/RoutePlanner';
@@ -176,6 +175,21 @@ export default function Home() {
     setZoom(15);
     setSelectedStation(station.id);
   }, []);
+
+  // Read URL params (from city pages) and navigate to location
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const lat = parseFloat(params.get('lat') || '');
+    const lng = parseFloat(params.get('lng') || '');
+    const z = parseInt(params.get('zoom') || '', 10);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      setCenter([lat, lng]);
+      setZoom(isNaN(z) ? 13 : z);
+      setUserLocation({ lat, lng });
+      setLocationName(params.get('name') || '');
+      fetchStations(lat, lng, radius);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Open sidebar by default on desktop
   useEffect(() => {
@@ -493,13 +507,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Cheapest near me card */}
-          <CheapestCard
-            stations={stations}
-            selectedFuels={selectedFuels}
-            onStationClick={handleStationClick}
-          />
-
           <Map
             center={center}
             zoom={zoom}
@@ -544,11 +551,18 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="flex-shrink-0 bg-gray-50 border-t border-gray-200 px-4 py-3">
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-gray-500">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-gray-500 mb-2">
           <span>&copy; {new Date().getFullYear()} GetCheapFuel</span>
           <Link href="/privacy" className="hover:text-gray-700 hover:underline">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-gray-700 hover:underline">Terms of Service</Link>
           <a href="mailto:support@getcheapfuel.co.uk" className="hover:text-gray-700 hover:underline">Contact</a>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 text-[10px] text-gray-400">
+          <span>Cheap fuel in:</span>
+          {['london','manchester','birmingham','leeds','glasgow','liverpool','edinburgh','bristol','sheffield','newcastle','nottingham','cardiff'].map(city => (
+            <Link key={city} href={`/cheap-fuel/${city}`} className="hover:text-gray-600 hover:underline capitalize">{city.replace('-', ' ')}</Link>
+          ))}
+          <Link href="/cheap-fuel/london" className="hover:text-gray-600 hover:underline">& more</Link>
         </div>
       </footer>
     </div>

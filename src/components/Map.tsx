@@ -247,7 +247,7 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
   const chartFuel = fuels.find(f => station.prices[f.key] != null);
 
   return (
-    <div className="min-w-[200px]">
+    <div className="min-w-[200px] max-w-[280px]">
       <div className="font-bold text-base text-gray-900">{station.brand}</div>
       <div className="text-xs text-gray-500 mt-0.5 mb-3">
         {station.address}

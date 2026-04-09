@@ -11,10 +11,15 @@ body {
 }
 
 /* MapLibre GL popup styling */
+.maplibregl-popup {
+  max-width: min(85vw, 320px) !important;
+}
+
 .maplibregl-popup-content {
   border-radius: 12px !important;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2) !important;
   padding: 14px 16px !important;
+  overflow: hidden;
 }
 
 .maplibregl-popup-close-button {
