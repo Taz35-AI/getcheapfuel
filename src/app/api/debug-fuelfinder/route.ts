@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 
 const TOKEN_URLS = [
-  'https://www.fuel-finder.service.gov.uk/api/v1/oauth/generate_access_token',
-  'https://fuel-finder.service.gov.uk/api/v1/oauth/generate_access_token',
-  'https://www.fuel-finder.service.gov.uk/oauth/token',
-  'https://fuel-finder.service.gov.uk/oauth/token',
+  'https://api.fuelfinder.service.gov.uk/v1/oauth/token',
+  'https://api.fuelfinder.service.gov.uk/v1/oauth/generate_access_token',
+  'https://api.fuelfinder.service.gov.uk/oauth/token',
+  'https://api.fuelfinder.service.gov.uk/oauth/generate_access_token',
 ];
 
 export async function GET() {
@@ -17,7 +17,6 @@ export async function GET() {
 
   const results: Record<string, unknown> = {};
 
-  // Try every possible token URL with the correct format (x-www-form-urlencoded + scope)
   for (const url of TOKEN_URLS) {
     try {
       const res = await fetch(url, {
@@ -29,7 +28,23 @@ export async function GET() {
       const text = await res.text();
       results[url] = { status: res.status, body: text.slice(0, 300) };
       if (res.ok) {
-        return NextResponse.json({ success: true, working_url: url, response: JSON.parse(text) });
+        const tokenData = JSON.parse(text);
+        const token = tokenData.access_token;
+
+        // Try fetching stations with this working token
+        const stationsRes = await fetch('https://api.fuelfinder.service.gov.uk/v1/pfs?batch-number=1', {
+          headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+          signal: AbortSignal.timeout(10000),
+        });
+        const stationsText = await stationsRes.text();
+
+        return NextResponse.json({
+          success: true,
+          working_token_url: url,
+          token_response: tokenData,
+          stations_status: stationsRes.status,
+          stations_sample: stationsText.slice(0, 500),
+        });
       }
     } catch (e: unknown) {
       results[url] = { error: e instanceof Error ? e.message : String(e) };
