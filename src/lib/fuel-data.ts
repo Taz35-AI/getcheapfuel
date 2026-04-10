@@ -124,13 +124,11 @@ async function fetchFuelFinderStations(): Promise<FuelStation[]> {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Reject prices outside a realistic UK range (125p–250p) to filter out
-// data entry errors, placeholders (e.g. 999.9, 110.9), and pound/pence mixups.
-// Tighter than the absolute minimum because UK petrol has not dropped below
-// 125p since 2021 and there is no realistic forecourt price above ~250p.
+// Reject obvious garbage like 999.9 placeholders, but otherwise leave
+// individual prices alone. Averages absorb the rare outliers.
 function sanitisePrice(price: number | null | undefined): number | null {
   if (price == null) return null;
-  if (price >= 125 && price <= 250) return price;
+  if (price >= 100 && price <= 350) return price;
   return null;
 }
 function normaliseBrand(raw: string): string {

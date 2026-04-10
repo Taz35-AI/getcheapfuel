@@ -62,15 +62,12 @@ export default async function FuelIndexPage() {
     year: 'numeric',
   }).format(today);
 
-  // 50 litre tank saving from a representative cheap vs average example
-  const tankSavingVsAverage = 50 * ((e10Summary.average - e10Summary.cheapest) / 100);
-
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
     name: 'UK Fuel Price Index',
     description:
-      'Daily aggregated dataset of UK petrol and diesel prices, sourced from the UK Government Fuel Finder API and the published price feeds of 13 major UK retailers. Includes national averages, regional breakdowns, brand league tables and individual station prices.',
+      'Daily aggregated dataset of UK petrol and diesel prices. Includes national averages, regional breakdowns, and brand league tables, sourced live from the UK Government.',
     url: 'https://getcheapfuel.co.uk/fuel-index',
     keywords: [
       'UK fuel prices',
@@ -150,27 +147,12 @@ export default async function FuelIndexPage() {
                 <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
                   {s.label}
                 </div>
-                <div className="flex items-baseline gap-2 mb-3">
+                <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-bold text-gray-900 tabular-nums">{s.average.toFixed(1)}</span>
-                  <span className="text-base text-gray-500">p / litre average</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div>
-                    <div className="text-gray-400">Cheapest</div>
-                    <div className="font-semibold text-green-700 tabular-nums">{fmtPence(s.cheapest)}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-400">Median</div>
-                    <div className="font-semibold text-gray-700 tabular-nums">{fmtPence(s.median)}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-400">Highest</div>
-                    <div className="font-semibold text-red-600 tabular-nums">{fmtPence(s.mostExpensive)}</div>
-                  </div>
+                  <span className="text-base text-gray-500">p / litre</span>
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
-                  Sampled across {s.stationCount.toLocaleString()} stations. Spread of {fmtPence(s.spread)} between
-                  cheapest and most expensive.
+                  National average across {s.stationCount.toLocaleString()} stations.
                 </div>
               </div>
             ))}
@@ -182,35 +164,25 @@ export default async function FuelIndexPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-5">What the data shows today</h2>
           <div className="space-y-4 text-base text-gray-700 leading-relaxed">
             <p>
-              The cheapest litre of unleaded petrol in the UK today is{' '}
-              <strong className="text-gray-900">{fmtPence(e10Summary.cheapest)}</strong>, found at{' '}
-              <strong className="text-gray-900">
-                {e10Summary.cheapestStation && toTitleCase(e10Summary.cheapestStation.brand)}
-              </strong>{' '}
-              ({e10Summary.cheapestStation?.postcode}). That is{' '}
-              <strong className="text-green-700">{(e10Summary.average - e10Summary.cheapest).toFixed(1)}p</strong>{' '}
-              below the national average. Drivers filling a 50 litre tank at the cheapest
-              forecourt save approximately{' '}
-              <strong className="text-green-700">£{tankSavingVsAverage.toFixed(2)}</strong>{' '}
-              compared with the average price.
-            </p>
-            <p>
-              Diesel costs an average of{' '}
-              <strong className="text-gray-900">{fmtPence(b7Summary.average)}</strong> per litre,{' '}
+              Drivers across the UK are paying an average of{' '}
+              <strong className="text-gray-900">{fmtPence(e10Summary.average)}</strong> for a
+              litre of standard unleaded and{' '}
+              <strong className="text-gray-900">{fmtPence(b7Summary.average)}</strong> for diesel.
+              That puts diesel{' '}
               <strong className="text-gray-900">{insights.petrolDieselGap.toFixed(1)}p</strong>{' '}
-              more than unleaded. The premium-unleaded grade (E5) sits{' '}
+              above petrol on average. The premium unleaded grade (E5) sits{' '}
               <strong className="text-gray-900">{insights.premiumPetrolPremium.toFixed(1)}p</strong>{' '}
-              above standard unleaded. Super diesel commands an additional{' '}
+              above standard unleaded, and super diesel adds another{' '}
               <strong className="text-gray-900">{insights.superDieselPremium.toFixed(1)}p</strong>{' '}
-              premium over the standard B7 grade.
+              over the standard diesel grade.
             </p>
             <p>
               Supermarket forecourts continue to undercut branded sites. Tesco, Asda,
               Sainsbury&apos;s and Morrisons sell unleaded for an average of{' '}
               <strong className="text-green-700">{insights.supermarketDiscount.toFixed(1)}p</strong>{' '}
               less per litre than independent and branded competitors such as Shell, BP, Esso
-              and Texaco. Across the {insights.supermarketCount.toLocaleString()} supermarket
-              forecourts in the dataset, the discount holds in every region.
+              and Texaco. The discount holds across all {insights.supermarketCount.toLocaleString()}{' '}
+              supermarket forecourts in the dataset.
             </p>
             <p>
               On a regional basis, the cheapest place to fill up is{' '}
@@ -302,57 +274,6 @@ export default async function FuelIndexPage() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </section>
-
-        {/* Cheapest stations */}
-        <section className="mb-14">
-          <h2 className="text-2xl font-bold text-gray-900 mb-5">Today&apos;s extremes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {e10Summary.cheapestStation && (
-              <div className="border border-green-200 bg-green-50/40 rounded-2xl p-5">
-                <div className="text-xs uppercase tracking-wider text-green-700 font-semibold mb-2">
-                  Cheapest unleaded in the UK
-                </div>
-                <div className="text-3xl font-bold text-green-700 tabular-nums mb-1">{fmtPence(e10Summary.cheapest)}</div>
-                <div className="text-sm font-semibold text-gray-900">{toTitleCase(e10Summary.cheapestStation.brand)}</div>
-                <div className="text-xs text-gray-600 mt-1">{toTitleCase(e10Summary.cheapestStation.address)}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{e10Summary.cheapestStation.postcode}</div>
-              </div>
-            )}
-            {e10Summary.mostExpensiveStation && (
-              <div className="border border-red-200 bg-red-50/40 rounded-2xl p-5">
-                <div className="text-xs uppercase tracking-wider text-red-700 font-semibold mb-2">
-                  Most expensive unleaded in the UK
-                </div>
-                <div className="text-3xl font-bold text-red-600 tabular-nums mb-1">{fmtPence(e10Summary.mostExpensive)}</div>
-                <div className="text-sm font-semibold text-gray-900">{toTitleCase(e10Summary.mostExpensiveStation.brand)}</div>
-                <div className="text-xs text-gray-600 mt-1">{toTitleCase(e10Summary.mostExpensiveStation.address)}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{e10Summary.mostExpensiveStation.postcode}</div>
-              </div>
-            )}
-            {b7Summary.cheapestStation && (
-              <div className="border border-green-200 bg-green-50/40 rounded-2xl p-5">
-                <div className="text-xs uppercase tracking-wider text-green-700 font-semibold mb-2">
-                  Cheapest diesel in the UK
-                </div>
-                <div className="text-3xl font-bold text-green-700 tabular-nums mb-1">{fmtPence(b7Summary.cheapest)}</div>
-                <div className="text-sm font-semibold text-gray-900">{toTitleCase(b7Summary.cheapestStation.brand)}</div>
-                <div className="text-xs text-gray-600 mt-1">{toTitleCase(b7Summary.cheapestStation.address)}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{b7Summary.cheapestStation.postcode}</div>
-              </div>
-            )}
-            {b7Summary.mostExpensiveStation && (
-              <div className="border border-red-200 bg-red-50/40 rounded-2xl p-5">
-                <div className="text-xs uppercase tracking-wider text-red-700 font-semibold mb-2">
-                  Most expensive diesel in the UK
-                </div>
-                <div className="text-3xl font-bold text-red-600 tabular-nums mb-1">{fmtPence(b7Summary.mostExpensive)}</div>
-                <div className="text-sm font-semibold text-gray-900">{toTitleCase(b7Summary.mostExpensiveStation.brand)}</div>
-                <div className="text-xs text-gray-600 mt-1">{toTitleCase(b7Summary.mostExpensiveStation.address)}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{b7Summary.mostExpensiveStation.postcode}</div>
-              </div>
-            )}
           </div>
         </section>
 
