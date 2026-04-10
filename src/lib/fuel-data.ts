@@ -42,7 +42,17 @@ function sanitisePrice(price: number | null | undefined): number | null {
   if (price >= 100 && price <= 350) return price;
   return null;
 }
-
+function normaliseBrand(raw: string): string {
+  const lower = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (lower.includes('sainsbury')) return "Sainsbury's";
+  if (lower.includes('tesco')) return 'Tesco';
+  if (lower.includes('asda')) return 'Asda';
+  if (lower.includes('morrisons')) return 'Morrisons';
+  if (lower.includes('shell')) return 'Shell';
+  if (lower.includes('bp')) return 'BP';
+  if (lower.includes('esso')) return 'Esso';
+  return raw;
+}
 export async function fetchCMAFeed(brand: string, url: string, revalidate = 300): Promise<FuelStation[]> {
   try {
     const response = await fetch(url, {
@@ -55,8 +65,8 @@ export async function fetchCMAFeed(brand: string, url: string, revalidate = 300)
       .filter(s => s.location?.latitude && s.location?.longitude)
       .map(station => ({
         id: `${brand}-${station.site_id}`,
-        brand: station.brand || brand,
-        name: station.brand || brand,
+        brand: normaliseBrand(station.brand || brand),
+        name: normaliseBrand(station.brand || brand),
         address: station.address,
         postcode: station.postcode,
         latitude: station.location.latitude,
