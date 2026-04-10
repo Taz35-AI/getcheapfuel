@@ -107,6 +107,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-GB" className={`${geistSans.variable} h-full`}>
+      <head>
+        {/* Preconnect to origins we'll talk to right after first paint
+            so the DNS + TLS handshake is already done by then */}
+        <link rel="preconnect" href="https://tiles.openfreemap.org" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+      </head>
       <body className="h-full font-sans">
         {children}
         <Analytics />
