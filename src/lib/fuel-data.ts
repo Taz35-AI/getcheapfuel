@@ -60,11 +60,48 @@ interface FuelStationRow {
   last_updated: string | null;
 }
 
-let ffCache: { stations: FuelStation[]; expiresAt: number } | null = null;
+// Per-bbox cache so repeated queries for the same area are instant
+const ffBboxCache = new Map<string, { stations: FuelStation[]; expiresAt: number }>();
+// Full-dataset cache for callers that don't pass a bounding box (city pages,
+// fuel-index page)
+let ffFullCache: { stations: FuelStation[]; expiresAt: number } | null = null;
 
-async function fetchFuelFinderStations(): Promise<FuelStation[]> {
-  if (ffCache && ffCache.expiresAt > Date.now()) {
-    return ffCache.stations;
+interface BBox {
+  lat: number;
+  lng: number;
+  radiusKm: number;
+}
+
+function rowToStation(row: FuelStationRow): FuelStation {
+  return {
+    id: row.id,
+    brand: normaliseBrand(row.brand),
+    name: normaliseBrand(row.name),
+    address: row.address,
+    postcode: row.postcode,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    prices: {
+      E10: sanitisePrice(row.e10),
+      E5: sanitisePrice(row.e5),
+      B7: sanitisePrice(row.b7),
+      SDV: sanitisePrice(row.sdv),
+    },
+    lastUpdated: row.last_updated ?? undefined,
+    source: 'fuelfinder' as const,
+    openingHours: row.opening_times ?? undefined,
+    amenities: row.amenities ?? undefined,
+  };
+}
+
+async function fetchFuelFinderStations(bbox?: BBox): Promise<FuelStation[]> {
+  // Bounded queries — use per-bbox cache
+  if (bbox) {
+    const key = `${bbox.lat.toFixed(2)}|${bbox.lng.toFixed(2)}|${bbox.radiusKm}`;
+    const cached = ffBboxCache.get(key);
+    if (cached && cached.expiresAt > Date.now()) return cached.stations;
+  } else if (ffFullCache && ffFullCache.expiresAt > Date.now()) {
+    return ffFullCache.stations;
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -75,47 +112,62 @@ async function fetchFuelFinderStations(): Promise<FuelStation[]> {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Paginate through all rows (Supabase default limit is 1000)
-    const allRows: FuelStationRow[] = [];
-    const pageSize = 1000;
-    for (let from = 0; from < 20000; from += pageSize) {
+    // Build the query — bounding box if provided, otherwise full dataset
+    let stations: FuelStation[];
+
+    if (bbox) {
+      // 1 deg lat ≈ 111 km. 1 deg lng ≈ 111 * cos(lat) km.
+      // Add a small buffer (radius * 1.05) so we never miss edge cases.
+      const dLat = (bbox.radiusKm * 1.05) / 111;
+      const dLng = (bbox.radiusKm * 1.05) / (111 * Math.cos((bbox.lat * Math.PI) / 180));
+      const minLat = bbox.lat - dLat;
+      const maxLat = bbox.lat + dLat;
+      const minLng = bbox.lng - dLng;
+      const maxLng = bbox.lng + dLng;
+
       const { data, error } = await supabase
         .from('fuel_stations_ff')
         .select('*')
-        .range(from, from + pageSize - 1);
+        .gte('latitude', minLat)
+        .lte('latitude', maxLat)
+        .gte('longitude', minLng)
+        .lte('longitude', maxLng)
+        .limit(2000);
+
       if (error) {
-        console.error('[FuelFinder] Supabase read error:', error.message);
-        break;
+        console.error('[FuelFinder] Supabase bbox read error:', error.message);
+        return [];
       }
-      if (!data || data.length === 0) break;
-      allRows.push(...(data as FuelStationRow[]));
-      if (data.length < pageSize) break;
+      stations = (data ?? []).map(rowToStation);
+
+      const key = `${bbox.lat.toFixed(2)}|${bbox.lng.toFixed(2)}|${bbox.radiusKm}`;
+      ffBboxCache.set(key, { stations, expiresAt: Date.now() + 30 * 60 * 1000 });
+      // Cap cache size to avoid unbounded growth
+      if (ffBboxCache.size > 200) {
+        const firstKey = ffBboxCache.keys().next().value;
+        if (firstKey) ffBboxCache.delete(firstKey);
+      }
+    } else {
+      // Full dataset — paginate through all rows
+      const allRows: FuelStationRow[] = [];
+      const pageSize = 1000;
+      for (let from = 0; from < 20000; from += pageSize) {
+        const { data, error } = await supabase
+          .from('fuel_stations_ff')
+          .select('*')
+          .range(from, from + pageSize - 1);
+        if (error) {
+          console.error('[FuelFinder] Supabase full read error:', error.message);
+          break;
+        }
+        if (!data || data.length === 0) break;
+        allRows.push(...(data as FuelStationRow[]));
+        if (data.length < pageSize) break;
+      }
+      stations = allRows.map(rowToStation);
+      ffFullCache = { stations, expiresAt: Date.now() + 30 * 60 * 1000 };
     }
 
-    const stations: FuelStation[] = allRows.map(row => ({
-      id: row.id,
-      brand: normaliseBrand(row.brand),
-      name: normaliseBrand(row.name),
-      address: row.address,
-      postcode: row.postcode,
-      latitude: row.latitude,
-      longitude: row.longitude,
-      // Re-sanitise at read time so we drop any stale rows that were stored
-      // under the old (looser) price range
-      prices: {
-        E10: sanitisePrice(row.e10),
-        E5: sanitisePrice(row.e5),
-        B7: sanitisePrice(row.b7),
-        SDV: sanitisePrice(row.sdv),
-      },
-      lastUpdated: row.last_updated ?? undefined,
-      source: 'fuelfinder' as const,
-      openingHours: row.opening_times ?? undefined,
-      amenities: row.amenities ?? undefined,
-    }));
-
-    // Cache for 5 minutes — Supabase reads are cheap but no need to spam
-    ffCache = { stations, expiresAt: Date.now() + 5 * 60 * 1000 };
     return stations;
   } catch (err) {
     console.error('[FuelFinder] Failed to read from Supabase:', err);
@@ -204,10 +256,12 @@ export async function fetchCMAFeed(brand: string, url: string, revalidate = 300)
   }
 }
 
-export async function fetchAllStations(revalidate = 300): Promise<FuelStation[]> {
-  // NEW: run Fuel Finder + all CMA feeds in parallel
+export async function fetchAllStations(revalidate = 300, bbox?: BBox): Promise<FuelStation[]> {
+  // Run Fuel Finder + all CMA feeds in parallel.
+  // If bbox is provided, FF reads only the rows in that bounding box —
+  // dramatically faster than fetching all 7,640 every time.
   const [fuelFinderResult, ...cmaResults] = await Promise.allSettled([
-    fetchFuelFinderStations(),
+    fetchFuelFinderStations(bbox),
     ...Object.entries(CMA_FEEDS).map(([brand, url]) => fetchCMAFeed(brand, url, revalidate)),
   ]);
 

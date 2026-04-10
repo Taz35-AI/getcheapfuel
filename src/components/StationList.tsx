@@ -5,6 +5,7 @@ import { FUEL_LABELS, FUEL_COLORS } from '@/lib/types';
 import PriceTrendChart from './PriceTrendChart';
 import OpenStatusBadge from './OpenStatusBadge';
 import StationAmenityIcons from './StationAmenityIcons';
+import BrandLogo from './BrandLogo';
 import { toTitleCase } from '@/lib/format-text';
 
 interface StationListProps {
@@ -97,7 +98,8 @@ export default function StationList({
             : null;
           return (
             <div key={station.id} className="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-3">
+                <BrandLogo brand={station.brand} size={36} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-sm text-gray-900">{station.brand}</span>

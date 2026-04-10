@@ -77,7 +77,15 @@ export async function GET(request: Request) {
       source: 'ocm' as const,
     }));
 
-    return NextResponse.json({ chargers, total: chargers.length });
+    return NextResponse.json(
+      { chargers, total: chargers.length },
+      {
+        headers: {
+          // Cache at Vercel's edge for 10 minutes (EV data changes slowly)
+          'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=3600',
+        },
+      }
+    );
   } catch {
     console.error('Failed to fetch EV charger data');
     return NextResponse.json({ chargers: [], total: 0 });

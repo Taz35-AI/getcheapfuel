@@ -16,8 +16,10 @@ import ShareButton from './ShareButton';
 import PriceTrendChart from './PriceTrendChart';
 import OpenStatusBadge from './OpenStatusBadge';
 import StationAmenityIcons from './StationAmenityIcons';
+import BrandLogo from './BrandLogo';
 import { formatUKDateTime } from '@/lib/format-date';
 import { toTitleCase } from '@/lib/format-text';
+import { getBrandLogo } from '@/lib/brand-logos';
 
 // Free vector tile styles from OpenFreeMap - no API key needed
 const MAP_STYLES = {
@@ -76,6 +78,7 @@ function FuelMarker({
   const price = station.prices[fuelType as keyof typeof station.prices];
   const color = getPriceColor(price);
   const displayPrice = price ? `${price.toFixed(1)}` : '?';
+  const logo = getBrandLogo(station.brand);
 
   return (
     <Marker
@@ -89,28 +92,58 @@ function FuelMarker({
     >
       <div
         className="cursor-pointer transition-transform hover:scale-110"
-        style={{ transform: isSelected ? 'scale(1.2)' : undefined }}
+        style={{
+          transform: isSelected ? 'scale(1.15)' : undefined,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
       >
+        {/* Logo circle */}
         <div
           style={{
-            background: color,
-            color: 'white',
-            borderRadius: '10px',
-            padding: '3px 8px',
-            fontSize: '11px',
-            fontWeight: 700,
-            whiteSpace: 'nowrap',
+            width: '34px',
+            height: '34px',
+            borderRadius: '999px',
+            background: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            border: `2px solid ${color}`,
             boxShadow: isSelected
-              ? `0 0 0 3px white, 0 0 0 5px ${color}, 0 4px 12px rgba(0,0,0,0.4)`
-              : '0 2px 8px rgba(0,0,0,0.3)',
-            textAlign: 'center',
-            lineHeight: 1.3,
-            border: '2px solid rgba(255,255,255,0.8)',
+              ? `0 0 0 3px white, 0 0 0 5px ${color}, 0 4px 12px rgba(0,0,0,0.35)`
+              : '0 2px 8px rgba(0,0,0,0.25)',
           }}
         >
-          <div style={{ fontSize: '9px', opacity: 0.9, letterSpacing: '0.3px' }}>
-            {station.brand}
-          </div>
+          <img
+            src={logo.src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            style={{
+              width: '26px',
+              height: '26px',
+              objectFit: 'contain',
+            }}
+          />
+        </div>
+        {/* Price pill below logo */}
+        <div
+          style={{
+            background: 'white',
+            border: `1.5px solid ${color}`,
+            borderRadius: '999px',
+            padding: '1px 7px',
+            fontSize: '11px',
+            fontWeight: 700,
+            color: color,
+            fontVariantNumeric: 'tabular-nums',
+            whiteSpace: 'nowrap',
+            marginTop: '-4px',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+          }}
+        >
           {displayPrice}p
         </div>
         {/* Pointer triangle */}
@@ -118,10 +151,10 @@ function FuelMarker({
           style={{
             width: 0,
             height: 0,
-            borderLeft: '6px solid transparent',
-            borderRight: '6px solid transparent',
-            borderTop: `6px solid ${color}`,
-            margin: '0 auto',
+            borderLeft: '5px solid transparent',
+            borderRight: '5px solid transparent',
+            borderTop: `5px solid ${color}`,
+            marginTop: '-1px',
           }}
         />
       </div>
@@ -253,16 +286,22 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
 
   return (
     <div className="min-w-[240px] max-w-[300px]">
-      <div className="flex items-start justify-between gap-2">
-        <div className="font-bold text-base text-gray-900 leading-tight">{station.brand}</div>
-        {station.openingHours && (
-          <OpenStatusBadge hours={station.openingHours} variant="badge" />
-        )}
+      <div className="flex items-start gap-3">
+        <BrandLogo brand={station.brand} size={56} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="font-bold text-base text-gray-900 leading-tight">{station.brand}</div>
+            {station.openingHours && (
+              <OpenStatusBadge hours={station.openingHours} variant="badge" />
+            )}
+          </div>
+          <div className="text-[11px] text-gray-500 mt-1 leading-snug">
+            {toTitleCase(station.address)}
+            {station.postcode && <><br />{station.postcode}</>}
+          </div>
+        </div>
       </div>
-      <div className="text-[11px] text-gray-500 mt-1 mb-3 leading-snug">
-        {toTitleCase(station.address)}
-        {station.postcode && <><br />{station.postcode}</>}
-      </div>
+      <div className="mb-3" />
 
       <div className="space-y-1.5">
         {fuels
