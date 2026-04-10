@@ -17,6 +17,7 @@ import PriceTrendChart from './PriceTrendChart';
 import OpenStatusBadge from './OpenStatusBadge';
 import StationAmenityIcons from './StationAmenityIcons';
 import { formatUKDateTime } from '@/lib/format-date';
+import { toTitleCase } from '@/lib/format-text';
 
 // Free vector tile styles from OpenFreeMap - no API key needed
 const MAP_STYLES = {
@@ -258,8 +259,8 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
           <OpenStatusBadge hours={station.openingHours} variant="badge" />
         )}
       </div>
-      <div className="text-xs text-gray-500 mt-1 mb-3">
-        {station.address}
+      <div className="text-[11px] text-gray-500 mt-1 mb-3 leading-snug">
+        {toTitleCase(station.address)}
         {station.postcode && <><br />{station.postcode}</>}
       </div>
 
@@ -332,8 +333,8 @@ function EVPopupContent({ charger, isFav, onToggleFav }: { charger: EVCharger; i
           {charger.operator}
         </div>
       )}
-      <div className="text-xs text-gray-500 mt-0.5 mb-3">
-        {charger.address}
+      <div className="text-[11px] text-gray-500 mt-0.5 mb-3 leading-snug">
+        {toTitleCase(charger.address)}
         {charger.postcode && <><br />{charger.postcode}</>}
       </div>
       <div className="space-y-1">

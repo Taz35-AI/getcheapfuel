@@ -5,6 +5,7 @@ import { FUEL_LABELS, FUEL_COLORS } from '@/lib/types';
 import PriceTrendChart from './PriceTrendChart';
 import OpenStatusBadge from './OpenStatusBadge';
 import StationAmenityIcons from './StationAmenityIcons';
+import { toTitleCase } from '@/lib/format-text';
 
 interface StationListProps {
   stations: FuelStation[];
@@ -107,7 +108,7 @@ export default function StationList({
                       <OpenStatusBadge hours={station.openingHours} variant="badge" />
                     )}
                   </div>
-                  <div className="text-xs text-gray-500 truncate mt-0.5">{station.address}</div>
+                  <div className="text-xs text-gray-500 truncate mt-0.5">{toTitleCase(station.address)}</div>
                 </div>
                 <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                   <button
