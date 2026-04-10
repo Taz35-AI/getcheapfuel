@@ -29,8 +29,18 @@ export interface OpenStatus {
   todayHours: string;     // "06:00 - 22:00" / "24 hours" / "Closed"
 }
 
+// True if at least one day has real opening hours data (not just 00:00/00:00 placeholder)
+function hasAnyRealHours(hours: OpeningHours): boolean {
+  for (const key of DAY_KEYS) {
+    if (isDayOpen(hours[key])) return true;
+  }
+  return false;
+}
+
 export function getOpenStatus(hours: OpeningHours | undefined, now: Date = new Date()): OpenStatus | null {
   if (!hours) return null;
+  // If we have no real data for any day, hide the badge instead of saying "Closed"
+  if (!hasAnyRealHours(hours)) return null;
 
   const dayIdx = now.getDay();
   const todayKey = DAY_KEYS[dayIdx];
@@ -103,9 +113,10 @@ export function getWeekSchedule(hours: OpeningHours | undefined): { day: string;
   const todayIdx = new Date().getDay();
   return DAY_KEYS.map((key, i) => {
     const d = hours[key];
-    let text = 'Closed';
+    let text = '—'; // unknown/no data
     if (d?.is_24_hours) text = '24 hours';
     else if (isDayOpen(d)) text = `${(d?.open_time || '').slice(0, 5)} - ${(d?.close_time || '').slice(0, 5)}`;
+    else if (d && (d.open_time || d.close_time)) text = 'Closed'; // explicitly closed day
     return { day: DAY_LABELS[i], text, isToday: i === todayIdx };
   });
 }
