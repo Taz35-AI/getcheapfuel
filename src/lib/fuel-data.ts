@@ -56,10 +56,13 @@ function normaliseBrand(raw: string): string {
 export async function fetchCMAFeed(brand: string, url: string, revalidate = 300): Promise<FuelStation[]> {
   try {
     const response = await fetch(url, {
-  next: { revalidate },
+  next: { revalidate: brand === 'sainsburys' ? 3600 : revalidate },
   signal: AbortSignal.timeout(8000),
   headers: {
     'User-Agent': 'Mozilla/5.0 (compatible; GetCheapFuel/1.0)',
+    'Accept': 'application/json',
+    'Accept-Language': 'en-GB,en;q=0.9',
+    'Referer': 'https://www.sainsburys.co.uk/',
   },
 });
     if (!response.ok) return [];
