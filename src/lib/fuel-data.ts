@@ -78,8 +78,15 @@ let firstCallLogged = false;
 async function getFuelFinderToken(): Promise<string | null> {
   const clientId = process.env.FUEL_FINDER_CLIENT_ID;
   const clientSecret = process.env.FUEL_FINDER_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) return cachedToken.token;
+  console.log('[FuelFinder] env check — clientId present:', !!clientId, '(len:', clientId?.length ?? 0, ') clientSecret present:', !!clientSecret, '(len:', clientSecret?.length ?? 0, ')');
+  if (!clientId || !clientSecret) {
+    console.error('[FuelFinder] MISSING credentials — env vars not loaded by runtime');
+    return null;
+  }
+  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
+    console.log('[FuelFinder] Using cached token');
+    return cachedToken.token;
+  }
   try {
     const res = await fetch(`${FUEL_FINDER_BASE}/api/v1/oauth/generate_access_token`, {
       method: 'POST',
