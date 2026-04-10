@@ -68,9 +68,12 @@ function normaliseBrand(raw: string): string {
   return raw;
 }
 
+// Tightened sanity range — UK petrol has not dropped below 125p since 2021
+// and no realistic forecourt sells above ~250p. Catches data entry errors
+// and placeholder values like 110.9, 999.9, etc.
 function sanitisePrice(p: number | null | undefined): number | null {
   if (p == null) return null;
-  if (p >= 100 && p <= 350) return p;
+  if (p >= 125 && p <= 250) return p;
   return null;
 }
 

@@ -100,11 +100,13 @@ async function fetchFuelFinderStations(): Promise<FuelStation[]> {
       postcode: row.postcode,
       latitude: row.latitude,
       longitude: row.longitude,
+      // Re-sanitise at read time so we drop any stale rows that were stored
+      // under the old (looser) price range
       prices: {
-        E10: row.e10,
-        E5: row.e5,
-        B7: row.b7,
-        SDV: row.sdv,
+        E10: sanitisePrice(row.e10),
+        E5: sanitisePrice(row.e5),
+        B7: sanitisePrice(row.b7),
+        SDV: sanitisePrice(row.sdv),
       },
       lastUpdated: row.last_updated ?? undefined,
       source: 'fuelfinder' as const,
@@ -122,11 +124,13 @@ async function fetchFuelFinderStations(): Promise<FuelStation[]> {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Reject prices outside a sane range (100p–350p) to filter out
-// data entry errors, placeholders (e.g. 999.9), and pound/pence mixups
+// Reject prices outside a realistic UK range (125p–250p) to filter out
+// data entry errors, placeholders (e.g. 999.9, 110.9), and pound/pence mixups.
+// Tighter than the absolute minimum because UK petrol has not dropped below
+// 125p since 2021 and there is no realistic forecourt price above ~250p.
 function sanitisePrice(price: number | null | undefined): number | null {
   if (price == null) return null;
-  if (price >= 100 && price <= 350) return price;
+  if (price >= 125 && price <= 250) return price;
   return null;
 }
 function normaliseBrand(raw: string): string {
