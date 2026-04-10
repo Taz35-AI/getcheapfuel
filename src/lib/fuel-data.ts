@@ -56,9 +56,12 @@ function normaliseBrand(raw: string): string {
 export async function fetchCMAFeed(brand: string, url: string, revalidate = 300): Promise<FuelStation[]> {
   try {
     const response = await fetch(url, {
-      next: { revalidate },
-      signal: AbortSignal.timeout(8000),
-    });
+  next: { revalidate },
+  signal: AbortSignal.timeout(8000),
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (compatible; GetCheapFuel/1.0)',
+  },
+});
     if (!response.ok) return [];
     const data: CMAFeed = await response.json();
     return (data.stations || [])
