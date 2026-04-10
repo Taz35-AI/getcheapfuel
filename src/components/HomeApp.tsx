@@ -5,19 +5,23 @@ import dynamic from 'next/dynamic';
 import SearchBar from '@/components/SearchBar';
 import FuelFilter from '@/components/FuelFilter';
 import StationList from '@/components/StationList';
-import FuelCalculator from '@/components/FuelCalculator';
 import FillUpAdvice from '@/components/FillUpAdvice';
-import FuelTracker from '@/components/FuelTracker';
-import ComparisonTable from '@/components/ComparisonTable';
-import RoutePlanner from '@/components/RoutePlanner';
-import InstallPrompt from '@/components/InstallPrompt';
-import NotificationManager from '@/components/NotificationManager';
 import SettingsMenu from '@/components/SettingsMenu';
 import { useFavourites } from '@/hooks/useFavourites';
 import Link from 'next/link';
 import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
 
+// Map is heavy (~80KB MapLibre + tiles) — defer until after first paint
 const Map = dynamic(() => import('@/components/Map'), { ssr: false });
+
+// Modal components only render when their `open` state is true.
+// Lazy-loading them keeps the initial JS bundle much smaller.
+const FuelCalculator = dynamic(() => import('@/components/FuelCalculator'), { ssr: false });
+const ComparisonTable = dynamic(() => import('@/components/ComparisonTable'), { ssr: false });
+const RoutePlanner = dynamic(() => import('@/components/RoutePlanner'), { ssr: false });
+const NotificationManager = dynamic(() => import('@/components/NotificationManager'), { ssr: false });
+const FuelTracker = dynamic(() => import('@/components/FuelTracker'), { ssr: false });
+const InstallPrompt = dynamic(() => import('@/components/InstallPrompt'), { ssr: false });
 
 type MapStyle = 'dark' | 'bright' | 'positron' | 'liberty';
 
@@ -193,6 +197,9 @@ export default function HomeApp() {
               <img
                 src="/icons/logo.png"
                 alt="GetCheapFuel - UK Fuel & EV Prices"
+                width={140}
+                height={56}
+                fetchPriority="high"
                 className="h-12 md:h-14 w-auto"
               />
             </div>
@@ -507,35 +514,45 @@ export default function HomeApp() {
         </div>
       </div>
 
-      {/* Modals */}
-      <FuelCalculator
-        stations={stations}
-        selectedFuels={selectedFuels}
-        open={calcOpen}
-        onClose={() => setCalcOpen(false)}
-      />
-      <ComparisonTable
-        stations={stations}
-        compareIds={compareIds}
-        onRemove={removeCompare}
-        open={compareOpen}
-        onClose={() => setCompareOpen(false)}
-      />
-      <RoutePlanner
-        stations={stations}
-        selectedFuels={selectedFuels}
-        open={routeOpen}
-        onClose={() => setRouteOpen(false)}
-        onStationClick={handleStationClick}
-      />
-      <NotificationManager
-        open={notifOpen}
-        onClose={() => setNotifOpen(false)}
-      />
-      <FuelTracker
-        open={trackerOpen}
-        onClose={() => setTrackerOpen(false)}
-      />
+      {/* Modals — only mount when opened so the JS chunk isn't fetched until needed */}
+      {calcOpen && (
+        <FuelCalculator
+          stations={stations}
+          selectedFuels={selectedFuels}
+          open={calcOpen}
+          onClose={() => setCalcOpen(false)}
+        />
+      )}
+      {compareOpen && (
+        <ComparisonTable
+          stations={stations}
+          compareIds={compareIds}
+          onRemove={removeCompare}
+          open={compareOpen}
+          onClose={() => setCompareOpen(false)}
+        />
+      )}
+      {routeOpen && (
+        <RoutePlanner
+          stations={stations}
+          selectedFuels={selectedFuels}
+          open={routeOpen}
+          onClose={() => setRouteOpen(false)}
+          onStationClick={handleStationClick}
+        />
+      )}
+      {notifOpen && (
+        <NotificationManager
+          open={notifOpen}
+          onClose={() => setNotifOpen(false)}
+        />
+      )}
+      {trackerOpen && (
+        <FuelTracker
+          open={trackerOpen}
+          onClose={() => setTrackerOpen(false)}
+        />
+      )}
       <InstallPrompt />
 
       {/* Footer — hidden on mobile to avoid overlap with station list */}
