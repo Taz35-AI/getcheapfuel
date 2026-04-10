@@ -4,8 +4,11 @@ import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import SearchBar from '@/components/SearchBar';
 import FuelFilter from '@/components/FuelFilter';
-import FillUpAdvice from '@/components/FillUpAdvice';
 import SettingsMenu from '@/components/SettingsMenu';
+
+// FillUpAdvice only renders once the user has a location, so its JS
+// doesn't need to be in the initial bundle.
+const FillUpAdvice = dynamic(() => import('@/components/FillUpAdvice'), { ssr: false });
 
 // StationList pulls in PriceTrendChart, StationAmenityIcons, OpenStatusBadge,
 // BrandLogo and the TitleCase helper. Defer it — only needed when the
@@ -51,6 +54,7 @@ export default function HomeApp() {
   const [showFavouritesOnly, setShowFavouritesOnly] = useState(false);
   const [calcOpen, setCalcOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [routeOpen, setRouteOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [trackerOpen, setTrackerOpen] = useState(false);
@@ -160,6 +164,19 @@ export default function HomeApp() {
       fetchStations(lat, lng, radius);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Defer the InstallPrompt mount until the page is idle so its JS chunk
+  // doesn't compete with the initial paint.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
+    const trigger = () => setShowInstallPrompt(true);
+    if (w.requestIdleCallback) {
+      w.requestIdleCallback(trigger, { timeout: 4000 });
+    } else {
+      setTimeout(trigger, 3000);
+    }
+  }, []);
 
   // Auto-open the desktop sidebar once we actually have results to show.
   // (Don't open it on first load — that triggers the StationList chunk
@@ -567,7 +584,7 @@ export default function HomeApp() {
           onClose={() => setTrackerOpen(false)}
         />
       )}
-      <InstallPrompt />
+      {showInstallPrompt && <InstallPrompt />}
 
       {/* Footer — hidden on mobile to avoid overlap with station list */}
       <footer className="hidden md:block flex-shrink-0 bg-gray-50 border-t border-gray-200 px-4 py-3">
