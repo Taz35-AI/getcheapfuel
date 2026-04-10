@@ -154,7 +154,7 @@ export interface BrandStats {
   isSupermarket: boolean;
 }
 
-export function computeBrandRankings(stations: FuelStation[], minStations = 15): BrandStats[] {
+export function computeBrandRankings(stations: FuelStation[], minStations = 5): BrandStats[] {
   const groups = new Map<string, FuelStation[]>();
   for (const s of stations) {
     const key = s.brand;

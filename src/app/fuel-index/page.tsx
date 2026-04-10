@@ -51,7 +51,7 @@ export default async function FuelIndexPage() {
   const sdvSummary = summaries[3];
 
   const regions = computeRegionalBreakdown(stations);
-  const brands = computeBrandRankings(stations).slice(0, 12);
+  const brands = computeBrandRankings(stations).slice(0, 25);
   const insights = computeInsights(stations, regions);
 
   const today = new Date();
@@ -244,8 +244,7 @@ export default async function FuelIndexPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Brand league table</h2>
           <p className="text-sm text-gray-600 mb-5">
             Average unleaded and diesel prices by retailer, ranked from cheapest to most
-            expensive. Only brands with at least 15 forecourts are listed to ensure a
-            representative sample.
+            expensive. Brands with at least 5 forecourts in the dataset are included.
           </p>
           <div className="overflow-x-auto rounded-2xl border border-gray-200">
             <table className="w-full text-sm">

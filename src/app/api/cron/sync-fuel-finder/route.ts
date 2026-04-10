@@ -55,16 +55,32 @@ function normaliseFuelType(raw: string): 'E10' | 'E5' | 'B7' | 'SDV' | null {
 }
 
 function normaliseBrand(raw: string): string {
+  if (!raw) return 'Unknown';
   const lower = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
   if (lower.includes('sainsbury')) return "Sainsbury's";
   if (lower.includes('tesco')) return 'Tesco';
   if (lower.includes('asda')) return 'Asda';
   if (lower.includes('morrisons')) return 'Morrisons';
+  if (lower.includes('coop') || lower.includes('cooperative')) return 'Co-op';
+  if (lower.includes('costco')) return 'Costco';
   if (lower.includes('shell')) return 'Shell';
-  if (lower === 'bp' || lower.startsWith('bp')) return 'BP';
   if (lower.includes('esso')) return 'Esso';
   if (lower.includes('texaco')) return 'Texaco';
   if (lower.includes('jet')) return 'Jet';
+  if (lower.includes('gulf')) return 'Gulf';
+  if (lower.includes('murco')) return 'Murco';
+  if (lower.includes('maxol')) return 'Maxol';
+  if (lower.includes('applegreen')) return 'Applegreen';
+  if (lower.includes('harvest')) return 'Harvest Energy';
+  if (lower.includes('certas')) return 'Certas Energy';
+  if (lower.includes('moto') && !lower.includes('motor')) return 'Moto';
+  if (lower.includes('roadchef')) return 'RoadChef';
+  if (lower.includes('welcomebreak')) return 'Welcome Break';
+  if (lower.includes('rontec')) return 'Rontec';
+  if (lower.includes('ascona')) return 'Ascona';
+  if (lower.includes('mfg') || lower.includes('motorfuelgroup')) return 'Motor Fuel Group';
+  if (lower.includes('eg') && lower.length <= 8) return 'EG Group';
+  if (lower.includes('bp')) return 'BP';
   return raw;
 }
 

@@ -94,8 +94,8 @@ async function fetchFuelFinderStations(): Promise<FuelStation[]> {
 
     const stations: FuelStation[] = allRows.map(row => ({
       id: row.id,
-      brand: row.brand,
-      name: row.name,
+      brand: normaliseBrand(row.brand),
+      name: normaliseBrand(row.name),
       address: row.address,
       postcode: row.postcode,
       latitude: row.latitude,
@@ -132,14 +132,37 @@ function sanitisePrice(price: number | null | undefined): number | null {
   return null;
 }
 function normaliseBrand(raw: string): string {
+  if (!raw) return 'Unknown';
   const lower = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
+  // Supermarkets
   if (lower.includes('sainsbury')) return "Sainsbury's";
   if (lower.includes('tesco')) return 'Tesco';
   if (lower.includes('asda')) return 'Asda';
   if (lower.includes('morrisons')) return 'Morrisons';
+  if (lower.includes('coop') || lower.includes('cooperative')) return 'Co-op';
+  if (lower.includes('costco')) return 'Costco';
+  // Major branded
   if (lower.includes('shell')) return 'Shell';
-  if (lower.includes('bp')) return 'BP';
   if (lower.includes('esso')) return 'Esso';
+  if (lower.includes('texaco')) return 'Texaco';
+  if (lower.includes('jet')) return 'Jet';
+  if (lower.includes('gulf')) return 'Gulf';
+  if (lower.includes('murco')) return 'Murco';
+  if (lower.includes('maxol')) return 'Maxol';
+  if (lower.includes('applegreen')) return 'Applegreen';
+  if (lower.includes('harvest')) return 'Harvest Energy';
+  if (lower.includes('certas')) return 'Certas Energy';
+  // Motorway services
+  if (lower.includes('moto') && !lower.includes('motor')) return 'Moto';
+  if (lower.includes('roadchef')) return 'RoadChef';
+  if (lower.includes('welcomebreak')) return 'Welcome Break';
+  // Operators (often run forecourts under multiple brand names)
+  if (lower.includes('rontec')) return 'Rontec';
+  if (lower.includes('ascona')) return 'Ascona';
+  if (lower.includes('mfg') || lower.includes('motorfuelgroup')) return 'Motor Fuel Group';
+  if (lower.includes('eg') && lower.length <= 8) return 'EG Group';
+  // BP last (would otherwise catch "MFG BP" etc.)
+  if (lower.includes('bp')) return 'BP';
   return raw;
 }
 export async function fetchCMAFeed(brand: string, url: string, revalidate = 300): Promise<FuelStation[]> {
