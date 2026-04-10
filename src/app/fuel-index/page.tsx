@@ -106,7 +106,7 @@ export default async function FuelIndexPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="h-screen overflow-y-auto bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -133,9 +133,8 @@ export default async function FuelIndexPage() {
           <p className="text-lg text-gray-600 leading-relaxed">
             A daily analysis of petrol and diesel prices across the United Kingdom, drawing on
             live data from {insights.coverageStations.toLocaleString()} forecourts and{' '}
-            {insights.coverageBrands} retailers. The index is rebuilt every morning using the
-            UK Government Fuel Finder API and the published feeds of the 13 major retailers
-            covered by the Competition and Markets Authority scheme.
+            {insights.coverageBrands} retailers. All prices come directly from the UK Government
+            and are refreshed regularly throughout the day.
           </p>
         </header>
 
@@ -362,34 +361,27 @@ export default async function FuelIndexPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-5">Methodology</h2>
           <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
             <p>
-              <strong className="text-gray-900">Primary data source.</strong> The UK Government
-              Fuel Finder API, operated under the Competition and Markets Authority Fuel
-              Finder Scheme. This is the official open dataset of UK forecourt prices,
-              published by retailers within thirty minutes of any change at the pump.
-            </p>
-            <p>
-              <strong className="text-gray-900">Secondary data source.</strong> Direct JSON
-              feeds published by the 13 retailers covered by the original CMA voluntary
-              scheme: Asda, BP, Shell, Esso, Tesco, Morrisons, Sainsbury&apos;s, Jet, SGN
-              Retail, Rontec, Motor Fuel Group, Ascona, and Moto. Used to fill any coverage
-              gaps in the primary feed.
+              <strong className="text-gray-900">Data source.</strong> All forecourt prices are
+              sourced live from the UK Government, which collects them directly from retailers
+              within 30 minutes of any change at the pump. The data is open and updated
+              continuously throughout the day.
             </p>
             <p>
               <strong className="text-gray-900">Coverage.</strong> {insights.coverageStations.toLocaleString()}{' '}
               forecourts across England, Scotland, Wales and Northern Ireland, representing{' '}
-              {insights.coverageBrands} distinct retailer brands. Stations marked as
-              temporarily or permanently closed are excluded.
+              {insights.coverageBrands} distinct retailer brands. Stations that are temporarily
+              or permanently closed are excluded.
             </p>
             <p>
-              <strong className="text-gray-900">Sanity checks.</strong> Prices outside the range
-              of 100 to 350 pence per litre are filtered out as data entry errors or
-              placeholder values. Stations missing valid coordinates or with no published
+              <strong className="text-gray-900">Quality checks.</strong> Prices outside the
+              normal range of 100 to 350 pence per litre are filtered out as data entry errors
+              or placeholder values. Stations missing valid coordinates or with no published
               price for any fuel type are excluded from the relevant calculations.
             </p>
             <p>
-              <strong className="text-gray-900">Refresh cadence.</strong> The full dataset is
-              re-synced from the upstream feeds once every 24 hours. The page you are
-              reading is rebuilt from the latest snapshot at the same cadence.
+              <strong className="text-gray-900">Refresh cadence.</strong> The dataset is
+              re-synced from the official feed daily, and this report is rebuilt from the
+              latest snapshot every morning.
             </p>
           </div>
         </section>
