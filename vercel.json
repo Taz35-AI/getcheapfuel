@@ -5,7 +5,7 @@
       "schedule": "0 6 * * *"
     },
     {
-      "path": "/api/cron/sync-fuel-finder",
+      "path": "/api/cron/sync-fuel-finder?secret=${CRON_SECRET}",
       "schedule": "0 5 * * *"
     }
   ]

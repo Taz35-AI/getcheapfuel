@@ -127,10 +127,12 @@ function parseAmenities(raw: string[] | undefined): Record<string, boolean> {
 }
 
 export async function GET(request: Request) {
-  // Vercel Cron sets this header automatically; reject manual abuse
-  const authHeader = request.headers.get('authorization');
+  // Accept either ?secret= query param (manual triggers) or
+  // Authorization: Bearer header (Vercel Cron automatic)
+  const { searchParams } = new URL(request.url);
+  const secret = searchParams.get('secret') || request.headers.get('authorization')?.replace('Bearer ', '');
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (cronSecret && secret !== cronSecret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
