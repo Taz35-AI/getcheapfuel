@@ -14,6 +14,8 @@ import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
 import { FUEL_COLORS } from '@/lib/types';
 import ShareButton from './ShareButton';
 import PriceTrendChart from './PriceTrendChart';
+import OpenStatusBadge from './OpenStatusBadge';
+import StationAmenityIcons from './StationAmenityIcons';
 
 // Free vector tile styles from OpenFreeMap - no API key needed
 const MAP_STYLES = {
@@ -248,13 +250,18 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
   const chartFuel = fuels.find(f => station.prices[f.key] != null);
 
   return (
-    <div className="min-w-[200px] max-w-[280px]">
-      <div className="font-bold text-base text-gray-900">{station.brand}</div>
-      <div className="text-xs text-gray-500 mt-0.5 mb-3">
-        {station.address}
-        <br />
-        {station.postcode}
+    <div className="min-w-[240px] max-w-[300px]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="font-bold text-base text-gray-900 leading-tight">{station.brand}</div>
+        {station.openingHours && (
+          <OpenStatusBadge hours={station.openingHours} variant="badge" />
+        )}
       </div>
+      <div className="text-xs text-gray-500 mt-1 mb-3">
+        {station.address}
+        {station.postcode && <><br />{station.postcode}</>}
+      </div>
+
       <div className="space-y-1.5">
         {fuels
           .filter(f => station.prices[f.key] != null)
@@ -274,6 +281,7 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
             );
           })}
       </div>
+
       {chartFuel && (
         <PriceTrendChart
           stationId={station.id}
@@ -281,6 +289,20 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
           color={FUEL_COLORS[chartFuel.key]}
         />
       )}
+
+      {station.openingHours && (
+        <div className="mt-3">
+          <OpenStatusBadge hours={station.openingHours} variant="full" />
+        </div>
+      )}
+
+      {station.amenities && Object.values(station.amenities).some(Boolean) && (
+        <div className="mt-3">
+          <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Amenities</div>
+          <StationAmenityIcons amenities={station.amenities} size="md" />
+        </div>
+      )}
+
       {station.lastUpdated && (
         <div className="text-[10px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
           Updated: {station.lastUpdated}

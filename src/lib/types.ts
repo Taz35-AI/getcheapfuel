@@ -5,6 +5,34 @@ export interface FuelPrices {
   SDV?: number | null;  // Super Diesel
 }
 
+export interface DayHours {
+  open_time?: string;     // "06:00:00" format
+  close_time?: string;    // "22:00:00" format
+  is_24_hours?: boolean;
+}
+
+export interface OpeningHours {
+  monday?: DayHours;
+  tuesday?: DayHours;
+  wednesday?: DayHours;
+  thursday?: DayHours;
+  friday?: DayHours;
+  saturday?: DayHours;
+  sunday?: DayHours;
+  bank_holiday?: DayHours;
+}
+
+export interface StationAmenities {
+  twenty_four_hour_fuel?: boolean;
+  adblue_pumps?: boolean;
+  adblue_packaged?: boolean;
+  lpg_pumps?: boolean;
+  car_wash?: boolean;
+  air_pump_or_screenwash?: boolean;
+  water_filling?: boolean;
+  customer_toilets?: boolean;
+}
+
 export interface FuelStation {
   id: string;
   brand: string;
@@ -16,6 +44,8 @@ export interface FuelStation {
   prices: FuelPrices;
   lastUpdated?: string;
   source: 'cma' | 'fuelfinder';
+  openingHours?: OpeningHours;
+  amenities?: StationAmenities;
 }
 
 export interface EVCharger {

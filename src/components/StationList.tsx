@@ -3,6 +3,8 @@
 import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
 import { FUEL_LABELS, FUEL_COLORS } from '@/lib/types';
 import PriceTrendChart from './PriceTrendChart';
+import OpenStatusBadge from './OpenStatusBadge';
+import StationAmenityIcons from './StationAmenityIcons';
 
 interface StationListProps {
   stations: FuelStation[];
@@ -96,10 +98,13 @@ export default function StationList({
             <div key={station.id} className="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-sm text-gray-900">{station.brand}</span>
                     {dist != null && (
                       <span className="text-xs text-gray-400">{(dist * 0.6214).toFixed(1)} mi</span>
+                    )}
+                    {station.openingHours && (
+                      <OpenStatusBadge hours={station.openingHours} variant="badge" />
                     )}
                   </div>
                   <div className="text-xs text-gray-500 truncate mt-0.5">{station.address}</div>
@@ -137,6 +142,11 @@ export default function StationList({
                     </div>
                   ))}
               </div>
+              {station.amenities && Object.values(station.amenities).some(Boolean) && (
+                <div className="mt-2">
+                  <StationAmenityIcons amenities={station.amenities} size="sm" />
+                </div>
+              )}
               {primaryFuel && station.prices[primaryFuel] != null && (
                 <PriceTrendChart
                   stationId={station.id}

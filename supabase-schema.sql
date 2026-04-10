@@ -116,3 +116,32 @@ create policy "Users delete own logs" on fuel_logs
 
 create policy "Users update own logs" on fuel_logs
   for update using (true);
+
+-- ============================================
+-- Fuel Finder cache (synced once a day from UK gov API via Vercel Cron)
+-- Reading from this is instant — no 20s cold-start fetch on every request.
+-- ============================================
+create table if not exists fuel_stations_ff (
+  id text primary key,
+  brand text not null,
+  name text not null,
+  address text not null,
+  postcode text not null,
+  latitude double precision not null,
+  longitude double precision not null,
+  e10 numeric,
+  e5 numeric,
+  b7 numeric,
+  sdv numeric,
+  opening_times jsonb,
+  amenities jsonb,
+  last_updated timestamptz,
+  synced_at timestamptz not null default now()
+);
+
+create index if not exists idx_ff_stations_bbox on fuel_stations_ff (latitude, longitude);
+
+alter table fuel_stations_ff enable row level security;
+
+create policy "Allow public reads ff" on fuel_stations_ff
+  for select using (true);

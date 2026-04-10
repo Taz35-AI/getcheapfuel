@@ -7,9 +7,6 @@ import { fetchAllStations, getStationsNear, haversineDistance } from '@/lib/fuel
 // Rebuild 3 times a day (every 8 hours)
 export const revalidate = 28800;
 
-// First-call cold start fetches all 7,640 Fuel Finder stations + prices (~30s)
-export const maxDuration = 60;
-
 export async function generateStaticParams() {
   return UK_CITIES.map(city => ({ city: city.slug }));
 }

@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/snapshot-prices?secret=${CRON_SECRET}",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/sync-fuel-finder",
+      "schedule": "0 5 * * *"
     }
   ]
 }

@@ -36,209 +36,87 @@ interface CMAFeed {
   stations: CMAStation[];
 }
 
-// ─── Fuel Finder (UK Gov CMA) ────────────────────────────────────────────────
-const FUEL_FINDER_BASE = 'https://www.fuel-finder.service.gov.uk';
+// ─── Fuel Finder (read from Supabase cache) ──────────────────────────────────
+// FF data is synced once a day to the fuel_stations_ff table by the
+// /api/cron/sync-fuel-finder route (Vercel Cron). We just read it here —
+// instant, no 30s cold-start fetch.
 
-interface FuelFinderLocation {
-  address_line_1?: string;
-  address_line_2?: string;
-  city?: string;
-  county?: string;
-  country?: string;
-  postcode?: string;
-  latitude?: number;
-  longitude?: number;
+import type { OpeningHours, StationAmenities } from './types';
+
+interface FuelStationRow {
+  id: string;
+  brand: string;
+  name: string;
+  address: string;
+  postcode: string;
+  latitude: number;
+  longitude: number;
+  e10: number | null;
+  e5: number | null;
+  b7: number | null;
+  sdv: number | null;
+  opening_times: OpeningHours | null;
+  amenities: StationAmenities | null;
+  last_updated: string | null;
 }
 
-interface FuelFinderStation {
-  node_id: string;
-  trading_name: string;
-  brand_name?: string;
-  temporary_closure?: boolean;
-  permanent_closure?: boolean | null;
-  location?: FuelFinderLocation;
-}
-
-interface FuelFinderFuelPrice {
-  fuel_type: string;
-  price: number;
-  price_last_updated?: string;
-  price_change_effective_timestamp?: string;
-}
-
-interface FuelFinderPriceEntry {
-  node_id: string;
-  trading_name: string;
-  fuel_prices: FuelFinderFuelPrice[];
-}
-
-let cachedToken: { token: string; expiresAt: number } | null = null;
-let firstCallLogged = false;
-
-async function getFuelFinderToken(): Promise<string | null> {
-  const clientId = process.env.FUEL_FINDER_CLIENT_ID;
-  const clientSecret = process.env.FUEL_FINDER_CLIENT_SECRET;
-  console.log('[FuelFinder] env check — clientId present:', !!clientId, '(len:', clientId?.length ?? 0, ') clientSecret present:', !!clientSecret, '(len:', clientSecret?.length ?? 0, ')');
-  if (!clientId || !clientSecret) {
-    console.error('[FuelFinder] MISSING credentials — env vars not loaded by runtime');
-    return null;
-  }
-  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
-    console.log('[FuelFinder] Using cached token');
-    return cachedToken.token;
-  }
-  try {
-    const res = await fetch(`${FUEL_FINDER_BASE}/api/v1/oauth/generate_access_token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: clientId,
-        client_secret: clientSecret,
-      }),
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      console.error('Fuel Finder token failed:', res.status, text.slice(0, 300));
-      return null;
-    }
-    const json = await res.json();
-    // Response shape is { success, data, message } — token nested inside data
-    const data = json.data ?? json;
-    const token = data.access_token ?? data.token ?? data.accessToken ?? json.access_token;
-    if (!token) {
-      console.error('Fuel Finder token response had no access_token. Top keys:', Object.keys(json), 'data keys:', data && typeof data === 'object' ? Object.keys(data) : 'n/a');
-      return null;
-    }
-    const expiresIn = data.expires_in ?? data.expiresIn ?? json.expires_in ?? 3600;
-    cachedToken = {
-      token,
-      expiresAt: Date.now() + expiresIn * 1000,
-    };
-    console.log('[FuelFinder] Token acquired, expires in', expiresIn, 'seconds');
-    return token;
-  } catch (err) {
-    console.error('Fuel Finder token error:', err);
-    return null;
-  }
-}
-
-function normaliseFuelType(raw: string): 'E10' | 'E5' | 'B7' | 'SDV' | null {
-  if (!raw) return null;
-  const u = raw.toUpperCase().replace(/[\s_-]/g, '');
-  // Order matters — check super/premium variants before generic
-  if (u === 'SDV' || u === 'SDVSTANDARD' || u.includes('SUPERDIESEL') || u.includes('PREMIUMDIESEL')) return 'SDV';
-  if (u === 'E5' || u === 'E5STANDARD' || u.includes('PREMIUMUNLEADED') || u.includes('SUPERUNLEADED')) return 'E5';
-  if (u === 'E10' || u === 'E10STANDARD' || u === 'UNLEADED' || u === 'PETROL') return 'E10';
-  if (u === 'B7' || u === 'B7STANDARD' || u === 'DIESEL') return 'B7';
-  return null;
-}
-
-// Fetch all batches of an endpoint until we get an empty array
-async function fetchAllBatches<T>(path: string, token: string): Promise<T[]> {
-  const all: T[] = [];
-  for (let batch = 1; batch <= 50; batch++) {
-    try {
-      const url = `${FUEL_FINDER_BASE}${path}${path.includes('?') ? '&' : '?'}batch-number=${batch}`;
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-        next: { revalidate: 300 },
-        signal: AbortSignal.timeout(30000),
-      });
-      if (!res.ok) {
-        console.error(`[FuelFinder] ${path} batch ${batch} failed:`, res.status);
-        break;
-      }
-      const data: T[] = await res.json();
-      if (!Array.isArray(data) || data.length === 0) break;
-      all.push(...data);
-      if (data.length < 500) break; // last batch
-    } catch (err) {
-      console.error(`[FuelFinder] ${path} batch ${batch} error:`, err);
-      break;
-    }
-  }
-  return all;
-}
-
-// Cache for the full Fuel Finder dataset — refreshed on demand
 let ffCache: { stations: FuelStation[]; expiresAt: number } | null = null;
 
 async function fetchFuelFinderStations(): Promise<FuelStation[]> {
-  // Cache the full dataset for 1 hour — fetching all 7,600 stations takes ~30s
   if (ffCache && ffCache.expiresAt > Date.now()) {
     return ffCache.stations;
   }
 
-  const token = await getFuelFinderToken();
-  if (!token) return [];
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) return [];
 
   try {
-    const [stations, prices] = await Promise.all([
-      fetchAllBatches<FuelFinderStation>('/api/v1/pfs', token),
-      fetchAllBatches<FuelFinderPriceEntry>('/api/v1/pfs/fuel-prices', token),
-    ]);
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    if (!firstCallLogged) {
-      firstCallLogged = true;
-      console.log('[FuelFinder] Stations:', stations.length, 'Prices:', prices.length);
-    }
-
-    // Build a price map keyed by node_id
-    const priceMap = new Map<string, Partial<Record<'E10' | 'E5' | 'B7' | 'SDV', number>>>();
-    for (const p of prices) {
-      if (!Array.isArray(p.fuel_prices)) continue;
-      const fuelObj: Partial<Record<'E10' | 'E5' | 'B7' | 'SDV', number>> = {};
-      for (const fp of p.fuel_prices) {
-        const fuel = normaliseFuelType(fp.fuel_type);
-        if (fuel && typeof fp.price === 'number') {
-          fuelObj[fuel] = fp.price;
-        }
+    // Paginate through all rows (Supabase default limit is 1000)
+    const allRows: FuelStationRow[] = [];
+    const pageSize = 1000;
+    for (let from = 0; from < 20000; from += pageSize) {
+      const { data, error } = await supabase
+        .from('fuel_stations_ff')
+        .select('*')
+        .range(from, from + pageSize - 1);
+      if (error) {
+        console.error('[FuelFinder] Supabase read error:', error.message);
+        break;
       }
-      if (Object.keys(fuelObj).length > 0) priceMap.set(p.node_id, fuelObj);
+      if (!data || data.length === 0) break;
+      allRows.push(...(data as FuelStationRow[]));
+      if (data.length < pageSize) break;
     }
 
-    // Convert stations to our shape
-    const result: FuelStation[] = [];
-    for (const s of stations) {
-      if (s.temporary_closure || s.permanent_closure) continue;
-      const loc = s.location;
-      if (!loc || typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number') continue;
+    const stations: FuelStation[] = allRows.map(row => ({
+      id: row.id,
+      brand: row.brand,
+      name: row.name,
+      address: row.address,
+      postcode: row.postcode,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      prices: {
+        E10: row.e10,
+        E5: row.e5,
+        B7: row.b7,
+        SDV: row.sdv,
+      },
+      lastUpdated: row.last_updated ?? undefined,
+      source: 'fuelfinder' as const,
+      openingHours: row.opening_times ?? undefined,
+      amenities: row.amenities ?? undefined,
+    }));
 
-      const stationPrices = priceMap.get(s.node_id) ?? {};
-      const addressParts = [loc.address_line_1, loc.address_line_2, loc.city, loc.county]
-        .filter((p): p is string => Boolean(p && p.trim()));
-
-      result.push({
-        id: `ff-${s.node_id}`,
-        brand: normaliseBrand(s.brand_name || s.trading_name || 'Unknown'),
-        name: normaliseBrand(s.brand_name || s.trading_name || 'Unknown'),
-        address: addressParts.join(', ') || s.trading_name,
-        postcode: loc.postcode || '',
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-        prices: {
-          E10: sanitisePrice(stationPrices.E10),
-          E5: sanitisePrice(stationPrices.E5),
-          B7: sanitisePrice(stationPrices.B7),
-          SDV: sanitisePrice(stationPrices.SDV),
-        },
-        lastUpdated: new Date().toISOString(),
-        source: 'fuelfinder' as const,
-      });
-    }
-
-    console.log(`[FuelFinder] Returning ${result.length} usable stations`);
-
-    // Cache for 1 hour
-    ffCache = { stations: result, expiresAt: Date.now() + 60 * 60 * 1000 };
-    return result;
+    // Cache for 5 minutes — Supabase reads are cheap but no need to spam
+    ffCache = { stations, expiresAt: Date.now() + 5 * 60 * 1000 };
+    return stations;
   } catch (err) {
-    console.error('Failed to fetch Fuel Finder stations:', err);
+    console.error('[FuelFinder] Failed to read from Supabase:', err);
     return [];
   }
 }
