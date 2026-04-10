@@ -42,6 +42,17 @@ body {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
+/* Reserve space for the bottom-right control container so it doesn't
+   cause CLS when MapLibre adds the navigation + geolocate buttons after
+   the map initialises. */
+.maplibregl-ctrl-bottom-right {
+  min-width: 38px;
+  min-height: 110px;
+}
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl {
+  contain: layout;
+}
+
 /* Collapse map attribution by default */
 .maplibregl-ctrl-attrib:not(.maplibregl-compact-show) {
   background: none !important;

@@ -161,12 +161,19 @@ export default function HomeApp() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Open sidebar by default on desktop
+  // Auto-open the desktop sidebar once we actually have results to show.
+  // (Don't open it on first load — that triggers the StationList chunk
+  // download immediately and hurts the desktop Lighthouse score.)
   useEffect(() => {
-    if (window.matchMedia('(min-width: 768px)').matches) {
+    if (
+      stations.length > 0 &&
+      !sidebarOpen &&
+      typeof window !== 'undefined' &&
+      window.matchMedia('(min-width: 768px)').matches
+    ) {
       setSidebarOpen(true);
     }
-  }, []);
+  }, [stations.length, sidebarOpen]);
 
   // Re-fetch when fuel filters or radius change (if we have a location)
   useEffect(() => {
@@ -198,14 +205,17 @@ export default function HomeApp() {
           <div className="flex items-center gap-2 md:gap-4">
             <div className="flex-shrink-0">
               <h1 className="sr-only">GetCheapFuel - Compare Cheap Petrol, Diesel & EV Charging Prices UK</h1>
-              <img
-                src="/icons/logo.png"
-                alt="GetCheapFuel - UK Fuel & EV Prices"
-                width={84}
-                height={56}
-                fetchPriority="high"
-                className="h-12 md:h-14 w-auto"
-              />
+              <picture>
+                <source srcSet="/icons/logo.webp" type="image/webp" />
+                <img
+                  src="/icons/logo.png"
+                  alt="GetCheapFuel - UK Fuel & EV Prices"
+                  width={84}
+                  height={56}
+                  fetchPriority="high"
+                  className="h-12 md:h-14 w-auto"
+                />
+              </picture>
             </div>
             <div className="flex-1 min-w-0">
               <SearchBar
