@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import type { StationAmenities } from '@/lib/types';
 
 interface Props {
@@ -117,6 +120,8 @@ const ICONS: Record<string, { label: string; svg: React.ReactNode; tone?: string
 };
 
 export default function StationAmenityIcons({ amenities, size = 'md' }: Props) {
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
   if (!amenities) return null;
 
   const active = Object.entries(ICONS)
@@ -128,17 +133,35 @@ export default function StationAmenityIcons({ amenities, size = 'md' }: Props) {
   const dim = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
   const pad = size === 'sm' ? 'p-1' : 'p-1.5';
 
+  const selectedLabel = active.find(([k]) => k === selectedKey)?.[1].label;
+
   return (
-    <div className="flex flex-wrap gap-1">
-      {active.map(([key, info]) => (
-        <div
-          key={key}
-          title={info.label}
-          className={`${pad} rounded-md transition-colors ${info.tone || 'bg-gray-100 text-gray-600'}`}
-        >
-          <div className={dim}>{info.svg}</div>
+    <div>
+      <div className="flex flex-wrap gap-1">
+        {active.map(([key, info]) => {
+          const isSelected = selectedKey === key;
+          return (
+            <button
+              type="button"
+              key={key}
+              title={info.label}
+              aria-label={info.label}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedKey(isSelected ? null : key);
+              }}
+              className={`${pad} rounded-md transition-all ${info.tone || 'bg-gray-100 text-gray-600'} ${isSelected ? 'ring-2 ring-offset-1 ring-current scale-110' : 'hover:brightness-95'}`}
+            >
+              <div className={dim}>{info.svg}</div>
+            </button>
+          );
+        })}
+      </div>
+      {selectedLabel && (
+        <div className="mt-1.5 text-[11px] font-medium text-gray-700 animate-in fade-in slide-in-from-top-1 duration-150">
+          {selectedLabel}
         </div>
-      ))}
+      )}
     </div>
   );
 }
