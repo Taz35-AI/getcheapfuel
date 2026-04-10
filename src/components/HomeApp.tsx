@@ -12,6 +12,7 @@ import ComparisonTable from '@/components/ComparisonTable';
 import RoutePlanner from '@/components/RoutePlanner';
 import InstallPrompt from '@/components/InstallPrompt';
 import NotificationManager from '@/components/NotificationManager';
+import SettingsMenu from '@/components/SettingsMenu';
 import { useFavourites } from '@/hooks/useFavourites';
 import Link from 'next/link';
 import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
@@ -290,90 +291,94 @@ export default function HomeApp() {
               <option value={50}>30 mi</option>
             </select>
           </div>
-          {/* Mobile only: Filters + Controls row */}
-          <div className="flex md:hidden flex-wrap items-center gap-2 mt-2">
-            <FuelFilter selected={selectedFuels} onChange={setSelectedFuels} />
-            <div className="flex items-center gap-1.5 ml-auto">
-              <select
-                value={radius}
-                onChange={(e) => setRadius(Number(e.target.value))}
-                className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-700"
-              >
-                <option value={5}>3 mi</option>
-                <option value={10}>6 mi</option>
-                <option value={20}>12 mi</option>
-                <option value={50}>30 mi</option>
-              </select>
+          {/* Mobile row 2: Fuel filters + radius chip */}
+          <div className="flex md:hidden items-center gap-2 mt-2">
+            <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+              <FuelFilter selected={selectedFuels} onChange={setSelectedFuels} />
+            </div>
+            <select
+              value={radius}
+              onChange={(e) => setRadius(Number(e.target.value))}
+              className="flex-shrink-0 text-[11px] border border-gray-300 rounded-full px-2.5 py-1 bg-white text-gray-700 font-medium"
+              aria-label="Search radius"
+            >
+              <option value={5}>3 mi</option>
+              <option value={10}>6 mi</option>
+              <option value={20}>12 mi</option>
+              <option value={50}>30 mi</option>
+            </select>
+          </div>
+
+          {/* Mobile row 3: Tool buttons + settings gear */}
+          <div className="flex md:hidden items-center gap-1.5 mt-2">
+            <button
+              onClick={() => setShowFavouritesOnly(!showFavouritesOnly)}
+              className={`flex-1 p-2 rounded-lg transition-colors flex items-center justify-center ${showFavouritesOnly ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              title="Favourites"
+              aria-label="Favourites"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill={showFavouritesOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setCalcOpen(true)}
+              className="flex-1 p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center"
+              title="Fuel Calculator"
+              aria-label="Fuel Calculator"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="4" y="2" width="16" height="20" rx="2" />
+                <line x1="8" y1="6" x2="16" y2="6" />
+                <line x1="8" y1="10" x2="10" y2="10" />
+                <line x1="14" y1="10" x2="16" y2="10" />
+                <line x1="8" y1="14" x2="10" y2="14" />
+                <line x1="14" y1="14" x2="16" y2="14" />
+                <line x1="8" y1="18" x2="16" y2="18" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setRouteOpen(true)}
+              className="flex-1 p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex items-center justify-center"
+              title="Route Planner"
+              aria-label="Route Planner"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="3 11 22 2 13 21 11 13 3 11" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setTrackerOpen(true)}
+              className="flex-1 p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors flex items-center justify-center"
+              title="Fuel Spending Tracker"
+              aria-label="Fuel Spending Tracker"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 22V5a2 2 0 012-2h8a2 2 0 012 2v17" />
+                <path d="M15 10h2a2 2 0 012 2v2a2 2 0 002 2h0" />
+                <path d="M21 10V8a2 2 0 00-2-2h-1" />
+                <rect x="6" y="7" width="6" height="5" rx="1" />
+              </svg>
+            </button>
+            {compareIds.size > 0 && (
               <button
-                onClick={() => setShowFavouritesOnly(!showFavouritesOnly)}
-                className={`p-1.5 rounded-lg transition-colors ${showFavouritesOnly ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-                title="Favourites"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill={showFavouritesOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setCalcOpen(true)}
-                className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                title="Fuel Calculator"
+                onClick={() => setCompareOpen(true)}
+                className="flex-1 p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors relative flex items-center justify-center"
+                title="Compare stations"
+                aria-label="Compare stations"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="4" y="2" width="16" height="20" rx="2" />
-                  <line x1="8" y1="6" x2="16" y2="6" />
-                  <line x1="8" y1="10" x2="10" y2="10" />
-                  <line x1="14" y1="10" x2="16" y2="10" />
-                  <line x1="8" y1="14" x2="10" y2="14" />
-                  <line x1="14" y1="14" x2="16" y2="14" />
-                  <line x1="8" y1="18" x2="16" y2="18" />
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
                 </svg>
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-600 text-white text-[10px] font-bold flex items-center justify-center">
+                  {compareIds.size}
+                </span>
               </button>
-              <button
-                onClick={() => setRouteOpen(true)}
-                className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
-                title="Route Planner"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="3 11 22 2 13 21 11 13 3 11" />
-                </svg>
-              </button>
-              {compareIds.size > 0 && (
-                <button
-                  onClick={() => setCompareOpen(true)}
-                  className="p-1.5 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors relative"
-                  title="Compare stations"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10" />
-                    <line x1="12" y1="20" x2="12" y2="4" />
-                    <line x1="6" y1="20" x2="6" y2="14" />
-                  </svg>
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-600 text-white text-[10px] font-bold flex items-center justify-center">
-                    {compareIds.size}
-                  </span>
-                </button>
-              )}
-              <button
-                onClick={() => setTrackerOpen(true)}
-                className="p-1.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
-                title="Fuel Spending Tracker"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 22V5a2 2 0 012-2h8a2 2 0 012 2v17" />
-                  <path d="M15 10h2a2 2 0 012 2v2a2 2 0 002 2h0" />
-                  <path d="M21 10V8a2 2 0 00-2-2h-1" />
-                  <rect x="6" y="7" width="6" height="5" rx="1" />
-                </svg>
-              </button>
-              <select
-                value={mapStyle}
-                onChange={(e) => setMapStyle(e.target.value as MapStyle)}
-                className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-700 capitalize"
-              >
-                {(['dark', 'bright', 'positron', 'liberty'] as MapStyle[]).map(style => (
-                  <option key={style} value={style} className="capitalize">{style}</option>
-                ))}
-              </select>
+            )}
+            <div className="flex-shrink-0">
+              <SettingsMenu mapStyle={mapStyle} onMapStyleChange={setMapStyle} />
             </div>
           </div>
         </div>

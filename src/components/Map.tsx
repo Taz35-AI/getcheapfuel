@@ -484,15 +484,20 @@ export default function Map({
       )}
 
       {showFuel &&
-        stations.map(station => (
-          <FuelMarker
-            key={station.id}
-            station={station}
-            selectedFuels={selectedFuels}
-            isSelected={selectedStation === station.id}
-            onClick={() => handleStationClick(station)}
-          />
-        ))}
+        stations
+          .filter(station =>
+            // Only show stations that have a price for at least one selected fuel
+            selectedFuels.some(f => f !== 'EV' && station.prices[f as Exclude<FuelType, 'EV'>] != null)
+          )
+          .map(station => (
+            <FuelMarker
+              key={station.id}
+              station={station}
+              selectedFuels={selectedFuels}
+              isSelected={selectedStation === station.id}
+              onClick={() => handleStationClick(station)}
+            />
+          ))}
 
       {showEV &&
         evChargers.map(charger => (
