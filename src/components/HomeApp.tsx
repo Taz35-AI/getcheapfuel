@@ -4,9 +4,13 @@ import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import SearchBar from '@/components/SearchBar';
 import FuelFilter from '@/components/FuelFilter';
-import StationList from '@/components/StationList';
 import FillUpAdvice from '@/components/FillUpAdvice';
 import SettingsMenu from '@/components/SettingsMenu';
+
+// StationList pulls in PriceTrendChart, StationAmenityIcons, OpenStatusBadge,
+// BrandLogo and the TitleCase helper. Defer it — only needed when the
+// sidebar opens (mobile bottom sheet, desktop sidebar).
+const StationList = dynamic(() => import('@/components/StationList'), { ssr: false });
 import { useFavourites } from '@/hooks/useFavourites';
 import Link from 'next/link';
 import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
@@ -197,7 +201,7 @@ export default function HomeApp() {
               <img
                 src="/icons/logo.png"
                 alt="GetCheapFuel - UK Fuel & EV Prices"
-                width={140}
+                width={84}
                 height={56}
                 fetchPriority="high"
                 className="h-12 md:h-14 w-auto"

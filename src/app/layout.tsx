@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import CookieConsent from "@/components/CookieConsent";
+import CookieConsentLazy from "@/components/CookieConsentLazy";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -110,7 +110,7 @@ export default function RootLayout({
       <body className="h-full font-sans">
         {children}
         <Analytics />
-        <CookieConsent />
+        <CookieConsentLazy />
         <noscript>
           <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
             <h1>GetCheapFuel - Compare Cheap Petrol, Diesel &amp; EV Charging Prices UK</h1>
@@ -130,7 +130,10 @@ export default function RootLayout({
         </noscript>
         <script
           dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js')})}`,
+            // Defer SW registration to idle time so it doesn't block the
+            // main thread during initial paint. Falls back to setTimeout
+            // on browsers without requestIdleCallback.
+            __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){var r=function(){navigator.serviceWorker.register('/sw.js').catch(function(){})};('requestIdleCallback' in window)?requestIdleCallback(r,{timeout:5000}):setTimeout(r,3000)})}`,
           }}
         />
       </body>
