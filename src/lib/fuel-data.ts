@@ -7,7 +7,7 @@ export const CMA_FEEDS: Record<string, string> = {
   esso: 'https://fuelprices.esso.co.uk/latestdata.json',
   tesco: 'https://www.tesco.com/fuel_prices/fuel_prices_data.json',
   morrisons: 'https://www.morrisons.com/fuel-prices/fuel_prices_data.json',
-  sainsburys: 'https://www.sainsburys.co.uk/fuel-prices/fuel_prices_data.json',
+  sainsburys: 'https://api.sainsburys.co.uk/v1/estates/fuel_prices_data.json',
   jet: 'https://jetlocal.co.uk/fuel_prices_data.json',
   murco: 'https://www.maboropetroleum.co.uk/fuel-prices/fuel_prices_data.json',
   sgn: 'https://www.sgnretail.uk/files/data/SGN_daily_fuel_prices.json',
