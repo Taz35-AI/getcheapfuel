@@ -36,6 +36,106 @@ interface CMAFeed {
   stations: CMAStation[];
 }
 
+// ─── NEW: Fuel Finder types ───────────────────────────────────────────────────
+interface FuelFinderStation {
+  id: string;
+  name: string;
+  brand: string;
+  address: { line1: string; line2?: string; town?: string; postcode: string };
+  location: { latitude: number; longitude: number };
+}
+
+interface FuelFinderPrice {
+  pfsId: string;
+  fuelType: string;
+  price: number;
+  lastUpdated: string;
+}
+
+// ─── NEW: Fuel Finder token cache ─────────────────────────────────────────────
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
+async function getFuelFinderToken(): Promise<string | null> {
+  const clientId = process.env.FUEL_FINDER_CLIENT_ID;
+  const clientSecret = process.env.FUEL_FINDER_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) return cachedToken.token;
+  try {
+    const res = await fetch('https://api.fuel-finder.service.gov.uk/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'client_credentials', client_id: clientId, client_secret: clientSecret }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) { console.error('Fuel Finder token failed:', res.status); return null; }
+    const data = await res.json();
+    cachedToken = { token: data.access_token, expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000 };
+    return cachedToken.token;
+  } catch (err) {
+    console.error('Fuel Finder token error:', err);
+    return null;
+  }
+}
+
+function normaliseFuelType(raw: string): 'E10' | 'E5' | 'B7' | 'SDV' | null {
+  const u = raw.toUpperCase();
+  if (u === 'E10') return 'E10';
+  if (u === 'E5') return 'E5';
+  if (u === 'B7' || u === 'B7_STANDARD') return 'B7';
+  if (u === 'SDV' || u === 'SUPER_DIESEL' || u === 'SDV_STANDARD') return 'SDV';
+  return null;
+}
+
+async function fetchFuelFinderStations(): Promise<FuelStation[]> {
+  const token = await getFuelFinderToken();
+  if (!token) return [];
+  try {
+    const headers = { Authorization: `Bearer ${token}` };
+    const [stationsRes, pricesRes] = await Promise.all([
+      fetch('https://api.fuel-finder.service.gov.uk/api/v1/pfs', { headers, next: { revalidate: 300 }, signal: AbortSignal.timeout(30000) }),
+      fetch('https://api.fuel-finder.service.gov.uk/api/v1/pfs/fuel-prices', { headers, next: { revalidate: 300 }, signal: AbortSignal.timeout(30000) }),
+    ]);
+    if (!stationsRes.ok || !pricesRes.ok) { console.error('Fuel Finder API error:', stationsRes.status, pricesRes.status); return []; }
+    const stationsData: FuelFinderStation[] = await stationsRes.json();
+    const pricesData: FuelFinderPrice[] = await pricesRes.json();
+
+    const priceMap = new Map<string, Record<string, number | null>>();
+    for (const p of pricesData) {
+      const fuelType = normaliseFuelType(p.fuelType);
+      if (!fuelType) continue;
+      if (!priceMap.has(p.pfsId)) priceMap.set(p.pfsId, {});
+      priceMap.get(p.pfsId)![fuelType] = sanitisePrice(p.price);
+    }
+
+    return stationsData
+      .filter(s => s.location?.latitude && s.location?.longitude)
+      .map(s => {
+        const prices = priceMap.get(s.id) ?? {};
+        return {
+          id: `ff-${s.id}`,
+          brand: normaliseBrand(s.brand || s.name || 'Unknown'),
+          name: normaliseBrand(s.brand || s.name || 'Unknown'),
+          address: [s.address.line1, s.address.line2, s.address.town].filter(Boolean).join(', '),
+          postcode: s.address.postcode,
+          latitude: s.location.latitude,
+          longitude: s.location.longitude,
+          prices: {
+            E10: (prices['E10'] as number | null) ?? null,
+            E5: (prices['E5'] as number | null) ?? null,
+            B7: (prices['B7'] as number | null) ?? null,
+            SDV: (prices['SDV'] as number | null) ?? null,
+          },
+          lastUpdated: new Date().toISOString(),
+          source: 'fuelfinder' as const,
+        };
+      });
+  } catch (err) {
+    console.error('Failed to fetch Fuel Finder stations:', err);
+    return [];
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Reject prices outside a sane range (100p–350p) to filter out
 // data entry errors, placeholders (e.g. 999.9), and pound/pence mixups
 function sanitisePrice(price: number | null | undefined): number | null {
@@ -94,13 +194,24 @@ export async function fetchCMAFeed(brand: string, url: string, revalidate = 300)
 }
 
 export async function fetchAllStations(revalidate = 300): Promise<FuelStation[]> {
-  const feedPromises = Object.entries(CMA_FEEDS).map(([brand, url]) =>
-    fetchCMAFeed(brand, url, revalidate)
-  );
-  const results = await Promise.allSettled(feedPromises);
-  return results
+  // NEW: run Fuel Finder + all CMA feeds in parallel
+  const [fuelFinderResult, ...cmaResults] = await Promise.allSettled([
+    fetchFuelFinderStations(),
+    ...Object.entries(CMA_FEEDS).map(([brand, url]) => fetchCMAFeed(brand, url, revalidate)),
+  ]);
+
+  const ffStations: FuelStation[] =
+    fuelFinderResult.status === 'fulfilled' ? fuelFinderResult.value : [];
+
+  const cmaStations: FuelStation[] = cmaResults
     .filter((r): r is PromiseFulfilledResult<FuelStation[]> => r.status === 'fulfilled')
     .flatMap(r => r.value);
+
+  // Fuel Finder takes priority — skip CMA stations with matching postcode
+  const seenPostcodes = new Set(ffStations.map(s => s.postcode.replace(/\s/g, '').toLowerCase()));
+  const dedupedCma = cmaStations.filter(s => !seenPostcodes.has(s.postcode.replace(/\s/g, '').toLowerCase()));
+
+  return [...ffStations, ...dedupedCma];
 }
 
 export function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
