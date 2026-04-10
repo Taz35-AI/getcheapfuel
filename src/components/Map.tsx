@@ -16,6 +16,7 @@ import ShareButton from './ShareButton';
 import PriceTrendChart from './PriceTrendChart';
 import OpenStatusBadge from './OpenStatusBadge';
 import StationAmenityIcons from './StationAmenityIcons';
+import { formatUKDateTime } from '@/lib/format-date';
 
 // Free vector tile styles from OpenFreeMap - no API key needed
 const MAP_STYLES = {
@@ -305,7 +306,7 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
 
       {station.lastUpdated && (
         <div className="text-[10px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
-          Updated: {station.lastUpdated}
+          Updated: {formatUKDateTime(station.lastUpdated)}
         </div>
       )}
       <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100">
@@ -411,16 +412,34 @@ export default function Map({
     });
   }, [center, zoom]);
 
+  // Pan the map so a clicked marker is positioned with enough room above
+  // for the popup (which is anchored to the bottom of the marker).
+  // On mobile we need extra room because popups are larger relative to viewport.
+  const panToMarker = useCallback((lat: number, lng: number) => {
+    if (typeof window === 'undefined') return;
+    const isMobile = window.innerWidth < 768;
+    // Positive Y offset shifts the destination DOWN from screen center,
+    // leaving room above for the popup.
+    const offsetY = isMobile ? 180 : 120;
+    mapRef.current?.flyTo({
+      center: [lng, lat],
+      offset: [0, offsetY],
+      duration: 600,
+    });
+  }, []);
+
   const handleStationClick = (station: FuelStation) => {
     onSelectStation(station.id);
     setPopupCharger(null);
     setPopupStation(station);
+    panToMarker(station.latitude, station.longitude);
   };
 
   const handleChargerClick = (charger: EVCharger) => {
     onSelectStation(charger.id);
     setPopupStation(null);
     setPopupCharger(charger);
+    panToMarker(charger.latitude, charger.longitude);
   };
 
   return (
