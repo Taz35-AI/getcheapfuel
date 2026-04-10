@@ -23,6 +23,16 @@ function isDayOpen(d: DayHours | undefined): boolean {
   return open !== close;
 }
 
+// True if a day has any usable data (24h flag set OR real open/close times)
+function isDayDataKnown(d: DayHours | undefined): boolean {
+  if (!d) return false;
+  if (d.is_24_hours === true) return true;
+  const open = parseTimeToMinutes(d.open_time);
+  const close = parseTimeToMinutes(d.close_time);
+  if (open != null && close != null && !(open === 0 && close === 0)) return true;
+  return false;
+}
+
 export interface OpenStatus {
   isOpen: boolean;
   label: string;          // "Open · Closes 22:00" / "Closed · Opens Mon 06:00"
@@ -35,6 +45,15 @@ function hasAnyRealHours(hours: OpeningHours): boolean {
     if (isDayOpen(hours[key])) return true;
   }
   return false;
+}
+
+// Count how many days are explicitly 24 hours
+function count24hDays(hours: OpeningHours): number {
+  let n = 0;
+  for (const key of DAY_KEYS) {
+    if (hours[key]?.is_24_hours === true) n++;
+  }
+  return n;
 }
 
 export function getOpenStatus(hours: OpeningHours | undefined, now: Date = new Date()): OpenStatus | null {
@@ -50,6 +69,15 @@ export function getOpenStatus(hours: OpeningHours | undefined, now: Date = new D
   if (today?.is_24_hours) {
     return { isOpen: true, label: 'Open 24 hours', todayHours: '24 hours' };
   }
+
+  // Inference: if today has no usable data but most other days are 24h,
+  // assume this is a 24h station with patchy upstream data
+  if (!isDayDataKnown(today) && count24hDays(hours) >= 4) {
+    return { isOpen: true, label: 'Open 24 hours', todayHours: '24 hours' };
+  }
+
+  // If today has no usable data at all, hide badge instead of saying "Closed"
+  if (!isDayDataKnown(today)) return null;
 
   if (!isDayOpen(today)) {
     // Find next open day
