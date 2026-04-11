@@ -8,6 +8,15 @@
     "start": "next start",
     "lint": "eslint"
   },
+  "browserslist": [
+    "chrome >= 100",
+    "firefox >= 100",
+    "edge >= 100",
+    "safari >= 15",
+    "ios >= 15",
+    "not dead",
+    "not op_mini all"
+  ],
   "dependencies": {
     "@supabase/supabase-js": "^2.102.1",
     "@vercel/analytics": "^2.0.1",
