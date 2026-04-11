@@ -20,13 +20,8 @@ interface IconDef {
 const ICONS: Record<string, IconDef> = {
   twenty_four_hour_fuel: {
     label: '24 hour fuel',
-    tone: 'bg-emerald-50 text-emerald-700',
-    svg: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="9" />
-        <text x="12" y="15.5" fontSize="7.5" fontWeight="700" textAnchor="middle" stroke="none" fill="currentColor">24</text>
-      </svg>
-    ),
+    tone: 'bg-white',
+    src: '/forecourt/24h-fuel.png',
   },
   car_wash: {
     label: 'Car wash',
@@ -40,15 +35,8 @@ const ICONS: Record<string, IconDef> = {
   },
   adblue_packaged: {
     label: 'AdBlue (bottled)',
-    tone: 'bg-blue-50 text-blue-700',
-    svg: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 7h11l2 2v11a1 1 0 01-1 1H6a1 1 0 01-1-1V7z" />
-        <path d="M9 7V4h5v3" />
-        <line x1="18" y1="9" x2="20" y2="7" />
-        <line x1="8" y1="13" x2="14" y2="13" />
-      </svg>
-    ),
+    tone: 'bg-white',
+    src: '/forecourt/adblue-bottle.png',
   },
   lpg_pumps: {
     label: 'LPG',
@@ -62,12 +50,8 @@ const ICONS: Record<string, IconDef> = {
   },
   water_filling: {
     label: 'Water',
-    tone: 'bg-cyan-50 text-cyan-700',
-    svg: (
-      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-        <path d="M12 2.5C12 2.5 5 11 5 16a7 7 0 0014 0c0-5-7-13.5-7-13.5z" />
-      </svg>
-    ),
+    tone: 'bg-white',
+    src: '/forecourt/water.png',
   },
   customer_toilets: {
     label: 'Toilets',
