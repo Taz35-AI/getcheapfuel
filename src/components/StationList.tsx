@@ -20,6 +20,9 @@ interface StationListProps {
   compareIds: Set<string>;
   onToggleCompare: (id: string) => void;
   showFavouritesOnly: boolean;
+  /** Click a card → focus the map and open its popup. */
+  onStationClick?: (station: FuelStation) => void;
+  onChargerClick?: (charger: EVCharger) => void;
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -45,6 +48,8 @@ export default function StationList({
   compareIds,
   onToggleCompare,
   showFavouritesOnly,
+  onStationClick,
+  onChargerClick,
 }: StationListProps) {
   const showFuel = selectedFuels.some(f => f !== 'EV');
   const showEV = selectedFuels.includes('EV');
@@ -99,7 +104,10 @@ export default function StationList({
           return (
             <div
               key={station.id}
-              className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
+              onClick={() => onStationClick?.(station)}
+              role={onStationClick ? 'button' : undefined}
+              tabIndex={onStationClick ? 0 : undefined}
+              className={`bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:shadow-md hover:border-gray-300 transition-all ${onStationClick ? 'cursor-pointer' : ''}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <BrandLogo brand={station.brand} size={36} />
@@ -117,7 +125,7 @@ export default function StationList({
                 </div>
                 <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                   <button
-                    onClick={() => onToggleFavourite(station.id)}
+                    onClick={(e) => { e.stopPropagation(); onToggleFavourite(station.id); }}
                     className="p-1 rounded hover:bg-gray-100 transition-colors"
                     title={isFavourite(station.id) ? 'Remove favourite' : 'Add favourite'}
                   >
@@ -128,6 +136,7 @@ export default function StationList({
                   <input
                     type="checkbox"
                     checked={compareIds.has(station.id)}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={() => onToggleCompare(station.id)}
                     className="w-3.5 h-3.5 accent-green-600 cursor-pointer"
                     title="Compare"
@@ -175,7 +184,10 @@ export default function StationList({
           return (
             <div
               key={charger.id}
-              className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:shadow-md hover:border-purple-300 transition-all"
+              onClick={() => onChargerClick?.(charger)}
+              role={onChargerClick ? 'button' : undefined}
+              tabIndex={onChargerClick ? 0 : undefined}
+              className={`bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:shadow-md hover:border-purple-300 transition-all ${onChargerClick ? 'cursor-pointer' : ''}`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -204,7 +216,7 @@ export default function StationList({
                     {speedLabel && <div className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${speedColor}`}>{speedLabel}</div>}
                   </div>
                   <button
-                    onClick={() => onToggleFavourite(charger.id)}
+                    onClick={(e) => { e.stopPropagation(); onToggleFavourite(charger.id); }}
                     className="p-1 rounded hover:bg-gray-100 transition-colors"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill={isFavourite(charger.id) ? '#ef4444' : 'none'} stroke={isFavourite(charger.id) ? '#ef4444' : '#9ca3af'} strokeWidth="2">

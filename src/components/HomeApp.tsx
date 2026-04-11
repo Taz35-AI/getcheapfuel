@@ -153,6 +153,27 @@ export default function HomeApp() {
     setSelectedStation(station.id);
   }, []);
 
+  // Click a station card from the sidebar list. Pans the map to the
+  // station, opens its popup (via selectedStation) and closes the
+  // mobile bottom sheet so the user can see the map.
+  const handleStationCardClick = useCallback((station: FuelStation) => {
+    setCenter([station.latitude, station.longitude]);
+    setZoom(15);
+    setSelectedStation(station.id);
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  }, []);
+
+  const handleChargerCardClick = useCallback((charger: EVCharger) => {
+    setCenter([charger.latitude, charger.longitude]);
+    setZoom(15);
+    setSelectedStation(charger.id);
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  }, []);
+
   // Read URL params (from city pages) and navigate to location
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -229,6 +250,8 @@ export default function HomeApp() {
     compareIds,
     onToggleCompare: toggleCompare,
     showFavouritesOnly,
+    onStationClick: handleStationCardClick,
+    onChargerClick: handleChargerCardClick,
   };
 
   return (

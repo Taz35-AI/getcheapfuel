@@ -468,6 +468,32 @@ export default function Map({
     });
   }, [center, zoom]);
 
+  // Watch the external `selectedStation` prop. When it changes (e.g. the
+  // user clicked a station card in the sidebar list), find the matching
+  // station/charger and open its popup. This makes the list and the map
+  // share a single source of truth for "which station is being shown".
+  useEffect(() => {
+    if (!selectedStation) {
+      // Don't auto-close the popup here — closing happens via the
+      // popup's onClose callback so we don't fight the user.
+      return;
+    }
+    // Already showing this one? Skip.
+    if (popupStation?.id === selectedStation || popupCharger?.id === selectedStation) return;
+
+    const matchingStation = stations.find(s => s.id === selectedStation);
+    if (matchingStation) {
+      setPopupCharger(null);
+      setPopupStation(matchingStation);
+      return;
+    }
+    const matchingCharger = evChargers.find(c => c.id === selectedStation);
+    if (matchingCharger) {
+      setPopupStation(null);
+      setPopupCharger(matchingCharger);
+    }
+  }, [selectedStation, stations, evChargers, popupStation, popupCharger]);
+
   // Pan the map so a clicked marker is positioned with enough room above
   // for the popup (which is anchored to the bottom of the marker). The
   // popup is roughly 460px tall when a station has all sections (logo,
