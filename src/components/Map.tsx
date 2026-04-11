@@ -471,34 +471,6 @@ export default function Map({
     });
   }, [center, zoom]);
 
-  // Watch the external `selectedStation` prop. When it changes (e.g. the
-  // user clicked a station card in the sidebar list), find the matching
-  // station/charger, open its popup AND fly the map there with the same
-  // smart offset that marker clicks use, so the popup is properly centred.
-  useEffect(() => {
-    if (!selectedStation) {
-      // Don't auto-close the popup here — closing happens via the
-      // popup's onClose callback so we don't fight the user.
-      return;
-    }
-    // Already showing this one? Skip — the original click already panned.
-    if (popupStation?.id === selectedStation || popupCharger?.id === selectedStation) return;
-
-    const matchingStation = stations.find(s => s.id === selectedStation);
-    if (matchingStation) {
-      setPopupCharger(null);
-      setPopupStation(matchingStation);
-      panToMarker(matchingStation.latitude, matchingStation.longitude, 15);
-      return;
-    }
-    const matchingCharger = evChargers.find(c => c.id === selectedStation);
-    if (matchingCharger) {
-      setPopupStation(null);
-      setPopupCharger(matchingCharger);
-      panToMarker(matchingCharger.latitude, matchingCharger.longitude, 15);
-    }
-  }, [selectedStation, stations, evChargers, popupStation, popupCharger, panToMarker]);
-
   // Pan the map so a clicked marker is positioned with enough room above
   // for the popup (which is anchored to the bottom of the marker). The
   // popup is roughly 460px tall when a station has all sections (logo,
@@ -535,6 +507,34 @@ export default function Map({
       ...(targetZoom != null ? { zoom: targetZoom } : {}),
     });
   }, []);
+
+  // Watch the external `selectedStation` prop. When it changes (e.g. the
+  // user clicked a station card in the sidebar list), find the matching
+  // station/charger, open its popup AND fly the map there with the same
+  // smart offset that marker clicks use, so the popup is properly centred.
+  useEffect(() => {
+    if (!selectedStation) {
+      // Don't auto-close the popup here — closing happens via the
+      // popup's onClose callback so we don't fight the user.
+      return;
+    }
+    // Already showing this one? Skip — the original click already panned.
+    if (popupStation?.id === selectedStation || popupCharger?.id === selectedStation) return;
+
+    const matchingStation = stations.find(s => s.id === selectedStation);
+    if (matchingStation) {
+      setPopupCharger(null);
+      setPopupStation(matchingStation);
+      panToMarker(matchingStation.latitude, matchingStation.longitude, 15);
+      return;
+    }
+    const matchingCharger = evChargers.find(c => c.id === selectedStation);
+    if (matchingCharger) {
+      setPopupStation(null);
+      setPopupCharger(matchingCharger);
+      panToMarker(matchingCharger.latitude, matchingCharger.longitude, 15);
+    }
+  }, [selectedStation, stations, evChargers, popupStation, popupCharger, panToMarker]);
 
   const handleStationClick = (station: FuelStation) => {
     onSelectStation(station.id);
