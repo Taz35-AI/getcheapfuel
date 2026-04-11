@@ -8,12 +8,20 @@ interface Props {
   size?: 'sm' | 'md';
 }
 
-const ICONS: Record<string, { label: string; svg: React.ReactNode; tone?: string }> = {
+interface IconDef {
+  label: string;
+  tone?: string;
+  /** Path under /public — preferred over inline svg if both are set. */
+  src?: string;
+  /** Inline SVG fallback for amenities without a custom image. */
+  svg?: React.ReactNode;
+}
+
+const ICONS: Record<string, IconDef> = {
   twenty_four_hour_fuel: {
     label: '24 hour fuel',
     tone: 'bg-emerald-50 text-emerald-700',
     svg: (
-      // Clock with "24" — universally understood
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="9" />
         <text x="12" y="15.5" fontSize="7.5" fontWeight="700" textAnchor="middle" stroke="none" fill="currentColor">24</text>
@@ -22,40 +30,18 @@ const ICONS: Record<string, { label: string; svg: React.ReactNode; tone?: string
   },
   car_wash: {
     label: 'Car wash',
-    tone: 'bg-sky-50 text-sky-700',
-    svg: (
-      // Car silhouette with droplets above
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        {/* droplets */}
-        <path d="M5 4c0 .8.7 1.5 1.5 1.5S8 4.8 8 4c0-1-1.5-2.5-1.5-2.5S5 3 5 4z" fill="currentColor" stroke="none" />
-        <path d="M11 3c0 .8.7 1.5 1.5 1.5S14 3.8 14 3c0-1-1.5-2.5-1.5-2.5S11 2 11 3z" fill="currentColor" stroke="none" />
-        <path d="M17 4c0 .8.7 1.5 1.5 1.5S20 4.8 20 4c0-1-1.5-2.5-1.5-2.5S17 3 17 4z" fill="currentColor" stroke="none" />
-        {/* car body */}
-        <path d="M3 17v-3l2-5h14l2 5v3" />
-        <path d="M3 17h18" />
-        <circle cx="7" cy="18.5" r="1.8" />
-        <circle cx="17" cy="18.5" r="1.8" />
-      </svg>
-    ),
+    tone: 'bg-white',
+    src: '/forecourt/carwash.png',
   },
   adblue_pumps: {
     label: 'AdBlue pump',
-    tone: 'bg-blue-50 text-blue-700',
-    svg: (
-      // Fuel pump silhouette
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="11" height="18" rx="1.5" />
-        <line x1="6" y1="7" x2="11" y2="7" />
-        <rect x="6" y="11" width="5" height="4" rx="0.5" />
-        <path d="M14 9h2.5a2 2 0 012 2v7a1.5 1.5 0 003 0v-9l-2.5-2.5" />
-      </svg>
-    ),
+    tone: 'bg-white',
+    src: '/forecourt/adblue-pump.png',
   },
   adblue_packaged: {
     label: 'AdBlue (bottled)',
     tone: 'bg-blue-50 text-blue-700',
     svg: (
-      // Jerry can / fuel container
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5 7h11l2 2v11a1 1 0 01-1 1H6a1 1 0 01-1-1V7z" />
         <path d="M9 7V4h5v3" />
@@ -66,35 +52,18 @@ const ICONS: Record<string, { label: string; svg: React.ReactNode; tone?: string
   },
   lpg_pumps: {
     label: 'LPG',
-    tone: 'bg-orange-50 text-orange-700',
-    svg: (
-      // Flame
-      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-        <path d="M12 2c0 4-4 5-4 9a4 4 0 008 0c0-1.5-.5-2.5-1.5-3.5C13 9 12 8 12 6c-1 1.5-2 2.5-2 4 0-2 1-3 2-4z" />
-        <path d="M8 13c-1.5 1-2.5 2.8-2.5 4.5C5.5 20 8.4 22 12 22s6.5-2 6.5-4.5c0-1.7-1-3.5-2.5-4.5 .3 1 .5 2 .5 3a4.5 4.5 0 11-9 0c0-1 .2-2 .5-3z" />
-      </svg>
-    ),
+    tone: 'bg-white',
+    src: '/forecourt/pgl.png',
   },
   air_pump_or_screenwash: {
     label: 'Air & screenwash',
-    tone: 'bg-slate-100 text-slate-700',
-    svg: (
-      // Tyre / wheel
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="3.5" />
-        <line x1="12" y1="3" x2="12" y2="8.5" />
-        <line x1="12" y1="15.5" x2="12" y2="21" />
-        <line x1="3" y1="12" x2="8.5" y2="12" />
-        <line x1="15.5" y1="12" x2="21" y2="12" />
-      </svg>
-    ),
+    tone: 'bg-white',
+    src: '/forecourt/air-screen.png',
   },
   water_filling: {
     label: 'Water',
     tone: 'bg-cyan-50 text-cyan-700',
     svg: (
-      // Water droplet (filled)
       <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
         <path d="M12 2.5C12 2.5 5 11 5 16a7 7 0 0014 0c0-5-7-13.5-7-13.5z" />
       </svg>
@@ -102,20 +71,8 @@ const ICONS: Record<string, { label: string; svg: React.ReactNode; tone?: string
   },
   customer_toilets: {
     label: 'Toilets',
-    tone: 'bg-purple-50 text-purple-700',
-    svg: (
-      // Two figures (man & woman) — universal WC sign
-      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-        {/* Man */}
-        <circle cx="7" cy="4" r="2" />
-        <path d="M5 22v-7H3.5l2-6.5h3l2 6.5H9v7H5z" />
-        {/* Divider */}
-        <rect x="11.5" y="3" width="0.6" height="18" fill="currentColor" />
-        {/* Woman */}
-        <circle cx="17" cy="4" r="2" />
-        <path d="M14 14l1.5-5.5a1.5 1.5 0 013 0L20 14h-1.7l-.3 8h-2l-.3-8H14z" />
-      </svg>
-    ),
+    tone: 'bg-white',
+    src: '/forecourt/toilets.svg',
   },
 };
 
@@ -130,14 +87,17 @@ export default function StationAmenityIcons({ amenities, size = 'md' }: Props) {
 
   if (active.length === 0) return null;
 
-  const dim = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
-  const pad = size === 'sm' ? 'p-1' : 'p-1.5';
+  // File-based icons need a bigger box than the inline SVGs because the
+  // images carry their own outline/colour and need a bit of breathing room.
+  const boxSize = size === 'sm' ? 'w-7 h-7' : 'w-9 h-9';
+  const imgSize = size === 'sm' ? 'w-5 h-5' : 'w-7 h-7';
+  const svgSize = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
 
   const selectedLabel = active.find(([k]) => k === selectedKey)?.[1].label;
 
   return (
     <div>
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1.5">
         {active.map(([key, info]) => {
           const isSelected = selectedKey === key;
           return (
@@ -150,9 +110,19 @@ export default function StationAmenityIcons({ amenities, size = 'md' }: Props) {
                 e.stopPropagation();
                 setSelectedKey(isSelected ? null : key);
               }}
-              className={`${pad} rounded-md transition-all ${info.tone || 'bg-gray-100 text-gray-600'} ${isSelected ? 'ring-2 ring-offset-1 ring-current scale-110' : 'hover:brightness-95'}`}
+              className={`${boxSize} flex items-center justify-center rounded-lg border border-gray-200 transition-all ${info.tone || 'bg-gray-100 text-gray-600'} ${isSelected ? 'ring-2 ring-offset-1 ring-green-500 scale-110' : 'hover:brightness-95'}`}
             >
-              <div className={dim}>{info.svg}</div>
+              {info.src ? (
+                <img
+                  src={info.src}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className={`${imgSize} object-contain`}
+                />
+              ) : (
+                <div className={svgSize}>{info.svg}</div>
+              )}
             </button>
           );
         })}
