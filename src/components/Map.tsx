@@ -230,14 +230,14 @@ function DirectionButtons({ lat, lng, label }: { lat: number; lng: number; label
   const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes&q=${encodeURIComponent(label)}`;
 
   return (
-    <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100">
+    <div className="flex gap-1.5 sm:gap-2 mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-gray-100">
       <a
         href={googleUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-semibold hover:bg-blue-600 transition-colors"
+        className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-blue-500 text-white text-[10px] sm:text-xs font-semibold hover:bg-blue-600 transition-colors"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="3 11 22 2 13 21 11 13 3 11" />
         </svg>
         Google Maps
@@ -246,7 +246,7 @@ function DirectionButtons({ lat, lng, label }: { lat: number; lng: number; label
         href={wazeUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500 text-white text-xs font-semibold hover:bg-cyan-600 transition-colors"
+        className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-cyan-500 text-white text-[10px] sm:text-xs font-semibold hover:bg-cyan-600 transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="3 11 22 2 13 21 11 13 3 11" />
@@ -261,12 +261,12 @@ function FavouriteButton({ id, isFav, onToggle }: { id: string; isFav: boolean; 
   return (
     <button
       onClick={() => onToggle(id)}
-      className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+      className={`flex items-center justify-center gap-1 px-2 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-colors ${
         isFav ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
       }`}
       title={isFav ? 'Remove from favourites' : 'Add to favourites'}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
         <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
       </svg>
       {isFav ? 'Saved' : 'Save'}
@@ -288,41 +288,41 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
 
   return (
     <div className="w-full min-w-[240px] sm:min-w-[340px] max-w-[400px]">
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2 sm:gap-3">
         <div className="flex-shrink-0">
-          <div className="block sm:hidden"><BrandLogo brand={station.brand} size={44} /></div>
+          <div className="block sm:hidden"><BrandLogo brand={station.brand} size={40} /></div>
           <div className="hidden sm:block"><BrandLogo brand={station.brand} size={56} /></div>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <div className="font-bold text-base text-gray-900 leading-tight">{station.brand}</div>
+            <div className="font-bold text-sm sm:text-base text-gray-900 leading-tight">{station.brand}</div>
             {station.openingHours && (
               <OpenStatusBadge hours={station.openingHours} variant="badge" />
             )}
           </div>
-          <div className="text-[11px] text-gray-500 mt-1 leading-snug">
+          <div className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 sm:mt-1 leading-snug">
             {toTitleCase(station.address)}
             {station.postcode && <><br />{station.postcode}</>}
           </div>
         </div>
       </div>
-      <div className="mb-3" />
+      <div className="mb-2 sm:mb-3" />
 
-      <div className="space-y-1.5">
+      <div className="space-y-1 sm:space-y-1.5">
         {fuels
           .filter(f => station.prices[f.key] != null)
           .map(f => {
             const price = station.prices[f.key]!;
             return (
               <div key={f.key} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <span
-                    className="w-2.5 h-2.5 rounded-full"
+                    className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full"
                     style={{ backgroundColor: FUEL_COLORS[f.key] }}
                   />
-                  <span className="text-sm text-gray-600">{f.label}</span>
+                  <span className="text-xs sm:text-sm text-gray-600">{f.label}</span>
                 </div>
-                <span className="text-sm font-bold text-gray-900">{price.toFixed(1)}p</span>
+                <span className="text-xs sm:text-sm font-bold text-gray-900">{price.toFixed(1)}p</span>
               </div>
             );
           })}
@@ -337,38 +337,38 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
       )}
 
       {station.openingHours && (
-        <div className="mt-3">
+        <div className="mt-2 sm:mt-3">
           <OpenStatusBadge hours={station.openingHours} variant="full" />
         </div>
       )}
 
       {station.amenities && Object.values(station.amenities).some(Boolean) && (
-        <div className="mt-3">
-          <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Amenities</div>
+        <div className="mt-2 sm:mt-3">
+          <div className="text-[9px] sm:text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1 sm:mb-1.5">Amenities</div>
           <StationAmenityIcons amenities={station.amenities} size="md" />
         </div>
       )}
 
       {/* Data freshness — colored by how stale the per-fuel timestamps are */}
-      <div className={`mt-3 pt-2 border-t border-gray-100`}>
-        <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg ${freshnessStyle.bg}`}>
+      <div className={`mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-gray-100`}>
+        <div className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg ${freshnessStyle.bg}`}>
           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${freshnessStyle.dot}`} />
-          <span className={`text-[11px] font-semibold ${freshnessStyle.text}`}>
+          <span className={`text-[10px] sm:text-[11px] font-semibold ${freshnessStyle.text}`}>
             {freshness.label}
           </span>
         </div>
         {freshness.tier === 'very-stale' && (
-          <div className="text-[10px] text-red-600 mt-1 pl-2">
+          <div className="text-[9px] sm:text-[10px] text-red-600 mt-1 pl-2">
             This price hasn&apos;t been updated in over a week and may be out of date.
           </div>
         )}
         {freshness.tier === 'stale' && (
-          <div className="text-[10px] text-amber-600 mt-1 pl-2">
+          <div className="text-[9px] sm:text-[10px] text-amber-600 mt-1 pl-2">
             Updated more than 3 days ago. Verify at the pump if accuracy matters.
           </div>
         )}
       </div>
-      <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100">
+      <div className="flex gap-2 mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-gray-100">
         <FavouriteButton id={station.id} isFav={isFav} onToggle={onToggleFav} />
         <ShareButton
           title={station.brand}

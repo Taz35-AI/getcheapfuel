@@ -32,10 +32,10 @@ export default function ShareButton({ title, text, lat, lng }: ShareButtonProps)
   return (
     <button
       onClick={handleShare}
-      className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-xs font-medium hover:bg-gray-200 transition-colors"
+      className="flex items-center justify-center gap-1 px-2 py-1 sm:py-1.5 rounded-lg bg-gray-100 text-gray-600 text-[10px] sm:text-xs font-medium hover:bg-gray-200 transition-colors"
       title="Share"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="18" cy="5" r="3" />
         <circle cx="6" cy="12" r="3" />
         <circle cx="18" cy="19" r="3" />
