@@ -37,6 +37,7 @@ interface FFFuelPrice {
   fuel_type: string;
   price: number;
   price_last_updated?: string;
+  price_change_effective_timestamp?: string;
 }
 
 interface FFPriceEntry {
@@ -166,13 +167,23 @@ export async function GET(request: Request) {
     ]);
     console.log(`[sync-ff] Fetched ${stations.length} stations, ${prices.length} price entries`);
 
-    const priceMap = new Map<string, Partial<Record<'E10' | 'E5' | 'B7' | 'SDV', number>>>();
+    type FuelKey = 'E10' | 'E5' | 'B7' | 'SDV';
+    interface FuelPriceData {
+      price: number;
+      updatedAt: string | null;
+    }
+    const priceMap = new Map<string, Partial<Record<FuelKey, FuelPriceData>>>();
     for (const p of prices) {
       if (!Array.isArray(p.fuel_prices)) continue;
-      const fuelObj: Partial<Record<'E10' | 'E5' | 'B7' | 'SDV', number>> = {};
+      const fuelObj: Partial<Record<FuelKey, FuelPriceData>> = {};
       for (const fp of p.fuel_prices) {
         const fuel = normaliseFuelType(fp.fuel_type);
-        if (fuel && typeof fp.price === 'number') fuelObj[fuel] = fp.price;
+        if (fuel && typeof fp.price === 'number') {
+          // Prefer the "effective at the pump" timestamp, fall back to
+          // when the API last received the update.
+          const updatedAt = fp.price_change_effective_timestamp ?? fp.price_last_updated ?? null;
+          fuelObj[fuel] = { price: fp.price, updatedAt };
+        }
       }
       if (Object.keys(fuelObj).length > 0) priceMap.set(p.node_id, fuelObj);
     }
@@ -189,6 +200,10 @@ export async function GET(request: Request) {
       e5: number | null;
       b7: number | null;
       sdv: number | null;
+      e10_updated_at: string | null;
+      e5_updated_at: string | null;
+      b7_updated_at: string | null;
+      sdv_updated_at: string | null;
       opening_times: unknown;
       amenities: unknown;
       last_updated: string;
@@ -223,10 +238,14 @@ export async function GET(request: Request) {
         postcode: loc.postcode || '',
         latitude: loc.latitude,
         longitude: loc.longitude,
-        e10: sanitisePrice(stationPrices.E10),
-        e5: sanitisePrice(stationPrices.E5),
-        b7: sanitisePrice(stationPrices.B7),
-        sdv: sanitisePrice(stationPrices.SDV),
+        e10: sanitisePrice(stationPrices.E10?.price),
+        e5: sanitisePrice(stationPrices.E5?.price),
+        b7: sanitisePrice(stationPrices.B7?.price),
+        sdv: sanitisePrice(stationPrices.SDV?.price),
+        e10_updated_at: stationPrices.E10?.updatedAt ?? null,
+        e5_updated_at: stationPrices.E5?.updatedAt ?? null,
+        b7_updated_at: stationPrices.B7?.updatedAt ?? null,
+        sdv_updated_at: stationPrices.SDV?.updatedAt ?? null,
         opening_times: Object.keys(openingTimes).length > 0 ? openingTimes : null,
         amenities: parseAmenities(s.amenities),
         last_updated: new Date().toISOString(),

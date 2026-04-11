@@ -17,9 +17,9 @@ import PriceTrendChart from './PriceTrendChart';
 import OpenStatusBadge from './OpenStatusBadge';
 import StationAmenityIcons from './StationAmenityIcons';
 import BrandLogo from './BrandLogo';
-import { formatUKDateTime } from '@/lib/format-date';
 import { toTitleCase } from '@/lib/format-text';
 import { getBrandLogo } from '@/lib/brand-logos';
+import { getStationFreshness, freshnessClasses } from '@/lib/freshness';
 
 // Free vector tile styles from OpenFreeMap - no API key needed
 const MAP_STYLES = {
@@ -283,6 +283,8 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
   ] as const;
 
   const chartFuel = fuels.find(f => station.prices[f.key] != null);
+  const freshness = getStationFreshness(station);
+  const freshnessStyle = freshnessClasses(freshness.tier);
 
   return (
     <div className="min-w-[240px] max-w-[300px]">
@@ -344,11 +346,25 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
         </div>
       )}
 
-      {station.lastUpdated && (
-        <div className="text-[10px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
-          Updated: {formatUKDateTime(station.lastUpdated)}
+      {/* Data freshness — colored by how stale the per-fuel timestamps are */}
+      <div className={`mt-3 pt-2 border-t border-gray-100`}>
+        <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg ${freshnessStyle.bg}`}>
+          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${freshnessStyle.dot}`} />
+          <span className={`text-[11px] font-semibold ${freshnessStyle.text}`}>
+            {freshness.label}
+          </span>
         </div>
-      )}
+        {freshness.tier === 'very-stale' && (
+          <div className="text-[10px] text-red-600 mt-1 pl-2">
+            This price hasn&apos;t been updated in over a week and may be out of date.
+          </div>
+        )}
+        {freshness.tier === 'stale' && (
+          <div className="text-[10px] text-amber-600 mt-1 pl-2">
+            Updated more than 3 days ago. Verify at the pump if accuracy matters.
+          </div>
+        )}
+      </div>
       <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100">
         <FavouriteButton id={station.id} isFav={isFav} onToggle={onToggleFav} />
         <ShareButton

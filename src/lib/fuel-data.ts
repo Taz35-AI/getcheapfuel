@@ -55,6 +55,10 @@ interface FuelStationRow {
   e5: number | null;
   b7: number | null;
   sdv: number | null;
+  e10_updated_at: string | null;
+  e5_updated_at: string | null;
+  b7_updated_at: string | null;
+  sdv_updated_at: string | null;
   opening_times: OpeningHours | null;
   amenities: StationAmenities | null;
   last_updated: string | null;
@@ -88,6 +92,12 @@ function rowToStation(row: FuelStationRow): FuelStation {
       SDV: sanitisePrice(row.sdv),
     },
     lastUpdated: row.last_updated ?? undefined,
+    priceUpdatedAt: {
+      E10: row.e10_updated_at,
+      E5: row.e5_updated_at,
+      B7: row.b7_updated_at,
+      SDV: row.sdv_updated_at,
+    },
     source: 'fuelfinder' as const,
     openingHours: row.opening_times ?? undefined,
     amenities: row.amenities ?? undefined,

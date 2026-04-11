@@ -33,6 +33,16 @@ export interface StationAmenities {
   customer_toilets?: boolean;
 }
 
+// Per-fuel "actual update time" timestamps from the retailer feed.
+// These reflect when each price last changed at the pump, not when our
+// cron last ran. Used to display freshness badges in the UI.
+export interface PriceUpdatedAt {
+  E10?: string | null;
+  E5?: string | null;
+  B7?: string | null;
+  SDV?: string | null;
+}
+
 export interface FuelStation {
   id: string;
   brand: string;
@@ -43,6 +53,7 @@ export interface FuelStation {
   longitude: number;
   prices: FuelPrices;
   lastUpdated?: string;
+  priceUpdatedAt?: PriceUpdatedAt;
   source: 'cma' | 'fuelfinder';
   openingHours?: OpeningHours;
   amenities?: StationAmenities;

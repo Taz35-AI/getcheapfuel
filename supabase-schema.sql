@@ -133,11 +133,24 @@ create table if not exists fuel_stations_ff (
   e5 numeric,
   b7 numeric,
   sdv numeric,
+  -- Per-fuel "actual update time" from the retailer (when the price last
+  -- changed at the pump), used to display freshness badges in the UI.
+  e10_updated_at timestamptz,
+  e5_updated_at timestamptz,
+  b7_updated_at timestamptz,
+  sdv_updated_at timestamptz,
   opening_times jsonb,
   amenities jsonb,
   last_updated timestamptz,
   synced_at timestamptz not null default now()
 );
+
+-- If the table already exists (initial install), bring it up to date with
+-- the new columns. Run these in Supabase SQL editor — safe to re-run.
+alter table fuel_stations_ff add column if not exists e10_updated_at timestamptz;
+alter table fuel_stations_ff add column if not exists e5_updated_at  timestamptz;
+alter table fuel_stations_ff add column if not exists b7_updated_at  timestamptz;
+alter table fuel_stations_ff add column if not exists sdv_updated_at timestamptz;
 
 create index if not exists idx_ff_stations_bbox on fuel_stations_ff (latitude, longitude);
 
