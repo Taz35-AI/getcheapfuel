@@ -473,29 +473,31 @@ export default function Map({
 
   // Watch the external `selectedStation` prop. When it changes (e.g. the
   // user clicked a station card in the sidebar list), find the matching
-  // station/charger and open its popup. This makes the list and the map
-  // share a single source of truth for "which station is being shown".
+  // station/charger, open its popup AND fly the map there with the same
+  // smart offset that marker clicks use, so the popup is properly centred.
   useEffect(() => {
     if (!selectedStation) {
       // Don't auto-close the popup here — closing happens via the
       // popup's onClose callback so we don't fight the user.
       return;
     }
-    // Already showing this one? Skip.
+    // Already showing this one? Skip — the original click already panned.
     if (popupStation?.id === selectedStation || popupCharger?.id === selectedStation) return;
 
     const matchingStation = stations.find(s => s.id === selectedStation);
     if (matchingStation) {
       setPopupCharger(null);
       setPopupStation(matchingStation);
+      panToMarker(matchingStation.latitude, matchingStation.longitude, 15);
       return;
     }
     const matchingCharger = evChargers.find(c => c.id === selectedStation);
     if (matchingCharger) {
       setPopupStation(null);
       setPopupCharger(matchingCharger);
+      panToMarker(matchingCharger.latitude, matchingCharger.longitude, 15);
     }
-  }, [selectedStation, stations, evChargers, popupStation, popupCharger]);
+  }, [selectedStation, stations, evChargers, popupStation, popupCharger, panToMarker]);
 
   // Pan the map so a clicked marker is positioned with enough room above
   // for the popup (which is anchored to the bottom of the marker). The
@@ -503,7 +505,9 @@ export default function Map({
   // 4 fuel prices, trend chart, opening hours, amenities, freshness, share
   // and directions). We compute the offset dynamically off the map height
   // so the popup is centered no matter the screen size.
-  const panToMarker = useCallback((lat: number, lng: number) => {
+  // Optional targetZoom: when called from a list card click the user may
+  // be zoomed way out, so we zoom in to 15 as well.
+  const panToMarker = useCallback((lat: number, lng: number, targetZoom?: number) => {
     if (typeof window === 'undefined') return;
     const map = mapRef.current;
     if (!map) return;
@@ -528,6 +532,7 @@ export default function Map({
       center: [lng, lat],
       offset: [0, offsetY],
       duration: 600,
+      ...(targetZoom != null ? { zoom: targetZoom } : {}),
     });
   }, []);
 

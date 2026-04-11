@@ -153,12 +153,13 @@ export default function HomeApp() {
     setSelectedStation(station.id);
   }, []);
 
-  // Click a station card from the sidebar list. Pans the map to the
-  // station, opens its popup (via selectedStation) and closes the
-  // mobile bottom sheet so the user can see the map.
+  // Click a station card from the sidebar list. We only set
+  // selectedStation here — the Map component's selectedStation effect
+  // handles BOTH the popup open AND the smart pan-with-offset that
+  // makes the popup land centred. Setting center/zoom here as well
+  // would trigger a competing flyTo with no offset, leaving the popup
+  // top cut off (the bug the user reported).
   const handleStationCardClick = useCallback((station: FuelStation) => {
-    setCenter([station.latitude, station.longitude]);
-    setZoom(15);
     setSelectedStation(station.id);
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       setSidebarOpen(false);
@@ -166,8 +167,6 @@ export default function HomeApp() {
   }, []);
 
   const handleChargerCardClick = useCallback((charger: EVCharger) => {
-    setCenter([charger.latitude, charger.longitude]);
-    setZoom(15);
     setSelectedStation(charger.id);
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       setSidebarOpen(false);
