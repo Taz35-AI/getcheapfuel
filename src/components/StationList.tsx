@@ -91,13 +91,16 @@ export default function StationList({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-gray-50/60 px-3 py-3 space-y-2">
         {showFuel && sortedStations.map(station => {
           const dist = userLocation
             ? haversineDistance(userLocation.lat, userLocation.lng, station.latitude, station.longitude)
             : null;
           return (
-            <div key={station.id} className="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <div
+              key={station.id}
+              className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
+            >
               <div className="flex items-start justify-between gap-3">
                 <BrandLogo brand={station.brand} size={36} />
                 <div className="flex-1 min-w-0">
@@ -170,7 +173,10 @@ export default function StationList({
           const speedLabel = maxPower >= 50 ? 'Rapid' : maxPower >= 22 ? 'Fast' : maxPower >= 7 ? 'Standard' : null;
           const speedColor = maxPower >= 50 ? 'bg-green-100 text-green-700' : maxPower >= 22 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600';
           return (
-            <div key={charger.id} className="px-4 py-3 border-b border-gray-100 hover:bg-purple-50 transition-colors">
+            <div
+              key={charger.id}
+              className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:shadow-md hover:border-purple-300 transition-all"
+            >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
