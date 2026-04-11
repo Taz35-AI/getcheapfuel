@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServiceClient } from '@/lib/supabase';
-import type { FuelStation } from '@/lib/types';
+import { fetchAllStations } from '@/lib/fuel-data';
+
+// Full snapshot of ~11,000 stations + writing them to Supabase can easily
+// exceed the default 10s function timeout.
+export const maxDuration = 300;
 
 const CRON_SECRET = process.env.CRON_SECRET || 'dev-secret';
 const FUEL_TYPES = ['E10', 'E5', 'B7', 'SDV'] as const;
@@ -17,21 +21,11 @@ export async function GET(request: Request) {
   const today = new Date().toISOString().split('T')[0];
   let totalInserted = 0;
 
-  // Use the internal fuel-prices API which already handles all CMA feeds
-  // with proper caching — avoids bot-blocking issues
-  const baseUrl = new URL(request.url).origin;
-  const regions = [
-    { lat: 51.5, lng: -0.1, r: 100 },   // London & South East
-    { lat: 52.5, lng: -1.9, r: 100 },   // Midlands
-    { lat: 53.5, lng: -2.3, r: 100 },   // North West
-    { lat: 53.8, lng: -1.5, r: 100 },   // Yorkshire
-    { lat: 54.9, lng: -1.6, r: 100 },   // North East
-    { lat: 55.9, lng: -3.2, r: 100 },   // Scotland Central
-    { lat: 57.5, lng: -4.2, r: 150 },   // Scotland North
-    { lat: 51.5, lng: -3.2, r: 100 },   // Wales
-    { lat: 50.7, lng: -3.5, r: 100 },   // South West
-    { lat: 52.6, lng: 1.3, r: 100 },    // East Anglia
-  ];
+  // Fetch the full dataset (not bbox-filtered) so we snapshot every station
+  // in Supabase, not just the ones within a 100km radius of a handful of regions.
+  // Calling fetchAllStations() directly bypasses the 2000-row bbox limit that
+  // /api/fuel-prices applies per query.
+  const allStations = await fetchAllStations(86400);
 
   const seen = new Set<string>();
   const allRows: {
@@ -42,36 +36,20 @@ export async function GET(request: Request) {
     snapshot_date: string;
   }[] = [];
 
-  // Fetch stations from multiple UK regions to cover the whole country
-  const results = await Promise.allSettled(
-    regions.map(async ({ lat, lng, r }) => {
-      const res = await fetch(
-        `${baseUrl}/api/fuel-prices?lat=${lat}&lng=${lng}&radius=${r}`,
-        { signal: AbortSignal.timeout(60000) }
-      );
-      if (!res.ok) return [];
-      const data = await res.json();
-      return (data.stations || []) as FuelStation[];
-    })
-  );
-
-  for (const result of results) {
-    if (result.status !== 'fulfilled') continue;
-    for (const station of result.value) {
-      for (const fuel of FUEL_TYPES) {
-        const price = station.prices[fuel];
-        if (price != null && price > 0) {
-          const key = `${station.id}-${fuel}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          allRows.push({
-            station_id: station.id,
-            brand: station.brand,
-            fuel_type: fuel,
-            price,
-            snapshot_date: today,
-          });
-        }
+  for (const station of allStations) {
+    for (const fuel of FUEL_TYPES) {
+      const price = station.prices[fuel];
+      if (price != null && price > 0) {
+        const key = `${station.id}-${fuel}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        allRows.push({
+          station_id: station.id,
+          brand: station.brand,
+          fuel_type: fuel,
+          price,
+          snapshot_date: today,
+        });
       }
     }
   }
@@ -100,7 +78,7 @@ export async function GET(request: Request) {
     success: true,
     date: today,
     inserted: totalInserted,
-    uniqueStations: seen.size,
-    regions: regions.length,
+    stationFuelCombinations: seen.size,
+    stationsScanned: allStations.length,
   });
 }
