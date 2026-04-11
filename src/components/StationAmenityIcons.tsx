@@ -89,9 +89,10 @@ export default function StationAmenityIcons({ amenities, size = 'md' }: Props) {
 
   // File-based icons need a bigger box than the inline SVGs because the
   // images carry their own outline/colour and need a bit of breathing room.
-  const boxSize = size === 'sm' ? 'w-7 h-7' : 'w-9 h-9';
-  const imgSize = size === 'sm' ? 'w-5 h-5' : 'w-7 h-7';
-  const svgSize = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
+  // md size is used inside the station popup, sm inside the list card.
+  const boxSize = size === 'sm' ? 'w-7 h-7' : 'w-12 h-12';
+  const imgSize = size === 'sm' ? 'w-5 h-5' : 'w-9 h-9';
+  const svgSize = size === 'sm' ? 'w-3.5 h-3.5' : 'w-6 h-6';
 
   const selectedLabel = active.find(([k]) => k === selectedKey)?.[1].label;
 

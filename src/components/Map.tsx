@@ -287,7 +287,7 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
   const freshnessStyle = freshnessClasses(freshness.tier);
 
   return (
-    <div className="min-w-[240px] max-w-[300px]">
+    <div className="min-w-[260px] sm:min-w-[360px] max-w-[400px]">
       <div className="flex items-start gap-3">
         <BrandLogo brand={station.brand} size={56} />
         <div className="flex-1 min-w-0">

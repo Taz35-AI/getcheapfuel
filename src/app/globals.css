@@ -12,7 +12,9 @@ body {
 
 /* MapLibre GL popup styling */
 .maplibregl-popup {
-  max-width: min(85vw, 320px) !important;
+  /* Wider on desktop so icons and prices have room to breathe;
+     stays narrow on mobile to fit the viewport. */
+  max-width: min(85vw, 420px) !important;
   /* Prevent browser pinch-zoom on the popup; only the map handles zoom */
   touch-action: pan-x pan-y;
 }
