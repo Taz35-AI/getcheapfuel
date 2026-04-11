@@ -224,7 +224,7 @@ export default function Home() {
         </Link>
 
         <h3 className="text-lg font-semibold text-gray-900 mb-3">Find Cheap Fuel Near You</h3>
-        <nav className="flex flex-wrap gap-2">
+        <nav className="flex flex-wrap gap-2 mb-8">
           {cities.map(city => (
             <Link
               key={city}
@@ -232,6 +232,58 @@ export default function Home() {
               className="text-sm text-green-700 hover:text-green-900 hover:underline capitalize px-3 py-1.5 bg-green-50 rounded-lg"
             >
               {city.replace('-', ' ')}
+            </Link>
+          ))}
+        </nav>
+
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Prices by Retailer</h3>
+        <nav className="flex flex-wrap gap-2 mb-8">
+          {[
+            { slug: 'tesco', name: 'Tesco' },
+            { slug: 'asda', name: 'Asda' },
+            { slug: 'sainsburys', name: "Sainsbury's" },
+            { slug: 'morrisons', name: 'Morrisons' },
+            { slug: 'bp', name: 'BP' },
+            { slug: 'shell', name: 'Shell' },
+            { slug: 'esso', name: 'Esso' },
+            { slug: 'texaco', name: 'Texaco' },
+            { slug: 'jet', name: 'Jet' },
+            { slug: 'gulf', name: 'Gulf' },
+            { slug: 'co-op', name: 'Co-op' },
+            { slug: 'costco', name: 'Costco' },
+          ].map(b => (
+            <Link
+              key={b.slug}
+              href={`/brand/${b.slug}`}
+              className="text-sm text-blue-700 hover:text-blue-900 hover:underline px-3 py-1.5 bg-blue-50 rounded-lg"
+            >
+              {b.name} prices today
+            </Link>
+          ))}
+        </nav>
+
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Popular UK Postcode Areas</h3>
+        <nav className="flex flex-wrap gap-2">
+          {[
+            { area: 'SW', name: 'South West London' },
+            { area: 'SE', name: 'South East London' },
+            { area: 'N', name: 'North London' },
+            { area: 'E', name: 'East London' },
+            { area: 'M', name: 'Manchester' },
+            { area: 'B', name: 'Birmingham' },
+            { area: 'L', name: 'Liverpool' },
+            { area: 'LS', name: 'Leeds' },
+            { area: 'G', name: 'Glasgow' },
+            { area: 'EH', name: 'Edinburgh' },
+            { area: 'CF', name: 'Cardiff' },
+            { area: 'BS', name: 'Bristol' },
+          ].map(p => (
+            <Link
+              key={p.area}
+              href={`/postcode/${p.area.toLowerCase()}`}
+              className="text-sm text-indigo-700 hover:text-indigo-900 hover:underline px-3 py-1.5 bg-indigo-50 rounded-lg"
+            >
+              {p.area} · {p.name}
             </Link>
           ))}
         </nav>
