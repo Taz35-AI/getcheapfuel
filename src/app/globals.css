@@ -14,7 +14,7 @@ body {
 .maplibregl-popup {
   /* Wider on desktop so icons and prices have room to breathe;
      stays narrow on mobile to fit the viewport. */
-  max-width: min(85vw, 420px) !important;
+  max-width: min(92vw, 420px) !important;
   /* Prevent browser pinch-zoom on the popup; only the map handles zoom */
   touch-action: pan-x pan-y;
 }
@@ -22,9 +22,21 @@ body {
 .maplibregl-popup-content {
   border-radius: 12px !important;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2) !important;
-  padding: 14px 16px !important;
-  overflow: hidden;
+  padding: 12px 14px !important;
+  /* Cap height so the popup never exceeds the visible area on small
+     screens. Internal scroll on the Y axis only — horizontal overflow
+     should never happen and is hidden defensively. */
+  max-height: 75vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   touch-action: pan-x pan-y;
+}
+
+/* Tighter padding on small screens */
+@media (max-width: 480px) {
+  .maplibregl-popup-content {
+    padding: 10px 12px !important;
+  }
 }
 
 .maplibregl-popup-close-button {
