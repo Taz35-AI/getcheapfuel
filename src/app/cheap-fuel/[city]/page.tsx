@@ -5,6 +5,7 @@ import { UK_CITIES } from '@/lib/cities';
 import { fetchAllStations, getStationsNear, haversineDistance } from '@/lib/fuel-data';
 import { BRAND_SLUGS } from '@/lib/brand-slugs';
 import { toTitleCase } from '@/lib/format-text';
+import { getStationFreshness, freshnessClasses, type FreshnessTier } from '@/lib/freshness';
 
 // Rebuild 3 times a day (every 8 hours)
 export const revalidate = 28800;
@@ -63,6 +64,13 @@ export default async function CityPage({
   const nearbyStations = getStationsNear(allStations, city.lat, city.lng, radiusKm);
 
   // Calculate price stats
+  interface TopRow {
+    brand: string;
+    price: number;
+    address: string;
+    dist: string;
+    freshness: { tier: FreshnessTier; label: string };
+  }
   interface FuelStat {
     fuel: FuelKey;
     label: string;
@@ -72,7 +80,7 @@ export default async function CityPage({
     avgPrice: string;
     highestPrice: number;
     stationCount: number;
-    top5: { brand: string; price: number; address: string; dist: string }[];
+    top5: TopRow[];
   }
 
   const fuelKeys: FuelKey[] = ['E10', 'E5', 'B7', 'SDV'];
@@ -95,12 +103,16 @@ export default async function CityPage({
       avgPrice: (prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(1),
       highestPrice: prices[prices.length - 1],
       stationCount: withPrice.length,
-      top5: withPrice.slice(0, 5).map(s => ({
-        brand: s.brand,
-        price: s.prices[fuel]!,
-        address: s.postcode || s.address,
-        dist: (haversineDistance(city.lat, city.lng, s.latitude, s.longitude) * 0.6214).toFixed(1),
-      })),
+      top5: withPrice.slice(0, 5).map(s => {
+        const f = getStationFreshness(s);
+        return {
+          brand: s.brand,
+          price: s.prices[fuel]!,
+          address: s.postcode || s.address,
+          dist: (haversineDistance(city.lat, city.lng, s.latitude, s.longitude) * 0.6214).toFixed(1),
+          freshness: { tier: f.tier, label: f.label },
+        };
+      }),
     };
   }).filter((s): s is FuelStat => s !== null);
 
@@ -322,24 +334,39 @@ export default async function CityPage({
                   <tr>
                     <th className="text-left px-4 py-2.5 font-medium text-gray-600">#</th>
                     <th className="text-left px-4 py-2.5 font-medium text-gray-600">Station</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-gray-600">Postcode</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-gray-600 hidden sm:table-cell">Postcode</th>
                     <th className="text-right px-4 py-2.5 font-medium text-gray-600">Price</th>
-                    <th className="text-right px-4 py-2.5 font-medium text-gray-600">Distance</th>
+                    <th className="text-right px-4 py-2.5 font-medium text-gray-600 hidden sm:table-cell">Distance</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-gray-600">Updated</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {s.top5.map((station, i) => (
-                    <tr key={i} className={i === 0 ? 'bg-green-50' : i % 2 === 0 ? 'bg-gray-50/50' : ''}>
-                      <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
-                      <td className="px-4 py-2.5 font-medium text-gray-900">{station.brand}</td>
-                      <td className="px-4 py-2.5 text-gray-500">{station.address}</td>
-                      <td className="px-4 py-2.5 text-right font-bold text-gray-900">{station.price.toFixed(1)}p</td>
-                      <td className="px-4 py-2.5 text-right text-gray-500">{station.dist} mi</td>
-                    </tr>
-                  ))}
+                  {s.top5.map((station, i) => {
+                    const fStyle = freshnessClasses(station.freshness.tier);
+                    return (
+                      <tr key={i} className={i === 0 ? 'bg-green-50' : i % 2 === 0 ? 'bg-gray-50/50' : ''}>
+                        <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
+                        <td className="px-4 py-2.5 font-medium text-gray-900">{station.brand}</td>
+                        <td className="px-4 py-2.5 text-gray-500 hidden sm:table-cell">{station.address}</td>
+                        <td className="px-4 py-2.5 text-right font-bold text-gray-900">{station.price.toFixed(1)}p</td>
+                        <td className="px-4 py-2.5 text-right text-gray-500 hidden sm:table-cell">{station.dist} mi</td>
+                        <td className="px-4 py-2.5">
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${fStyle.bg} ${fStyle.text}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${fStyle.dot}`} />
+                            {station.freshness.label.replace('Updated ', '')}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
+            {s.top5.some(t => t.freshness.tier === 'very-stale') && (
+              <p className="text-[11px] text-red-600 mt-2 px-1">
+                One or more prices in this list are over 7 days old and may be out of date. Verify at the pump.
+              </p>
+            )}
           </section>
         ))}
 

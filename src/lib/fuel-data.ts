@@ -14,7 +14,9 @@ export const CMA_FEEDS: Record<string, string> = {
   mfg: 'https://fuel.motorfuelgroup.com/fuel_prices_data.json',
   ascona: 'https://fuelprices.asconagroup.co.uk/newfuel.json',
   moto: 'https://moto-way.com/fuel-price/fuel_prices.json',
-  karan: 'https://devapi.krlpos.com/integration/live_price/krl',
+  // 'karan' (https://devapi.krlpos.com/...) was removed — it's a dev/staging
+  // endpoint that 404s in production. Add it back if/when they publish a
+  // stable URL.
 };
 
 interface CMAStation {
@@ -261,7 +263,9 @@ export async function fetchCMAFeed(brand: string, url: string, revalidate = 300)
         source: 'cma' as const,
       }));
   } catch {
-    console.error(`Failed to fetch ${brand} fuel data`);
+    // Upstream CMA feeds are flaky (rate limits, 404s, geo blocks).
+    // Failures are non-fatal: Fuel Finder data still covers the same
+    // stations. Stay silent so dev logs aren't polluted on every page load.
     return [];
   }
 }
