@@ -469,15 +469,33 @@ export default function Map({
   }, [center, zoom]);
 
   // Pan the map so a clicked marker is positioned with enough room above
-  // for the popup (which is anchored to the bottom of the marker).
-  // On mobile we need extra room because popups are larger relative to viewport.
+  // for the popup (which is anchored to the bottom of the marker). The
+  // popup is roughly 460px tall when a station has all sections (logo,
+  // 4 fuel prices, trend chart, opening hours, amenities, freshness, share
+  // and directions). We compute the offset dynamically off the map height
+  // so the popup is centered no matter the screen size.
   const panToMarker = useCallback((lat: number, lng: number) => {
     if (typeof window === 'undefined') return;
+    const map = mapRef.current;
+    if (!map) return;
     const isMobile = window.innerWidth < 768;
-    // Positive Y offset shifts the destination DOWN from screen center,
-    // leaving room above for the popup.
-    const offsetY = isMobile ? 180 : 120;
-    mapRef.current?.flyTo({
+    const mapHeight = map.getContainer().clientHeight || 600;
+
+    let offsetY: number;
+    if (isMobile) {
+      // Mobile is already working with this constant — leave it alone
+      offsetY = 180;
+    } else {
+      // Place the marker at roughly 78% from the top of the visible map
+      // so the popup above it lands centred-ish in the top portion.
+      // Clamp so the marker never falls outside the visible area.
+      offsetY = Math.min(
+        Math.max(mapHeight * 0.28, 180),
+        mapHeight / 2 - 60,
+      );
+    }
+
+    map.flyTo({
       center: [lng, lat],
       offset: [0, offsetY],
       duration: 600,
