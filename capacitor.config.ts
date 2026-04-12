@@ -15,12 +15,11 @@ const config: CapacitorConfig = {
 
   plugins: {
     SplashScreen: {
-      // Keep splash visible until the web page signals it's ready
-      launchAutoHide: false,
-      launchShowDuration: 0,
+      launchAutoHide: true,
+      launchShowDuration: 1500,
+      launchFadeOutDuration: 300,
       backgroundColor: '#16a34a',
-      showSpinner: true,
-      spinnerColor: '#ffffff',
+      showSpinner: false,
     },
     StatusBar: {
       style: 'LIGHT',
