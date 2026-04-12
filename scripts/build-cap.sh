@@ -32,7 +32,7 @@ cp -r "$API_DIR" "$BACKUP_DIR"
 rm -rf "$API_DIR"
 
 echo "→ Building static export…"
-CAPACITOR=1 NEXT_PUBLIC_API_BASE=https://getcheapfuel.co.uk npx next build
+CAPACITOR=1 NEXT_PUBLIC_API_BASE=https://www.getcheapfuel.co.uk npx next build
 
 echo "→ Syncing with native projects…"
 npx cap sync
