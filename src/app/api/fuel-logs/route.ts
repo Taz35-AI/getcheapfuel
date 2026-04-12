@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServiceClient } from '@/lib/supabase';
 
+export function OPTIONS() {
+  return new Response(null, { status: 204 });
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const email = searchParams.get('email');

@@ -5,14 +5,6 @@ const config: CapacitorConfig = {
   appName: 'GetCheapFuel',
   webDir: 'out',
 
-  // Load the live website — always up-to-date, no app store update needed
-  server: {
-    url: 'https://getcheapfuel.co.uk',
-    cleartext: false,
-    // Allow navigation to external URLs (Google Maps, Waze links etc.)
-    allowNavigation: ['getcheapfuel.co.uk', '*.getcheapfuel.co.uk'],
-  },
-
   plugins: {
     SplashScreen: {
       launchAutoHide: true,
@@ -40,7 +32,6 @@ const config: CapacitorConfig = {
   android: {
     backgroundColor: '#16a34a',
     allowMixedContent: false,
-    // Use Chrome WebView for better compatibility
     webContentsDebuggingEnabled: false,
   },
 };

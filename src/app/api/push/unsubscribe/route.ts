@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceClient } from '@/lib/supabase';
 
+export function OPTIONS() {
+  return new Response(null, { status: 204 });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { endpoint } = await req.json();

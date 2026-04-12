@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { isNative } from '@/lib/platform';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useAuth } from '@/hooks/useAuth';
+import { apiUrl } from '@/lib/api';
 
 // FillUpAdvice only renders once the user has a location, so its JS
 // doesn't need to be in the initial bundle.
@@ -122,7 +123,7 @@ export default function HomeApp() {
 
       if (showFuel) {
         promises.push(
-          fetch(`/api/fuel-prices?lat=${lat}&lng=${lng}&radius=${r}`)
+          fetch(apiUrl(`/api/fuel-prices?lat=${lat}&lng=${lng}&radius=${r}`))
             .then(res => res.json())
             .then(data => setStations(data.stations || []))
         );
@@ -132,7 +133,7 @@ export default function HomeApp() {
 
       if (showEV) {
         promises.push(
-          fetch(`/api/ev-chargers?lat=${lat}&lng=${lng}&radius=${r}`)
+          fetch(apiUrl(`/api/ev-chargers?lat=${lat}&lng=${lng}&radius=${r}`))
             .then(res => res.json())
             .then(data => setEvChargers(data.chargers || []))
         );

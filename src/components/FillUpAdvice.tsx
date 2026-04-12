@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiUrl } from '@/lib/api';
 
 interface Trend {
   direction: 'rising' | 'falling' | 'stable';
@@ -50,7 +51,7 @@ export default function FillUpAdvice({ fuelType }: FillUpAdviceProps) {
 
   useEffect(() => {
     setDismissed(false);
-    fetch(`/api/price-trend?fuelType=${fuelType}`)
+    fetch(apiUrl(`/api/price-trend?fuelType=${fuelType}`))
       .then(res => res.json())
       .then(data => setTrend(data.trend || null))
       .catch(() => setTrend(null));

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { apiUrl } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 
 const FAVOURITES_KEY = 'gcf_favourites';
@@ -92,7 +93,7 @@ export default function ProfilePage() {
   const handleDeleteAccount = async () => {
     setDeleting(true);
     try {
-      const res = await fetch('/api/auth/delete-account', {
+      const res = await fetch(apiUrl('/api/auth/delete-account'), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

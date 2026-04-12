@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { FUEL_LABELS, FUEL_COLORS } from '@/lib/types';
+import { apiUrl } from '@/lib/api';
 import type { FuelType } from '@/lib/types';
 
 interface FuelLog {
@@ -66,7 +67,7 @@ export default function FuelTracker({ open, onClose }: FuelTrackerProps) {
     if (!email) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/fuel-logs?email=${encodeURIComponent(email)}`);
+      const res = await fetch(apiUrl(`/api/fuel-logs?email=${encodeURIComponent(email)}`));
       const data = await res.json();
       setLogs(data.logs || []);
     } catch {
@@ -103,7 +104,7 @@ export default function FuelTracker({ open, onClose }: FuelTrackerProps) {
     if (!station || !litres || !totalCost || !email) return;
     setSaving(true);
     try {
-      await fetch('/api/fuel-logs', {
+      await fetch(apiUrl('/api/fuel-logs'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -130,7 +131,7 @@ export default function FuelTracker({ open, onClose }: FuelTrackerProps) {
   };
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/fuel-logs?id=${id}&email=${encodeURIComponent(email)}`, {
+    await fetch(apiUrl(`/api/fuel-logs?id=${id}&email=${encodeURIComponent(email)}`), {
       method: 'DELETE',
     });
     setLogs(prev => prev.filter(l => l.id !== id));

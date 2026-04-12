@@ -3,6 +3,8 @@ import { UK_CITIES } from '@/lib/cities'
 import { BRAND_SLUGS } from '@/lib/brand-slugs'
 import { UNIQUE_POSTCODE_AREAS } from '@/lib/uk-postcodes'
 
+export const dynamic = 'force-static';
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://getcheapfuel.co.uk'
   const now = new Date()

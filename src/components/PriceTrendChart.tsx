@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { apiUrl } from '@/lib/api';
 
 interface PricePoint {
   price: number;
@@ -22,7 +23,7 @@ export default function PriceTrendChart({ stationId, fuelType, color = '#22c55e'
   useEffect(() => {
     setLoading(true);
     setError(false);
-    fetch(`/api/price-history?stationId=${encodeURIComponent(stationId)}&fuelType=${fuelType}&days=30`)
+    fetch(apiUrl(`/api/price-history?stationId=${encodeURIComponent(stationId)}&fuelType=${fuelType}&days=30`))
       .then(res => res.json())
       .then(json => {
         setData(json.history || []);

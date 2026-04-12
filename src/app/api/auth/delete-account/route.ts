@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export function OPTIONS() {
+  return new Response(null, { status: 204 });
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     // Verify the user's JWT from the Authorization header

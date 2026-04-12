@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { apiUrl } from '@/lib/api';
 
 interface SearchResult {
   name: string;
@@ -29,7 +30,7 @@ export default function SearchBar({ onLocationSelect, onUseMyLocation, isLocatin
     }
     setSearching(true);
     try {
-      const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+      const res = await fetch(apiUrl(`/api/geocode?q=${encodeURIComponent(q)}`));
       const data = await res.json();
       setResults(data.results || []);
       setShowResults(true);

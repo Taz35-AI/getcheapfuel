@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { isNative } from '@/lib/platform';
+import { apiUrl } from '@/lib/api';
 import { PushNotifications } from '@capacitor/push-notifications';
 
 interface NotificationManagerProps {
@@ -115,7 +116,7 @@ export default function NotificationManager({ open, onClose }: NotificationManag
         localStorage.setItem('gcf_native_push_token', token);
 
         // Send native token + alerts to our API
-        const res = await fetch('/api/push/native-subscribe', {
+        const res = await fetch(apiUrl('/api/push/native-subscribe'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -148,7 +149,7 @@ export default function NotificationManager({ open, onClose }: NotificationManag
           });
         }
 
-        const res = await fetch('/api/push/subscribe', {
+        const res = await fetch(apiUrl('/api/push/subscribe'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -181,7 +182,7 @@ export default function NotificationManager({ open, onClose }: NotificationManag
       if (isNative()) {
         const token = localStorage.getItem('gcf_native_push_token');
         if (token) {
-          await fetch('/api/push/unsubscribe', {
+          await fetch(apiUrl('/api/push/unsubscribe'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ endpoint: `native:${token}` }),
@@ -192,7 +193,7 @@ export default function NotificationManager({ open, onClose }: NotificationManag
         const reg = await navigator.serviceWorker.ready;
         const subscription = await reg.pushManager.getSubscription();
         if (subscription) {
-          await fetch('/api/push/unsubscribe', {
+          await fetch(apiUrl('/api/push/unsubscribe'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ endpoint: subscription.endpoint }),

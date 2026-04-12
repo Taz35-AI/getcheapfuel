@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import type { FuelStation, FuelType } from '@/lib/types';
 import { FUEL_LABELS, FUEL_COLORS } from '@/lib/types';
+import { apiUrl } from '@/lib/api';
 
 interface RoutePlannerProps {
   stations: FuelStation[];
@@ -20,7 +21,7 @@ interface RouteResult {
 
 async function geocode(query: string): Promise<{ lat: number; lng: number; name: string } | null> {
   try {
-    const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+    const res = await fetch(apiUrl(`/api/geocode?q=${encodeURIComponent(query)}`));
     const data = await res.json();
     if (data.results?.length > 0) {
       return { lat: data.results[0].lat, lng: data.results[0].lng, name: data.results[0].name };
@@ -98,7 +99,7 @@ export default function RoutePlanner({ stations, selectedFuels, open, onClose, o
       const midLng = (fromGeo.lng + toGeo.lng) / 2;
       const searchRadius = Math.ceil(distanceKm / 2) + 10;
 
-      const stationsRes = await fetch(`/api/fuel-prices?lat=${midLat}&lng=${midLng}&radius=${searchRadius}`);
+      const stationsRes = await fetch(apiUrl(`/api/fuel-prices?lat=${midLat}&lng=${midLng}&radius=${searchRadius}`));
       const stationsData = await stationsRes.json();
       const allStations: FuelStation[] = stationsData.stations || [];
 
