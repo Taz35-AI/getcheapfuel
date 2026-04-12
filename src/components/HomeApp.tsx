@@ -163,49 +163,25 @@ export default function HomeApp() {
       Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
     }
     try {
-      if (isNative()) {
-        // Native: request runtime permission first (required on Android)
-        const perms = await Geolocation.requestPermissions();
-        if (perms.location === 'denied') {
-          alert('Location permission denied. Please enable it in your device settings.');
-          setIsLocating(false);
-          return;
-        }
-        const pos = await Geolocation.getCurrentPosition({
-          enableHighAccuracy: true,
-          timeout: 10000,
-        });
-        const { latitude, longitude } = pos.coords;
-        setCenter([latitude, longitude]);
-        setZoom(13);
-        setUserLocation({ lat: latitude, lng: longitude });
-        setLocationName('Your Location');
-        fetchStations(latitude, longitude, radius);
-      } else {
-        // Web: use browser geolocation
-        if (!navigator.geolocation) {
-          alert('Geolocation is not supported by your browser');
-          setIsLocating(false);
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setCenter([latitude, longitude]);
-            setZoom(13);
-            setUserLocation({ lat: latitude, lng: longitude });
-            setLocationName('Your Location');
-            fetchStations(latitude, longitude, radius);
-            setIsLocating(false);
-          },
-          () => {
-            alert('Unable to get your location. Please search manually.');
-            setIsLocating(false);
-          },
-          { enableHighAccuracy: true, timeout: 10000 }
-        );
-        return; // setIsLocating handled in callbacks above
+      // Use Capacitor Geolocation for both native and web — it handles
+      // native permissions on Android/iOS and falls back to browser API on web.
+      // Calling requestPermissions() is a no-op on web but required on Android.
+      const perms = await Geolocation.requestPermissions();
+      if (perms.location === 'denied') {
+        alert('Location permission denied. Please enable it in your device settings.');
+        setIsLocating(false);
+        return;
       }
+      const pos = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+      });
+      const { latitude, longitude } = pos.coords;
+      setCenter([latitude, longitude]);
+      setZoom(13);
+      setUserLocation({ lat: latitude, lng: longitude });
+      setLocationName('Your Location');
+      fetchStations(latitude, longitude, radius);
     } catch {
       alert('Unable to get your location. Please search manually.');
     }
