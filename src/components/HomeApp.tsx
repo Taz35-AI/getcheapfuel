@@ -8,6 +8,7 @@ import SettingsMenu from '@/components/SettingsMenu';
 import { isNative } from '@/lib/platform';
 import { Geolocation } from '@capacitor/geolocation';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { useAuth } from '@/hooks/useAuth';
 
 // FillUpAdvice only renders once the user has a location, so its JS
 // doesn't need to be in the initial bundle.
@@ -66,6 +67,7 @@ export default function HomeApp() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [trackerOpen, setTrackerOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const { user } = useAuth();
 
   const toggleCompare = useCallback((id: string) => {
     setCompareIds(prev => {
@@ -373,10 +375,23 @@ export default function HomeApp() {
               </select>
               <button
                 onClick={() => setAuthOpen(true)}
-                className="px-3 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm text-sm font-semibold"
-                title="Sign In"
+                className={`px-3 py-2.5 rounded-lg transition-colors shadow-sm text-sm font-semibold ${
+                  user
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
+                title={user ? 'Account' : 'Sign In'}
               >
-                Sign In
+                {user ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-green-600 text-white text-[10px] font-bold flex items-center justify-center">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </span>
+                    Account
+                  </span>
+                ) : (
+                  'Sign In'
+                )}
               </button>
             </div>
           </div>
@@ -474,14 +489,24 @@ export default function HomeApp() {
             </div>
             <button
               onClick={() => setAuthOpen(true)}
-              className="flex-shrink-0 p-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-              title="Sign In"
-              aria-label="Sign In"
+              className={`flex-shrink-0 p-2 rounded-lg transition-colors ${
+                user
+                  ? 'bg-green-100 hover:bg-green-200'
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
+              title={user ? 'Account' : 'Sign In'}
+              aria-label={user ? 'Account' : 'Sign In'}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+              {user ? (
+                <span className="w-4 h-4 rounded-full bg-green-600 text-white text-[8px] font-bold flex items-center justify-center">
+                  {user.email?.charAt(0).toUpperCase()}
+                </span>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              )}
             </button>
           </div>
         </div>
