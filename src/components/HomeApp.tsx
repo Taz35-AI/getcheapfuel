@@ -5,6 +5,9 @@ import dynamic from 'next/dynamic';
 import SearchBar from '@/components/SearchBar';
 import FuelFilter from '@/components/FuelFilter';
 import SettingsMenu from '@/components/SettingsMenu';
+import { isNative } from '@/lib/platform';
+import { Geolocation } from '@capacitor/geolocation';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 // FillUpAdvice only renders once the user has a location, so its JS
 // doesn't need to be in the initial bundle.
@@ -29,6 +32,7 @@ const RoutePlanner = dynamic(() => import('@/components/RoutePlanner'), { ssr: f
 const NotificationManager = dynamic(() => import('@/components/NotificationManager'), { ssr: false });
 const FuelTracker = dynamic(() => import('@/components/FuelTracker'), { ssr: false });
 const InstallPrompt = dynamic(() => import('@/components/InstallPrompt'), { ssr: false });
+const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false });
 
 type MapStyle = 'dark' | 'bright' | 'positron' | 'liberty';
 
@@ -61,6 +65,7 @@ export default function HomeApp() {
   const [routeOpen, setRouteOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [trackerOpen, setTrackerOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const toggleCompare = useCallback((id: string) => {
     setCompareIds(prev => {
@@ -123,28 +128,53 @@ export default function HomeApp() {
     fetchStations(lat, lng, radius);
   }, [fetchStations, radius]);
 
-  const handleUseMyLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
-      return;
-    }
+  const handleUseMyLocation = useCallback(async () => {
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
+    if (isNative()) {
+      Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+    }
+    try {
+      if (isNative()) {
+        // Native: use Capacitor geolocation (handles permissions natively)
+        const pos = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
+        const { latitude, longitude } = pos.coords;
         setCenter([latitude, longitude]);
         setZoom(13);
         setUserLocation({ lat: latitude, lng: longitude });
         setLocationName('Your Location');
         fetchStations(latitude, longitude, radius);
-        setIsLocating(false);
-      },
-      () => {
-        alert('Unable to get your location. Please search manually.');
-        setIsLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+      } else {
+        // Web: use browser geolocation
+        if (!navigator.geolocation) {
+          alert('Geolocation is not supported by your browser');
+          setIsLocating(false);
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            setCenter([latitude, longitude]);
+            setZoom(13);
+            setUserLocation({ lat: latitude, lng: longitude });
+            setLocationName('Your Location');
+            fetchStations(latitude, longitude, radius);
+            setIsLocating(false);
+          },
+          () => {
+            alert('Unable to get your location. Please search manually.');
+            setIsLocating(false);
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+        return; // setIsLocating handled in callbacks above
+      }
+    } catch {
+      alert('Unable to get your location. Please search manually.');
+    }
+    setIsLocating(false);
   }, [fetchStations, radius]);
 
   const handleStationClick = useCallback((station: FuelStation) => {
@@ -341,6 +371,13 @@ export default function HomeApp() {
                   <option key={style} value={style} className="capitalize">{style}</option>
                 ))}
               </select>
+              <button
+                onClick={() => setAuthOpen(true)}
+                className="px-3 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm text-sm font-semibold"
+                title="Sign In"
+              >
+                Sign In
+              </button>
             </div>
           </div>
           {/* Desktop row 2: Fuel filters + radius */}
@@ -435,6 +472,17 @@ export default function HomeApp() {
             <div className="flex-shrink-0">
               <SettingsMenu mapStyle={mapStyle} onMapStyleChange={setMapStyle} />
             </div>
+            <button
+              onClick={() => setAuthOpen(true)}
+              className="flex-shrink-0 p-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+              title="Sign In"
+              aria-label="Sign In"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </button>
           </div>
         </div>
       </header>
@@ -614,6 +662,12 @@ export default function HomeApp() {
         />
       )}
       {showInstallPrompt && <InstallPrompt />}
+      {authOpen && (
+        <AuthModal
+          open={authOpen}
+          onClose={() => setAuthOpen(false)}
+        />
+      )}
 
       {/* Footer — hidden on mobile to avoid overlap with station list */}
       <footer className="hidden md:block flex-shrink-0 bg-gray-50 border-t border-gray-200 px-4 py-3">

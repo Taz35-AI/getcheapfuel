@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { isNative } from '@/lib/platform';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 interface NotificationManagerProps {
   open: boolean;
@@ -33,22 +35,32 @@ export default function NotificationManager({ open, onClose }: NotificationManag
   const [statusMsg, setStatusMsg] = useState('');
 
   useEffect(() => {
-    if (typeof Notification !== 'undefined') {
-      setPermission(Notification.permission);
-    }
     // Load alerts from localStorage as draft state
     try {
       const stored = localStorage.getItem('gcf_price_alerts');
       if (stored) setAlerts(JSON.parse(stored));
     } catch {}
 
-    // Check if already subscribed
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(reg => {
-        reg.pushManager.getSubscription().then(sub => {
-          setSubscribed(!!sub);
-        });
+    if (isNative()) {
+      // Native: check Capacitor push permission
+      PushNotifications.checkPermissions().then(({ receive }) => {
+        setPermission(receive === 'granted' ? 'granted' : receive === 'denied' ? 'denied' : 'default');
       });
+      // Check if native token was previously sent
+      const hasToken = localStorage.getItem('gcf_native_push_token');
+      setSubscribed(!!hasToken);
+    } else {
+      // Web: check browser notification permission
+      if (typeof Notification !== 'undefined') {
+        setPermission(Notification.permission);
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.pushManager.getSubscription().then(sub => {
+            setSubscribed(!!sub);
+          });
+        });
+      }
     }
   }, []);
 
@@ -58,9 +70,14 @@ export default function NotificationManager({ open, onClose }: NotificationManag
   };
 
   const requestPermission = async () => {
-    if (typeof Notification === 'undefined') return;
-    const result = await Notification.requestPermission();
-    setPermission(result);
+    if (isNative()) {
+      const { receive } = await PushNotifications.requestPermissions();
+      setPermission(receive === 'granted' ? 'granted' : 'denied');
+    } else {
+      if (typeof Notification === 'undefined') return;
+      const result = await Notification.requestPermission();
+      setPermission(result);
+    }
   };
 
   const subscribeToPush = useCallback(async () => {
@@ -77,38 +94,78 @@ export default function NotificationManager({ open, onClose }: NotificationManag
     setStatusMsg('');
 
     try {
-      // Register/get service worker
-      const reg = await navigator.serviceWorker.ready;
+      if (isNative()) {
+        // Native: register with FCM/APNs via Capacitor
+        await PushNotifications.register();
 
-      // Subscribe to push
-      let subscription = await reg.pushManager.getSubscription();
-      if (!subscription) {
-        subscription = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(
-            process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-          ),
+        // Listen for token (fires once after register)
+        const tokenPromise = new Promise<string>((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('Token timeout')), 10000);
+          PushNotifications.addListener('registration', ({ value }) => {
+            clearTimeout(timeout);
+            resolve(value);
+          });
+          PushNotifications.addListener('registrationError', (err) => {
+            clearTimeout(timeout);
+            reject(err);
+          });
         });
-      }
 
-      // Send subscription + alerts to our API
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subscription: subscription.toJSON(),
-          alerts: alerts
-            .filter(a => a.enabled)
-            .map(a => ({ fuelType: a.fuelType, threshold: a.threshold })),
-        }),
-      });
+        const token = await tokenPromise;
+        localStorage.setItem('gcf_native_push_token', token);
 
-      if (res.ok) {
-        setSubscribed(true);
-        setStatusMsg('Alerts saved! You\'ll get notified when prices drop.');
+        // Send native token + alerts to our API
+        const res = await fetch('/api/push/native-subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token,
+            platform: (await import('@capacitor/core')).Capacitor.getPlatform(),
+            alerts: alerts
+              .filter(a => a.enabled)
+              .map(a => ({ fuelType: a.fuelType, threshold: a.threshold })),
+          }),
+        });
+
+        if (res.ok) {
+          setSubscribed(true);
+          setStatusMsg('Alerts saved! You\'ll get notified when prices drop.');
+        } else {
+          const data = await res.json();
+          setStatusMsg(data.error || 'Failed to save alerts');
+        }
       } else {
-        const data = await res.json();
-        setStatusMsg(data.error || 'Failed to save alerts');
+        // Web: use service worker push
+        const reg = await navigator.serviceWorker.ready;
+
+        let subscription = await reg.pushManager.getSubscription();
+        if (!subscription) {
+          subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+              process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+            ),
+          });
+        }
+
+        const res = await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subscription: subscription.toJSON(),
+            alerts: alerts
+              .filter(a => a.enabled)
+              .map(a => ({ fuelType: a.fuelType, threshold: a.threshold })),
+          }),
+        });
+
+        if (res.ok) {
+          setSubscribed(true);
+          setStatusMsg('Alerts saved! You\'ll get notified when prices drop.');
+        } else {
+          const data = await res.json();
+          setStatusMsg(data.error || 'Failed to save alerts');
+        }
       }
     } catch (err) {
       console.error('Push subscribe error:', err);
@@ -121,15 +178,27 @@ export default function NotificationManager({ open, onClose }: NotificationManag
   const unsubscribe = async () => {
     setSaving(true);
     try {
-      const reg = await navigator.serviceWorker.ready;
-      const subscription = await reg.pushManager.getSubscription();
-      if (subscription) {
-        await fetch('/api/push/unsubscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint: subscription.endpoint }),
-        });
-        await subscription.unsubscribe();
+      if (isNative()) {
+        const token = localStorage.getItem('gcf_native_push_token');
+        if (token) {
+          await fetch('/api/push/unsubscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: `native:${token}` }),
+          });
+          localStorage.removeItem('gcf_native_push_token');
+        }
+      } else {
+        const reg = await navigator.serviceWorker.ready;
+        const subscription = await reg.pushManager.getSubscription();
+        if (subscription) {
+          await fetch('/api/push/unsubscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: subscription.endpoint }),
+          });
+          await subscription.unsubscribe();
+        }
       }
       setSubscribed(false);
       setStatusMsg('Unsubscribed from notifications');
