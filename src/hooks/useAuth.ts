@@ -10,14 +10,12 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
       setLoading(false);
     });
 
-    // Listen for auth changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, s) => {
         setSession(s);
@@ -28,15 +26,22 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithMagicLink = useCallback(async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
+  const signUp = useCallback(async (email: string, password: string, name: string) => {
+    const { error } = await supabase.auth.signUp({
       email,
+      password,
       options: {
+        data: { display_name: name },
         emailRedirectTo: typeof window !== 'undefined'
-          ? `${window.location.origin}`
+          ? window.location.origin
           : 'https://getcheapfuel.co.uk',
       },
     });
+    return { error };
+  }, []);
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
   }, []);
 
@@ -46,5 +51,8 @@ export function useAuth() {
     setSession(null);
   }, []);
 
-  return { user, session, loading, signInWithMagicLink, signOut };
+  /** Display name from user metadata, or first part of email as fallback. */
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
+
+  return { user, session, loading, displayName, signUp, signIn, signOut };
 }

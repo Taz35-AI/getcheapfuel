@@ -67,7 +67,7 @@ export default function HomeApp() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [trackerOpen, setTrackerOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, displayName } = useAuth();
 
   const toggleCompare = useCallback((id: string) => {
     setCompareIds(prev => {
@@ -385,9 +385,9 @@ export default function HomeApp() {
                 {user ? (
                   <span className="flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full bg-green-600 text-white text-[10px] font-bold flex items-center justify-center">
-                      {user.email?.charAt(0).toUpperCase()}
+                      {displayName.charAt(0).toUpperCase()}
                     </span>
-                    Account
+                    {displayName}
                   </span>
                 ) : (
                   'Sign In'
