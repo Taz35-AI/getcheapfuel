@@ -68,11 +68,12 @@ export default function HomeApp() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [trackerOpen, setTrackerOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [unitSystem, setUnitSystem] = useState<'miles' | 'km'>('miles');
   const { user, displayName } = useAuth();
   const appRouter = useRouter();
 
-  // Read persisted settings from localStorage on mount
-  useEffect(() => {
+  // Read persisted settings from localStorage on mount + when page regains focus
+  const loadSettings = useCallback(() => {
     try {
       const ms = localStorage.getItem('gcf_map_style');
       if (ms) setMapStyle(ms as MapStyle);
@@ -82,8 +83,18 @@ export default function HomeApp() {
       if (r) setRadius(Number(r));
       const s = localStorage.getItem('gcf_sort_by');
       if (s) setSortBy(s as 'distance' | 'price');
+      const u = localStorage.getItem('gcf_unit_system');
+      if (u) setUnitSystem(u as 'miles' | 'km');
     } catch {}
   }, []);
+
+  useEffect(() => {
+    loadSettings();
+    // Reload settings when user comes back from /settings page
+    const handleFocus = () => loadSettings();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [loadSettings]);
 
   const toggleCompare = useCallback((id: string) => {
     setCompareIds(prev => {
@@ -411,10 +422,21 @@ export default function HomeApp() {
               onChange={(e) => setRadius(Number(e.target.value))}
               className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-700"
             >
-              <option value={5}>3 mi</option>
-              <option value={10}>6 mi</option>
-              <option value={20}>12 mi</option>
-              <option value={50}>30 mi</option>
+              {unitSystem === 'km' ? (
+                <>
+                  <option value={5}>5 km</option>
+                  <option value={10}>10 km</option>
+                  <option value={20}>20 km</option>
+                  <option value={50}>50 km</option>
+                </>
+              ) : (
+                <>
+                  <option value={5}>3 mi</option>
+                  <option value={10}>6 mi</option>
+                  <option value={20}>12 mi</option>
+                  <option value={50}>30 mi</option>
+                </>
+              )}
             </select>
           </div>
           {/* Mobile row 2: Fuel filters + radius chip */}
@@ -428,10 +450,21 @@ export default function HomeApp() {
               className="flex-shrink-0 text-[11px] border border-gray-300 rounded-full px-2.5 py-1 bg-white text-gray-700 font-medium"
               aria-label="Search radius"
             >
-              <option value={5}>3 mi</option>
-              <option value={10}>6 mi</option>
-              <option value={20}>12 mi</option>
-              <option value={50}>30 mi</option>
+              {unitSystem === 'km' ? (
+                <>
+                  <option value={5}>5 km</option>
+                  <option value={10}>10 km</option>
+                  <option value={20}>20 km</option>
+                  <option value={50}>50 km</option>
+                </>
+              ) : (
+                <>
+                  <option value={5}>3 mi</option>
+                  <option value={10}>6 mi</option>
+                  <option value={20}>12 mi</option>
+                  <option value={50}>30 mi</option>
+                </>
+              )}
             </select>
           </div>
 
