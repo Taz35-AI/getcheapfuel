@@ -261,7 +261,6 @@ export default function HomeApp() {
           {/* Mobile: 2 rows | Desktop: single row */}
           <div className="flex items-center gap-2 md:gap-4">
             <div className="flex-shrink-0">
-              <h1 className="sr-only">GetCheapFuel - Compare Cheap Petrol, Diesel & EV Charging Prices UK</h1>
               <picture>
                 <source srcSet="/icons/logo.webp" type="image/webp" />
                 <img
@@ -285,36 +284,30 @@ export default function HomeApp() {
             <div className="hidden md:flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => setShowFavouritesOnly(!showFavouritesOnly)}
-                className={`px-3 py-2.5 rounded-lg transition-colors shadow-sm ${showFavouritesOnly ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                className={`px-3 py-2.5 rounded-lg transition-colors shadow-sm ${showFavouritesOnly ? 'bg-red-50' : 'bg-gray-100 hover:bg-gray-200'}`}
                 title="Favourites"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill={showFavouritesOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-                </svg>
+                {showFavouritesOnly ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                  </svg>
+                ) : (
+                  <img src="/icons/favourites.svg" alt="Favourites" className="w-5 h-5" />
+                )}
               </button>
               <button
                 onClick={() => setCalcOpen(true)}
-                className="px-3 py-2.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors shadow-sm"
+                className="px-3 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm"
                 title="Fuel Calculator"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="4" y="2" width="16" height="20" rx="2" />
-                  <line x1="8" y1="6" x2="16" y2="6" />
-                  <line x1="8" y1="10" x2="10" y2="10" />
-                  <line x1="14" y1="10" x2="16" y2="10" />
-                  <line x1="8" y1="14" x2="10" y2="14" />
-                  <line x1="14" y1="14" x2="16" y2="14" />
-                  <line x1="8" y1="18" x2="16" y2="18" />
-                </svg>
+                <img src="/icons/calculator.svg" alt="Fuel Calculator" className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setRouteOpen(true)}
-                className="px-3 py-2.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors shadow-sm"
+                className="px-3 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm"
                 title="Route Planner"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="3 11 22 2 13 21 11 13 3 11" />
-                </svg>
+                <img src="/icons/route-planner.svg" alt="Route Planner" className="w-5 h-5" />
               </button>
               {compareIds.size > 0 && (
                 <button
@@ -334,15 +327,10 @@ export default function HomeApp() {
               )}
               <button
                 onClick={() => setTrackerOpen(true)}
-                className="px-3 py-2.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors shadow-sm"
+                className="px-3 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm"
                 title="Fuel Spending Tracker"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 22V5a2 2 0 012-2h8a2 2 0 012 2v17" />
-                  <path d="M15 10h2a2 2 0 012 2v2a2 2 0 002 2h0" />
-                  <path d="M21 10V8a2 2 0 00-2-2h-1" />
-                  <rect x="6" y="7" width="6" height="5" rx="1" />
-                </svg>
+                <img src="/icons/fuel-tracker.svg" alt="Fuel Spending Tracker" className="w-5 h-5" />
               </button>
               <select
                 value={mapStyle}
@@ -391,52 +379,41 @@ export default function HomeApp() {
           <div className="flex md:hidden items-center gap-1.5 mt-2">
             <button
               onClick={() => setShowFavouritesOnly(!showFavouritesOnly)}
-              className={`flex-1 p-2 rounded-lg transition-colors flex items-center justify-center ${showFavouritesOnly ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              className={`flex-1 p-2 rounded-lg transition-colors flex items-center justify-center ${showFavouritesOnly ? 'bg-red-50' : 'bg-gray-100 hover:bg-gray-200'}`}
               title="Favourites"
               aria-label="Favourites"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill={showFavouritesOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-              </svg>
+              {showFavouritesOnly ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                </svg>
+              ) : (
+                <img src="/icons/favourites.svg" alt="Favourites" className="w-4 h-4" />
+              )}
             </button>
             <button
               onClick={() => setCalcOpen(true)}
-              className="flex-1 p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center"
+              className="flex-1 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center"
               title="Fuel Calculator"
               aria-label="Fuel Calculator"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="4" y="2" width="16" height="20" rx="2" />
-                <line x1="8" y1="6" x2="16" y2="6" />
-                <line x1="8" y1="10" x2="10" y2="10" />
-                <line x1="14" y1="10" x2="16" y2="10" />
-                <line x1="8" y1="14" x2="10" y2="14" />
-                <line x1="14" y1="14" x2="16" y2="14" />
-                <line x1="8" y1="18" x2="16" y2="18" />
-              </svg>
+              <img src="/icons/calculator.svg" alt="Fuel Calculator" className="w-4 h-4" />
             </button>
             <button
               onClick={() => setRouteOpen(true)}
-              className="flex-1 p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex items-center justify-center"
+              className="flex-1 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center"
               title="Route Planner"
               aria-label="Route Planner"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="3 11 22 2 13 21 11 13 3 11" />
-              </svg>
+              <img src="/icons/route-planner.svg" alt="Route Planner" className="w-4 h-4" />
             </button>
             <button
               onClick={() => setTrackerOpen(true)}
-              className="flex-1 p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors flex items-center justify-center"
+              className="flex-1 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center"
               title="Fuel Spending Tracker"
               aria-label="Fuel Spending Tracker"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 22V5a2 2 0 012-2h8a2 2 0 012 2v17" />
-                <path d="M15 10h2a2 2 0 012 2v2a2 2 0 002 2h0" />
-                <path d="M21 10V8a2 2 0 00-2-2h-1" />
-                <rect x="6" y="7" width="6" height="5" rx="1" />
-              </svg>
+              <img src="/icons/fuel-tracker.svg" alt="Fuel Spending Tracker" className="w-4 h-4" />
             </button>
             {compareIds.size > 0 && (
               <button

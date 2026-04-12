@@ -48,7 +48,7 @@ interface FFPriceEntry {
 function normaliseFuelType(raw: string): 'E10' | 'E5' | 'B7' | 'SDV' | null {
   if (!raw) return null;
   const u = raw.toUpperCase().replace(/[\s_-]/g, '');
-  if (u === 'SDV' || u === 'SDVSTANDARD' || u.includes('SUPERDIESEL') || u.includes('PREMIUMDIESEL')) return 'SDV';
+  if (u === 'SDV' || u === 'SDVSTANDARD' || u === 'B7PREMIUM' || u.includes('SUPERDIESEL') || u.includes('PREMIUMDIESEL')) return 'SDV';
   if (u === 'E5' || u === 'E5STANDARD' || u.includes('PREMIUMUNLEADED') || u.includes('SUPERUNLEADED')) return 'E5';
   if (u === 'E10' || u === 'E10STANDARD' || u === 'UNLEADED' || u === 'PETROL') return 'E10';
   if (u === 'B7' || u === 'B7STANDARD' || u === 'DIESEL') return 'B7';
@@ -104,7 +104,7 @@ async function getToken(): Promise<string> {
       client_id: clientId,
       client_secret: clientSecret,
     }),
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) throw new Error(`Token request failed: ${res.status}`);
   const json = await res.json();
@@ -113,14 +113,38 @@ async function getToken(): Promise<string> {
   return token;
 }
 
+async function fetchWithRetry(url: string, token: string, retries = 2): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(30000),
+      });
+      if (res.ok) return res;
+      // 429 / 5xx — retry after a short pause
+      if (attempt < retries && (res.status === 429 || res.status >= 500)) {
+        console.warn(`[sync] ${url} returned ${res.status}, retrying (${attempt + 1}/${retries})...`);
+        await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+        continue;
+      }
+      return res; // non-retryable error
+    } catch (err) {
+      if (attempt < retries) {
+        console.warn(`[sync] ${url} failed, retrying (${attempt + 1}/${retries})...`, (err as Error).message);
+        await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error(`[sync] ${url} failed after ${retries + 1} attempts`);
+}
+
 async function fetchAllBatches<T>(path: string, token: string): Promise<T[]> {
   const all: T[] = [];
   for (let batch = 1; batch <= 50; batch++) {
     const url = `${FUEL_FINDER_BASE}${path}${path.includes('?') ? '&' : '?'}batch-number=${batch}`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-      signal: AbortSignal.timeout(60000),
-    });
+    const res = await fetchWithRetry(url, token);
     if (!res.ok) {
       console.error(`[sync] ${path} batch ${batch} failed: ${res.status}`);
       break;

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { fetchAllStations } from '@/lib/fuel-data';
+import { isFreshFuelPrice } from '@/lib/freshness';
 import {
   computeNationalSummary,
   computeRegionalBreakdown,
@@ -18,10 +19,10 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: 'UK Fuel Price Index | Live Petrol & Diesel Data | GetCheapFuel',
   description:
-    'The UK Fuel Price Index from GetCheapFuel. Live national and regional averages for petrol and diesel, brand league tables and price spread analysis. Data from 7,500+ UK stations, updated daily.',
+    'The UK Fuel Price Index from GetCheapFuel. Live national and regional averages for petrol and diesel, brand league tables and price spread analysis. Data from 8,200+ UK stations, updated daily.',
   alternates: { canonical: 'https://getcheapfuel.co.uk/fuel-index' },
   openGraph: {
-    title: 'UK Fuel Price Index | Live Data from 7,500+ Stations',
+    title: 'UK Fuel Price Index | Live Data from 8,200+ Stations',
     description:
       'Daily fuel price analysis covering every region of the UK. National averages, brand rankings, regional breakdowns, and the cheapest pumps in the country.',
     url: 'https://getcheapfuel.co.uk/fuel-index',
@@ -41,7 +42,12 @@ function fmtDelta(n: number | null | undefined): { text: string; tone: 'up' | 'd
 }
 
 export default async function FuelIndexPage() {
-  const stations = await fetchAllStations(86400);
+  const allStations = await fetchAllStations(86400);
+  // Reports use only data reported within the last 7 days
+  const stations = allStations.filter(s =>
+    isFreshFuelPrice(s, 'E10', 7) || isFreshFuelPrice(s, 'E5', 7) ||
+    isFreshFuelPrice(s, 'B7', 7) || isFreshFuelPrice(s, 'SDV', 7)
+  );
   const fuelKeys: FuelKey[] = ['E10', 'E5', 'B7', 'SDV'];
 
   const summaries = fuelKeys.map(f => computeNationalSummary(stations, f));
@@ -74,7 +80,7 @@ export default async function FuelIndexPage() {
       'petrol price index',
       'diesel price index',
       'fuel price comparison',
-      'CMA fuel data',
+      'UK fuel data',
     ],
     license: 'https://creativecommons.org/licenses/by/4.0/',
     creator: {

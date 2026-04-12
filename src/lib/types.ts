@@ -54,7 +54,7 @@ export interface FuelStation {
   prices: FuelPrices;
   lastUpdated?: string;
   priceUpdatedAt?: PriceUpdatedAt;
-  source: 'cma' | 'fuelfinder';
+  source: 'fuelfinder';
   openingHours?: OpeningHours;
   amenities?: StationAmenities;
 }

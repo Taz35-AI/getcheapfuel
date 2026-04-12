@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     // 2. Get unique fuel types that have alerts
     const fuelTypes = [...new Set(alerts.map(a => a.fuel_type))];
 
-    // 3. Fetch current cheapest prices from the CMA feed
+    // 3. Fetch current cheapest prices from the fuel price data
     // Use a central UK location with a large radius to get a broad price picture
     const priceRes = await fetch(
       `${req.nextUrl.origin}/api/fuel-prices?lat=52.5&lng=-1.5&radius=50`

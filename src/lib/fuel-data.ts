@@ -1,49 +1,10 @@
 import type { FuelStation } from './types';
-
-export const CMA_FEEDS: Record<string, string> = {
-  asda: 'https://storelocator.asda.com/fuel_prices_data.json',
-  bp: 'https://www.bp.com/en_gb/united-kingdom/home/fuelprices/fuel_prices_data.json',
-  shell: 'https://www.shell.co.uk/fuel-prices-data.html',
-  esso: 'https://fuelprices.esso.co.uk/latestdata.json',
-  tesco: 'https://www.tesco.com/fuel_prices/fuel_prices_data.json',
-  morrisons: 'https://www.morrisons.com/fuel-prices/fuel.json',
-  sainsburys: 'https://api.sainsburys.co.uk/v1/exports/latest/fuel_prices_data.json',
-  jet: 'https://jetlocal.co.uk/fuel_prices_data.json',
-  sgn: 'https://www.sgnretail.uk/files/data/SGN_daily_fuel_prices.json',
-  rontec: 'https://www.rontec-servicestations.co.uk/fuel-prices/data/fuel_prices_data.json',
-  mfg: 'https://fuel.motorfuelgroup.com/fuel_prices_data.json',
-  ascona: 'https://fuelprices.asconagroup.co.uk/newfuel.json',
-  moto: 'https://moto-way.com/fuel-price/fuel_prices.json',
-  // 'karan' (https://devapi.krlpos.com/...) was removed — it's a dev/staging
-  // endpoint that 404s in production. Add it back if/when they publish a
-  // stable URL.
-};
-
-interface CMAStation {
-  site_id: string;
-  brand: string;
-  address: string;
-  postcode: string;
-  location: { latitude: number; longitude: number };
-  prices: {
-    E10?: number | null;
-    E5?: number | null;
-    B7?: number | null;
-    SDV?: number | null;
-  };
-}
-
-interface CMAFeed {
-  last_updated: string;
-  stations: CMAStation[];
-}
+import type { OpeningHours, StationAmenities } from './types';
 
 // ─── Fuel Finder (read from Supabase cache) ──────────────────────────────────
 // FF data is synced once a day to the fuel_stations_ff table by the
 // /api/cron/sync-fuel-finder route (Vercel Cron). We just read it here —
 // instant, no 30s cold-start fetch.
-
-import type { OpeningHours, StationAmenities } from './types';
 
 interface FuelStationRow {
   id: string;
@@ -76,6 +37,49 @@ interface BBox {
   lat: number;
   lng: number;
   radiusKm: number;
+}
+
+// Reject obvious garbage like 999.9 placeholders, but otherwise leave
+// individual prices alone. Averages absorb the rare outliers.
+function sanitisePrice(price: number | null | undefined): number | null {
+  if (price == null) return null;
+  if (price >= 100 && price <= 350) return price;
+  return null;
+}
+
+function normaliseBrand(raw: string): string {
+  if (!raw) return 'Unknown';
+  const lower = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
+  // Supermarkets
+  if (lower.includes('sainsbury')) return "Sainsbury's";
+  if (lower.includes('tesco')) return 'Tesco';
+  if (lower.includes('asda')) return 'Asda';
+  if (lower.includes('morrisons')) return 'Morrisons';
+  if (lower.includes('coop') || lower.includes('cooperative')) return 'Co-op';
+  if (lower.includes('costco')) return 'Costco';
+  // Major branded
+  if (lower.includes('shell')) return 'Shell';
+  if (lower.includes('esso')) return 'Esso';
+  if (lower.includes('texaco')) return 'Texaco';
+  if (lower.includes('jet')) return 'Jet';
+  if (lower.includes('gulf')) return 'Gulf';
+  if (lower.includes('murco')) return 'Murco';
+  if (lower.includes('maxol')) return 'Maxol';
+  if (lower.includes('applegreen')) return 'Applegreen';
+  if (lower.includes('harvest')) return 'Harvest Energy';
+  if (lower.includes('certas')) return 'Certas Energy';
+  // Motorway services
+  if (lower.includes('moto') && !lower.includes('motor')) return 'Moto';
+  if (lower.includes('roadchef')) return 'RoadChef';
+  if (lower.includes('welcomebreak')) return 'Welcome Break';
+  // Operators (often run forecourts under multiple brand names)
+  if (lower.includes('rontec')) return 'Rontec';
+  if (lower.includes('ascona')) return 'Ascona';
+  if (lower.includes('mfg') || lower.includes('motorfuelgroup')) return 'Motor Fuel Group';
+  if (lower.includes('eg') && lower.length <= 8) return 'EG Group';
+  // BP last (would otherwise catch "MFG BP" etc.)
+  if (lower.includes('bp')) return 'BP';
+  return raw;
 }
 
 function rowToStation(row: FuelStationRow): FuelStation {
@@ -186,111 +190,9 @@ async function fetchFuelFinderStations(bbox?: BBox): Promise<FuelStation[]> {
     return [];
   }
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
-// Reject obvious garbage like 999.9 placeholders, but otherwise leave
-// individual prices alone. Averages absorb the rare outliers.
-function sanitisePrice(price: number | null | undefined): number | null {
-  if (price == null) return null;
-  if (price >= 100 && price <= 350) return price;
-  return null;
-}
-function normaliseBrand(raw: string): string {
-  if (!raw) return 'Unknown';
-  const lower = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
-  // Supermarkets
-  if (lower.includes('sainsbury')) return "Sainsbury's";
-  if (lower.includes('tesco')) return 'Tesco';
-  if (lower.includes('asda')) return 'Asda';
-  if (lower.includes('morrisons')) return 'Morrisons';
-  if (lower.includes('coop') || lower.includes('cooperative')) return 'Co-op';
-  if (lower.includes('costco')) return 'Costco';
-  // Major branded
-  if (lower.includes('shell')) return 'Shell';
-  if (lower.includes('esso')) return 'Esso';
-  if (lower.includes('texaco')) return 'Texaco';
-  if (lower.includes('jet')) return 'Jet';
-  if (lower.includes('gulf')) return 'Gulf';
-  if (lower.includes('murco')) return 'Murco';
-  if (lower.includes('maxol')) return 'Maxol';
-  if (lower.includes('applegreen')) return 'Applegreen';
-  if (lower.includes('harvest')) return 'Harvest Energy';
-  if (lower.includes('certas')) return 'Certas Energy';
-  // Motorway services
-  if (lower.includes('moto') && !lower.includes('motor')) return 'Moto';
-  if (lower.includes('roadchef')) return 'RoadChef';
-  if (lower.includes('welcomebreak')) return 'Welcome Break';
-  // Operators (often run forecourts under multiple brand names)
-  if (lower.includes('rontec')) return 'Rontec';
-  if (lower.includes('ascona')) return 'Ascona';
-  if (lower.includes('mfg') || lower.includes('motorfuelgroup')) return 'Motor Fuel Group';
-  if (lower.includes('eg') && lower.length <= 8) return 'EG Group';
-  // BP last (would otherwise catch "MFG BP" etc.)
-  if (lower.includes('bp')) return 'BP';
-  return raw;
-}
-export async function fetchCMAFeed(brand: string, url: string, revalidate = 300): Promise<FuelStation[]> {
-  try {
-    const response = await fetch(url, {
-  next: { revalidate: brand === 'sainsburys' ? 3600 : revalidate },
-  signal: AbortSignal.timeout(8000),
-  headers: {
-    'User-Agent': 'Mozilla/5.0 (compatible; GetCheapFuel/1.0)',
-    'Accept': 'application/json',
-    'Accept-Language': 'en-GB,en;q=0.9',
-    'Referer': 'https://www.sainsburys.co.uk/',
-  },
-});
-    if (!response.ok) return [];
-    const data: CMAFeed = await response.json();
-    return (data.stations || [])
-      .filter(s => s.location?.latitude && s.location?.longitude)
-      .map(station => ({
-        id: `${brand}-${station.site_id}`,
-        brand: normaliseBrand(station.brand || brand),
-        name: normaliseBrand(station.brand || brand),
-        address: station.address,
-        postcode: station.postcode,
-        latitude: station.location.latitude,
-        longitude: station.location.longitude,
-        prices: {
-          E10: sanitisePrice(station.prices?.E10),
-          E5: sanitisePrice(station.prices?.E5),
-          B7: sanitisePrice(station.prices?.B7),
-          SDV: sanitisePrice(station.prices?.SDV),
-        },
-        lastUpdated: data.last_updated,
-        source: 'cma' as const,
-      }));
-  } catch {
-    // Upstream CMA feeds are flaky (rate limits, 404s, geo blocks).
-    // Failures are non-fatal: Fuel Finder data still covers the same
-    // stations. Stay silent so dev logs aren't polluted on every page load.
-    return [];
-  }
-}
-
-export async function fetchAllStations(revalidate = 300, bbox?: BBox): Promise<FuelStation[]> {
-  // Run Fuel Finder + all CMA feeds in parallel.
-  // If bbox is provided, FF reads only the rows in that bounding box —
-  // dramatically faster than fetching all 7,640 every time.
-  const [fuelFinderResult, ...cmaResults] = await Promise.allSettled([
-    fetchFuelFinderStations(bbox),
-    ...Object.entries(CMA_FEEDS).map(([brand, url]) => fetchCMAFeed(brand, url, revalidate)),
-  ]);
-
-  const ffStations: FuelStation[] =
-    fuelFinderResult.status === 'fulfilled' ? fuelFinderResult.value : [];
-
-  const cmaStations: FuelStation[] = cmaResults
-    .filter((r): r is PromiseFulfilledResult<FuelStation[]> => r.status === 'fulfilled')
-    .flatMap(r => r.value);
-
-  // Fuel Finder takes priority — skip CMA stations with matching postcode
-  const seenPostcodes = new Set(ffStations.map(s => s.postcode.replace(/\s/g, '').toLowerCase()));
-  const dedupedCma = cmaStations.filter(s => !seenPostcodes.has(s.postcode.replace(/\s/g, '').toLowerCase()));
-
-  return [...ffStations, ...dedupedCma];
+export async function fetchAllStations(_revalidate = 300, bbox?: BBox): Promise<FuelStation[]> {
+  return fetchFuelFinderStations(bbox);
 }
 
 export function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {

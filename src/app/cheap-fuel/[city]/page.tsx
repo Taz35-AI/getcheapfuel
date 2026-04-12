@@ -5,7 +5,7 @@ import { UK_CITIES } from '@/lib/cities';
 import { fetchAllStations, getStationsNear, haversineDistance } from '@/lib/fuel-data';
 import { BRAND_SLUGS } from '@/lib/brand-slugs';
 import { toTitleCase } from '@/lib/format-text';
-import { getStationFreshness, freshnessClasses, type FreshnessTier } from '@/lib/freshness';
+import { isFreshFuelPrice } from '@/lib/freshness';
 
 // Rebuild 3 times a day (every 8 hours)
 export const revalidate = 28800;
@@ -63,13 +63,12 @@ export default async function CityPage({
   const radiusKm = 16; // ~10 miles
   const nearbyStations = getStationsNear(allStations, city.lat, city.lng, radiusKm);
 
-  // Calculate price stats
+  // Calculate price stats (7-day fresh data only for reports)
   interface TopRow {
     brand: string;
     price: number;
     address: string;
     dist: string;
-    freshness: { tier: FreshnessTier; label: string };
   }
   interface FuelStat {
     fuel: FuelKey;
@@ -86,7 +85,7 @@ export default async function CityPage({
   const fuelKeys: FuelKey[] = ['E10', 'E5', 'B7', 'SDV'];
   const stats: FuelStat[] = fuelKeys.map((fuel): FuelStat | null => {
     const withPrice = nearbyStations
-      .filter(s => s.prices[fuel] != null)
+      .filter(s => s.prices[fuel] != null && isFreshFuelPrice(s, fuel, 7))
       .sort((a, b) => (a.prices[fuel] ?? 999) - (b.prices[fuel] ?? 999));
     if (withPrice.length === 0) return null;
 
@@ -103,16 +102,12 @@ export default async function CityPage({
       avgPrice: (prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(1),
       highestPrice: prices[prices.length - 1],
       stationCount: withPrice.length,
-      top5: withPrice.slice(0, 5).map(s => {
-        const f = getStationFreshness(s);
-        return {
-          brand: s.brand,
-          price: s.prices[fuel]!,
-          address: s.postcode || s.address,
-          dist: (haversineDistance(city.lat, city.lng, s.latitude, s.longitude) * 0.6214).toFixed(1),
-          freshness: { tier: f.tier, label: f.label },
-        };
-      }),
+      top5: withPrice.slice(0, 5).map(s => ({
+        brand: s.brand,
+        price: s.prices[fuel]!,
+        address: s.postcode || s.address,
+        dist: (haversineDistance(city.lat, city.lng, s.latitude, s.longitude) * 0.6214).toFixed(1),
+      })),
     };
   }).filter((s): s is FuelStat => s !== null);
 
@@ -134,8 +129,8 @@ export default async function CityPage({
     }
     const entry = brandStatsMap.get(s.brand)!;
     entry.count++;
-    if (s.prices.E10 != null) { entry.e10Sum += s.prices.E10; entry.e10Count++; }
-    if (s.prices.B7 != null) { entry.b7Sum += s.prices.B7; entry.b7Count++; }
+    if (s.prices.E10 != null && isFreshFuelPrice(s, 'E10', 7)) { entry.e10Sum += s.prices.E10; entry.e10Count++; }
+    if (s.prices.B7 != null && isFreshFuelPrice(s, 'B7', 7)) { entry.b7Sum += s.prices.B7; entry.b7Count++; }
   }
   const cityBrands = Array.from(brandStatsMap.entries())
     .filter(([, v]) => v.count >= 2)
@@ -337,36 +332,21 @@ export default async function CityPage({
                     <th className="text-left px-4 py-2.5 font-medium text-gray-600 hidden sm:table-cell">Postcode</th>
                     <th className="text-right px-4 py-2.5 font-medium text-gray-600">Price</th>
                     <th className="text-right px-4 py-2.5 font-medium text-gray-600 hidden sm:table-cell">Distance</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-gray-600">Updated</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {s.top5.map((station, i) => {
-                    const fStyle = freshnessClasses(station.freshness.tier);
-                    return (
-                      <tr key={i} className={i === 0 ? 'bg-green-50' : i % 2 === 0 ? 'bg-gray-50/50' : ''}>
-                        <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
-                        <td className="px-4 py-2.5 font-medium text-gray-900">{station.brand}</td>
-                        <td className="px-4 py-2.5 text-gray-500 hidden sm:table-cell">{station.address}</td>
-                        <td className="px-4 py-2.5 text-right font-bold text-gray-900">{station.price.toFixed(1)}p</td>
-                        <td className="px-4 py-2.5 text-right text-gray-500 hidden sm:table-cell">{station.dist} mi</td>
-                        <td className="px-4 py-2.5">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${fStyle.bg} ${fStyle.text}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${fStyle.dot}`} />
-                            {station.freshness.label.replace('Updated ', '')}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {s.top5.map((station, i) => (
+                    <tr key={i} className={i === 0 ? 'bg-green-50' : i % 2 === 0 ? 'bg-gray-50/50' : ''}>
+                      <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
+                      <td className="px-4 py-2.5 font-medium text-gray-900">{station.brand}</td>
+                      <td className="px-4 py-2.5 text-gray-500 hidden sm:table-cell">{station.address}</td>
+                      <td className="px-4 py-2.5 text-right font-bold text-gray-900">{station.price.toFixed(1)}p</td>
+                      <td className="px-4 py-2.5 text-right text-gray-500 hidden sm:table-cell">{station.dist} mi</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
-            {s.top5.some(t => t.freshness.tier === 'very-stale') && (
-              <p className="text-[11px] text-red-600 mt-2 px-1">
-                One or more prices in this list are over 7 days old and may be out of date. Verify at the pump.
-              </p>
-            )}
           </section>
         ))}
 
@@ -555,7 +535,7 @@ export default async function CityPage({
           <h2 className="text-lg font-semibold text-gray-900 mb-3">About GetCheapFuel</h2>
           <p className="text-sm text-gray-600">
             GetCheapFuel is a free fuel price comparison tool for the UK. We show real-time
-            petrol, diesel, and EV charging prices from 7,500+ stations across the country.
+            petrol, diesel, and EV charging prices from 8,200+ stations across the country.
             Prices come directly from the retailers — the same prices you see at
             the pump. No sign-up needed.
           </p>

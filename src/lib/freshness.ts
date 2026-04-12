@@ -16,10 +16,10 @@ const DAY = 24 * 60 * 60 * 1000;
  * Compute a station's data freshness from its per-fuel update timestamps.
  *
  * Tiers:
- *   fresh       <  3 days old   → display normally
- *   stale       3-7 days old    → amber warning colour
- *   very-stale  >= 7 days old   → red, explicit "may be out of date"
- *   unknown     no timestamps   → fall back to the cron last-sync time
+ *   fresh       <  3 days old   → green "Fresh"
+ *   stale       3-14 days old   → blue "Stable" (price unchanged, likely still accurate)
+ *   very-stale  >= 14 days old  → amber warning
+ *   unknown     no timestamps   → grey
  */
 export function getStationFreshness(station: FuelStation, now: Date = new Date()): Freshness {
   const updates = station.priceUpdatedAt;
@@ -40,7 +40,7 @@ export function getStationFreshness(station: FuelStation, now: Date = new Date()
     return {
       tier: 'unknown',
       mostRecent: null,
-      label: 'Last updated date unknown',
+      label: 'Report date unknown',
     };
   }
 
@@ -50,31 +50,43 @@ export function getStationFreshness(station: FuelStation, now: Date = new Date()
 
   let tier: FreshnessTier;
   if (ageDays < 3) tier = 'fresh';
-  else if (ageDays < 7) tier = 'stale';
+  else if (ageDays < 14) tier = 'stale';
   else tier = 'very-stale';
 
   return {
     tier,
     mostRecent: new Date(mostRecentMs).toISOString(),
-    label: formatRelative(ageMs),
+    label: formatRelative(ageMs, mostRecentMs),
   };
 }
 
-function formatRelative(ageMs: number): string {
-  const minutes = Math.floor(ageMs / (60 * 1000));
+function formatRelative(ageMs: number, mostRecentMs: number): string {
   const hours = Math.floor(ageMs / (60 * 60 * 1000));
   const days = Math.floor(ageMs / DAY);
 
-  if (minutes < 1) return 'Updated just now';
-  if (minutes < 60) return `Updated ${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-  if (hours < 24) return `Updated ${hours} hour${hours === 1 ? '' : 's'} ago`;
-  if (days < 7) return `Updated ${days} day${days === 1 ? '' : 's'} ago`;
-  if (days < 30) {
-    const weeks = Math.floor(days / 7);
-    return `Updated ${weeks} week${weeks === 1 ? '' : 's'} ago`;
-  }
-  const months = Math.floor(days / 30);
-  return `Updated ${months} month${months === 1 ? '' : 's'} ago`;
+  if (hours < 24) return 'Reported by station today';
+  if (days === 1) return 'Reported today · Price changed yesterday';
+
+  const date = new Date(mostRecentMs);
+  const formatted = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(date);
+  return `Reported today · Price unchanged since ${formatted}`;
+}
+
+/**
+ * Check whether a specific fuel price on a station is within the given
+ * age limit. Used by report pages to exclude stale data from calculations.
+ */
+export function isFreshFuelPrice(
+  station: FuelStation,
+  fuel: 'E10' | 'E5' | 'B7' | 'SDV',
+  maxAgeDays = 7,
+  now: Date = new Date(),
+): boolean {
+  const updatedAt = station.priceUpdatedAt?.[fuel];
+  if (!updatedAt) return false;
+  const ts = Date.parse(updatedAt);
+  if (isNaN(ts)) return false;
+  return (now.getTime() - ts) <= maxAgeDays * DAY;
 }
 
 /** Tailwind classes per tier — used by the popup badge. */
@@ -83,10 +95,20 @@ export function freshnessClasses(tier: FreshnessTier): { bg: string; text: strin
     case 'fresh':
       return { bg: 'bg-green-50', text: 'text-green-700', dot: 'bg-green-500' };
     case 'stale':
-      return { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' };
+      return { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' };
     case 'very-stale':
-      return { bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500' };
+      return { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' };
     default:
       return { bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-400' };
+  }
+}
+
+/** Human-friendly tier name for badge display. */
+export function freshnessLabel(tier: FreshnessTier): string {
+  switch (tier) {
+    case 'fresh': return 'Fresh';
+    case 'stale': return 'Stable';
+    case 'very-stale': return 'Unverified';
+    default: return 'Unknown';
   }
 }

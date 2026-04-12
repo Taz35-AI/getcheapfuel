@@ -19,7 +19,7 @@ import StationAmenityIcons from './StationAmenityIcons';
 import BrandLogo from './BrandLogo';
 import { toTitleCase } from '@/lib/format-text';
 import { getBrandLogo } from '@/lib/brand-logos';
-import { getStationFreshness, freshnessClasses } from '@/lib/freshness';
+import { getStationFreshness, freshnessClasses, freshnessLabel } from '@/lib/freshness';
 
 // Free vector tile styles from OpenFreeMap - no API key needed
 const MAP_STYLES = {
@@ -349,24 +349,17 @@ function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStatio
         </div>
       )}
 
-      {/* Data freshness — colored by how stale the per-fuel timestamps are */}
+      {/* Data freshness badge */}
       <div className={`mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-gray-100`}>
-        <div className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg ${freshnessStyle.bg}`}>
-          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${freshnessStyle.dot}`} />
-          <span className={`text-[10px] sm:text-[11px] font-semibold ${freshnessStyle.text}`}>
+        <div className="flex items-center gap-2">
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold ${freshnessStyle.bg} ${freshnessStyle.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${freshnessStyle.dot}`} />
+            {freshnessLabel(freshness.tier)}
+          </span>
+          <span className="text-[9px] sm:text-[10px] text-gray-400">
             {freshness.label}
           </span>
         </div>
-        {freshness.tier === 'very-stale' && (
-          <div className="text-[9px] sm:text-[10px] text-red-600 mt-1 pl-2">
-            This price hasn&apos;t been updated in over a week and may be out of date.
-          </div>
-        )}
-        {freshness.tier === 'stale' && (
-          <div className="text-[9px] sm:text-[10px] text-amber-600 mt-1 pl-2">
-            Updated more than 3 days ago. Verify at the pump if accuracy matters.
-          </div>
-        )}
       </div>
       <div className="flex gap-2 mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-gray-100">
         <FavouriteButton id={station.id} isFav={isFav} onToggle={onToggleFav} />
