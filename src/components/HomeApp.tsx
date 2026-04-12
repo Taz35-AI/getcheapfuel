@@ -164,7 +164,13 @@ export default function HomeApp() {
     }
     try {
       if (isNative()) {
-        // Native: use Capacitor geolocation (handles permissions natively)
+        // Native: request runtime permission first (required on Android)
+        const perms = await Geolocation.requestPermissions();
+        if (perms.location === 'denied') {
+          alert('Location permission denied. Please enable it in your device settings.');
+          setIsLocating(false);
+          return;
+        }
         const pos = await Geolocation.getCurrentPosition({
           enableHighAccuracy: true,
           timeout: 10000,
