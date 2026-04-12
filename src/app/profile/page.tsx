@@ -233,22 +233,6 @@ export default function ProfilePage() {
           )}
         </section>
 
-        {/* Settings link */}
-        <section className="mb-8">
-          <Link
-            href="/settings"
-            className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-          >
-            <div>
-              <div className="text-sm font-semibold text-gray-900">Settings</div>
-              <div className="text-xs text-gray-500">Map style, fuel types, search radius</div>
-            </div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </Link>
-        </section>
-
         {/* Sign out */}
         <section className="mb-8">
           <button

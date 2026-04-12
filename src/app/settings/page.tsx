@@ -96,10 +96,10 @@ export default function SettingsPage() {
     <main className="h-screen overflow-y-auto bg-white">
       <div className="max-w-lg mx-auto px-4 py-8 md:py-12">
         <Link
-          href="/profile"
+          href="/"
           className="inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-700 mb-8"
         >
-          &larr; Back to Profile
+          &larr; Back to GetCheapFuel
         </Link>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-8">Settings</h1>
