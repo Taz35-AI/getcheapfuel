@@ -138,10 +138,13 @@ export default function RootLayout({
         </noscript>
         <script
           dangerouslySetInnerHTML={{
-            // Defer SW registration to idle time so it doesn't block the
-            // main thread during initial paint. Falls back to setTimeout
-            // on browsers without requestIdleCallback.
-            __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){var r=function(){navigator.serviceWorker.register('/sw.js').catch(function(){})};('requestIdleCallback' in window)?requestIdleCallback(r,{timeout:5000}):setTimeout(r,3000)})}`,
+            __html: [
+              // Defer SW registration to idle time so it doesn't block the
+              // main thread during initial paint.
+              `if('serviceWorker' in navigator){window.addEventListener('load',function(){var r=function(){navigator.serviceWorker.register('/sw.js').catch(function(){})};('requestIdleCallback' in window)?requestIdleCallback(r,{timeout:5000}):setTimeout(r,3000)})}`,
+              // Hide Capacitor splash screen once the page has loaded
+              `window.addEventListener('load',function(){if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.SplashScreen){window.Capacitor.Plugins.SplashScreen.hide()}})`,
+            ].join(';'),
           }}
         />
       </body>

@@ -9,14 +9,18 @@ const config: CapacitorConfig = {
   server: {
     url: 'https://getcheapfuel.co.uk',
     cleartext: false,
+    // Allow navigation to external URLs (Google Maps, Waze links etc.)
+    allowNavigation: ['getcheapfuel.co.uk', '*.getcheapfuel.co.uk'],
   },
 
   plugins: {
     SplashScreen: {
-      launchAutoHide: true,
-      launchShowDuration: 2000,
-      backgroundColor: '#ffffff',
-      showSpinner: false,
+      // Keep splash visible until the web page signals it's ready
+      launchAutoHide: false,
+      launchShowDuration: 0,
+      backgroundColor: '#16a34a',
+      showSpinner: true,
+      spinnerColor: '#ffffff',
     },
     StatusBar: {
       style: 'LIGHT',
@@ -35,8 +39,10 @@ const config: CapacitorConfig = {
   },
 
   android: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#16a34a',
     allowMixedContent: false,
+    // Use Chrome WebView for better compatibility
+    webContentsDebuggingEnabled: false,
   },
 };
 
