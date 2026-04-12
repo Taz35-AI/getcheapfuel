@@ -8,13 +8,22 @@ import { supabase } from '@/lib/supabase';
 
 const FAVOURITES_KEY = 'gcf_favourites';
 
+interface FavStation {
+  id: string;
+  brand: string;
+  address: string;
+  postcode: string;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading, displayName, signOut } = useAuth();
   const [name, setName] = useState('');
   const [editingName, setEditingName] = useState(false);
   const [savingName, setSavingName] = useState(false);
-  const [favourites, setFavourites] = useState<string[]>([]);
+  const [favourites, setFavourites] = useState<FavStation[]>([]);
+  const [favIds, setFavIds] = useState<string[]>([]);
+  const [loadingFavs, setLoadingFavs] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
@@ -24,14 +33,36 @@ export default function ProfilePage() {
     if (!loading && !user) router.push('/');
   }, [loading, user, router]);
 
-  // Load display name and favourites
+  // Load display name and favourites with station details
   useEffect(() => {
     if (user) {
       setName(displayName);
       try {
         const stored = localStorage.getItem(FAVOURITES_KEY);
-        if (stored) setFavourites(JSON.parse(stored));
-      } catch {}
+        if (stored) {
+          const ids: string[] = JSON.parse(stored);
+          setFavIds(ids);
+          if (ids.length > 0) {
+            // Fetch station details from Supabase
+            supabase
+              .from('fuel_stations_ff')
+              .select('id, brand, address, postcode')
+              .in('id', ids)
+              .then(({ data }) => {
+                if (data) {
+                  setFavourites(data as FavStation[]);
+                }
+                setLoadingFavs(false);
+              });
+          } else {
+            setLoadingFavs(false);
+          }
+        } else {
+          setLoadingFavs(false);
+        }
+      } catch {
+        setLoadingFavs(false);
+      }
     }
   }, [user, displayName]);
 
@@ -52,9 +83,10 @@ export default function ProfilePage() {
   };
 
   const removeFavourite = (id: string) => {
-    const next = favourites.filter(f => f !== id);
-    setFavourites(next);
-    localStorage.setItem(FAVOURITES_KEY, JSON.stringify(next));
+    const nextIds = favIds.filter(f => f !== id);
+    setFavIds(nextIds);
+    setFavourites(prev => prev.filter(f => f.id !== id));
+    localStorage.setItem(FAVOURITES_KEY, JSON.stringify(nextIds));
   };
 
   const handleDeleteAccount = async () => {
@@ -164,18 +196,34 @@ export default function ProfilePage() {
         {/* Favourites */}
         <section className="mb-8">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">
-            Favourite Stations ({favourites.length})
+            Favourite Stations ({favIds.length})
           </h2>
-          {favourites.length > 0 ? (
+          {loadingFavs ? (
+            <div className="flex justify-center py-4">
+              <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : favourites.length > 0 ? (
             <div className="space-y-2">
-              {favourites.map(id => (
-                <div key={id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm text-gray-700 font-mono">{id}</span>
+              {favourites.map(station => (
+                <div key={station.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-gray-900 truncate">{station.brand}</div>
+                    <div className="text-xs text-gray-500 truncate">{station.address}</div>
+                    <div className="text-xs text-gray-400">{station.postcode}</div>
+                  </div>
                   <button
-                    onClick={() => removeFavourite(id)}
-                    className="text-xs text-red-500 hover:text-red-700 font-semibold"
+                    onClick={() => removeFavourite(station.id)}
+                    className="flex-shrink-0 p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
                   >
-                    Remove
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    </svg>
                   </button>
                 </div>
               ))}
