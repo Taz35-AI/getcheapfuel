@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import SearchBar from '@/components/SearchBar';
 import FuelFilter from '@/components/FuelFilter';
 import SettingsMenu from '@/components/SettingsMenu';
+import { useRouter } from 'next/navigation';
 import { isNative } from '@/lib/platform';
 import { Geolocation } from '@capacitor/geolocation';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
@@ -68,6 +69,21 @@ export default function HomeApp() {
   const [trackerOpen, setTrackerOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const { user, displayName } = useAuth();
+  const appRouter = useRouter();
+
+  // Read persisted settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const ms = localStorage.getItem('gcf_map_style');
+      if (ms) setMapStyle(ms as MapStyle);
+      const fuels = localStorage.getItem('gcf_default_fuels');
+      if (fuels) setSelectedFuels(JSON.parse(fuels));
+      const r = localStorage.getItem('gcf_radius');
+      if (r) setRadius(Number(r));
+      const s = localStorage.getItem('gcf_sort_by');
+      if (s) setSortBy(s as 'distance' | 'price');
+    } catch {}
+  }, []);
 
   const toggleCompare = useCallback((id: string) => {
     setCompareIds(prev => {
@@ -374,13 +390,13 @@ export default function HomeApp() {
                 ))}
               </select>
               <button
-                onClick={() => setAuthOpen(true)}
+                onClick={() => user ? appRouter.push('/profile') : setAuthOpen(true)}
                 className={`px-3 py-2.5 rounded-lg transition-colors shadow-sm text-sm font-semibold ${
                   user
                     ? 'bg-green-100 text-green-700 hover:bg-green-200'
                     : 'bg-green-600 text-white hover:bg-green-700'
                 }`}
-                title={user ? 'Account' : 'Sign In'}
+                title={user ? 'Profile' : 'Sign In'}
               >
                 {user ? (
                   <span className="flex items-center gap-1.5">
@@ -485,17 +501,17 @@ export default function HomeApp() {
               </button>
             )}
             <div className="flex-shrink-0">
-              <SettingsMenu mapStyle={mapStyle} onMapStyleChange={setMapStyle} />
+              <SettingsMenu />
             </div>
             <button
-              onClick={() => setAuthOpen(true)}
+              onClick={() => user ? appRouter.push('/profile') : setAuthOpen(true)}
               className={`flex-shrink-0 p-2 rounded-lg transition-colors ${
                 user
                   ? 'bg-green-100 hover:bg-green-200'
                   : 'bg-green-600 text-white hover:bg-green-700'
               }`}
-              title={user ? 'Account' : 'Sign In'}
-              aria-label={user ? 'Account' : 'Sign In'}
+              title={user ? 'Profile' : 'Sign In'}
+              aria-label={user ? 'Profile' : 'Sign In'}
             >
               {user ? (
                 <span className="w-4 h-4 rounded-full bg-green-600 text-white text-[8px] font-bold flex items-center justify-center">
