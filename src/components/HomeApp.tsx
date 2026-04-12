@@ -380,15 +380,7 @@ export default function HomeApp() {
               >
                 <img src="/icons/fuel-tracker.svg" alt="Fuel Spending Tracker" className="w-5 h-5" />
               </button>
-              <select
-                value={mapStyle}
-                onChange={(e) => setMapStyle(e.target.value as MapStyle)}
-                className="px-3 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm shadow-sm capitalize cursor-pointer"
-              >
-                {(['dark', 'bright', 'positron', 'liberty'] as MapStyle[]).map(style => (
-                  <option key={style} value={style} className="capitalize">{style}</option>
-                ))}
-              </select>
+              <SettingsMenu />
               <button
                 onClick={() => user ? appRouter.push('/profile') : setAuthOpen(true)}
                 className={`px-3 py-2.5 rounded-lg transition-colors shadow-sm text-sm font-semibold ${

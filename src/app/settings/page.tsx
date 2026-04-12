@@ -107,6 +107,7 @@ export default function SettingsPage() {
         {/* Map style */}
         <section className="mb-8">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Map Style</h2>
+          <p className="text-xs text-gray-400 mb-3">Choose how the map looks when you open the app.</p>
           <div className="grid grid-cols-2 gap-3">
             {MAP_STYLES.map(s => (
               <button
@@ -161,6 +162,7 @@ export default function SettingsPage() {
         {/* Search radius */}
         <section className="mb-8">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Search Radius</h2>
+          <p className="text-xs text-gray-400 mb-3">Select default radius when searching for fuel stations near you.</p>
           <div className="grid grid-cols-2 gap-2">
             {RADIUS_OPTIONS.map(r => (
               <button
@@ -181,6 +183,7 @@ export default function SettingsPage() {
         {/* Sort preference */}
         <section className="mb-10">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Default Sort</h2>
+          <p className="text-xs text-gray-400 mb-3">Choose how stations are sorted in the list by default.</p>
           <div className="grid grid-cols-2 gap-2">
             {SORT_OPTIONS.map(s => (
               <button
