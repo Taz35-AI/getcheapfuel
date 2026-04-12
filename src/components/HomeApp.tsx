@@ -7,7 +7,6 @@ import FuelFilter from '@/components/FuelFilter';
 import SettingsMenu from '@/components/SettingsMenu';
 import { useRouter } from 'next/navigation';
 import { isNative } from '@/lib/platform';
-import { Geolocation } from '@capacitor/geolocation';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -163,40 +162,21 @@ export default function HomeApp() {
       Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
     }
     try {
-      let latitude: number;
-      let longitude: number;
-
-      if (isNative()) {
-        // Native Capacitor — request Android/iOS runtime permission first
-        const perms = await Geolocation.requestPermissions();
-        if (perms.location === 'denied') {
-          alert('Location permission denied. Please enable it in Settings > Apps > GetCheapFuel > Permissions.');
-          setIsLocating(false);
+      // Use browser geolocation API — works in both web browsers and the
+      // Capacitor WebView. The Android app requests runtime permission
+      // natively on startup (MainActivity.java), so this will succeed
+      // without needing the Capacitor bridge for geolocation.
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('Geolocation not supported'));
           return;
         }
-        const pos = await Geolocation.getCurrentPosition({
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
           timeout: 10000,
         });
-        latitude = pos.coords.latitude;
-        longitude = pos.coords.longitude;
-      } else {
-        // Web / Capacitor WebView with remote URL — use browser API directly
-        // (the Capacitor bridge may not be available when loading a remote URL)
-        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-          if (!navigator.geolocation) {
-            reject(new Error('Geolocation not supported'));
-            return;
-          }
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-          });
-        });
-        latitude = pos.coords.latitude;
-        longitude = pos.coords.longitude;
-      }
-
+      });
+      const { latitude, longitude } = pos.coords;
       setCenter([latitude, longitude]);
       setZoom(13);
       setUserLocation({ lat: latitude, lng: longitude });
