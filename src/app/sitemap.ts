@@ -47,6 +47,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...brandPages,
     ...postcodePages,
     {
+      url: `${baseUrl}/blog`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/blog/trump-strait-of-hormuz-blockade-uk-fuel-prices`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/privacy`,
       lastModified: now,
       changeFrequency: 'monthly',

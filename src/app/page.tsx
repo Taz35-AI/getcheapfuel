@@ -548,6 +548,41 @@ export default async function Home() {
           </details>
         </div>
 
+        {/* ── Latest from the blog ───────────────────────────────────────── */}
+        <Link
+          href="/blog/trump-strait-of-hormuz-blockade-uk-fuel-prices"
+          className="block mb-10 p-6 rounded-2xl border border-red-200 bg-gradient-to-br from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 transition-colors group"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] uppercase tracking-widest text-red-700 font-semibold">Breaking</span>
+                <span className="text-[10px] text-gray-400">13 April 2026</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1.5 group-hover:text-red-900">
+                Trump&apos;s Strait of Hormuz Blockade: What It Means for UK Fuel Prices
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Oil pushes past $100 a barrel as the US Navy blockades Iranian ports. Here&apos;s how it could
+                affect your fuel bill and what you can do about it.
+              </p>
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-6 h-6 text-red-600 group-hover:translate-x-1 transition-transform flex-shrink-0 mt-1"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </div>
+        </Link>
+
         {/* ── Internal links ────────────────────────────────────────────── */}
         <h3 className="text-lg font-semibold text-gray-900 mb-3">Find Cheap Fuel Near You</h3>
         <nav className="flex flex-wrap gap-2 mb-8">
