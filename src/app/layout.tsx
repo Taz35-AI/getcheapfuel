@@ -106,7 +106,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-GB" className={`${geistSans.variable} h-full`}>
+    <html lang="en-GB" className={`${geistSans.variable}`}>
       <head>
         {/* Preconnect to origins we'll talk to right after first paint
             so the DNS + TLS handshake is already done by then */}
@@ -115,7 +115,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
       </head>
-      <body className="h-full font-sans">
+      <body className="font-sans">
         {children}
         <Analytics />
         <CookieConsentLazy />
