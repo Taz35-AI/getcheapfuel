@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import SearchBar from '@/components/SearchBar';
 import FuelFilter from '@/components/FuelFilter';
@@ -369,7 +369,7 @@ export default function HomeApp() {
                 </button>
               )}
               <button
-                onClick={() => setTrackerOpen(true)}
+                onClick={() => user ? setTrackerOpen(true) : setAuthOpen(true)}
                 className="px-3 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm"
                 title="Fuel Spending Tracker"
               >
@@ -485,7 +485,7 @@ export default function HomeApp() {
               <img src="/icons/route-planner.svg" alt="Route Planner" className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setTrackerOpen(true)}
+              onClick={() => user ? setTrackerOpen(true) : setAuthOpen(true)}
               className="flex-1 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center"
               title="Fuel Spending Tracker"
               aria-label="Fuel Spending Tracker"
@@ -586,10 +586,44 @@ export default function HomeApp() {
           }`}
           style={{ maxHeight: '70vh' }}
         >
-          <div className="flex justify-center py-2" onClick={() => setSidebarOpen(false)}>
+          <div
+            className="flex justify-center py-2 cursor-grab"
+            onTouchStart={(e) => {
+              const startY = e.touches[0].clientY;
+              const el = e.currentTarget.parentElement!;
+              const scrollEl = el.querySelector('[data-sheet-scroll]') as HTMLElement | null;
+              const atTop = !scrollEl || scrollEl.scrollTop <= 0;
+              let moved = false;
+
+              const onMove = (ev: TouchEvent) => {
+                const dy = ev.touches[0].clientY - startY;
+                // Only allow swipe-down to close when scrolled to top
+                if (dy > 0 && atTop) {
+                  moved = true;
+                  el.style.transition = 'none';
+                  el.style.transform = `translateY(${dy}px)`;
+                }
+              };
+
+              const onEnd = (ev: TouchEvent) => {
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('touchend', onEnd);
+                el.style.transition = '';
+                el.style.transform = '';
+                const endY = ev.changedTouches[0].clientY;
+                const dy = endY - startY;
+                if (moved && dy > 80) {
+                  setSidebarOpen(false);
+                }
+              };
+
+              document.addEventListener('touchmove', onMove, { passive: true });
+              document.addEventListener('touchend', onEnd);
+            }}
+          >
             <div className="w-10 h-1 rounded-full bg-gray-300" />
           </div>
-          <div className="overflow-y-auto" style={{ maxHeight: 'calc(70vh - 24px)' }}>
+          <div data-sheet-scroll className="overflow-y-auto" style={{ maxHeight: 'calc(70vh - 24px)' }}>
             <StationList {...stationListProps} />
           </div>
         </div>
@@ -603,6 +637,15 @@ export default function HomeApp() {
         {/* Mobile list toggle button */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
+          onTouchStart={(e) => {
+            const startY = e.touches[0].clientY;
+            const onEnd = (ev: TouchEvent) => {
+              document.removeEventListener('touchend', onEnd);
+              const dy = ev.changedTouches[0].clientY - startY;
+              if (dy < -40) setSidebarOpen(true);
+            };
+            document.addEventListener('touchend', onEnd);
+          }}
           className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-20 bg-green-600 text-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 text-sm font-semibold hover:bg-green-700 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -635,7 +678,7 @@ export default function HomeApp() {
           {/* Notification bell on map */}
           <button
             onClick={() => setNotifOpen(true)}
-            className="absolute top-2 left-2 md:top-12 md:left-1 z-[1000] bg-white/90 backdrop-blur p-2 rounded-lg shadow hover:bg-white transition-colors text-amber-500"
+            className="absolute top-2 left-2 md:top-12 md:left-1 z-20 bg-white/90 backdrop-blur p-2 rounded-lg shadow hover:bg-white transition-colors text-amber-500"
             title="Price Alerts"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
