@@ -16,6 +16,13 @@ interface FavStation {
   postcode: string;
 }
 
+interface LeaderboardEntry {
+  email: string;
+  votes: number;
+  up: number;
+  down: number;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading, displayName, signOut } = useAuth();
@@ -28,11 +35,30 @@ export default function ProfilePage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
 
   // Redirect if not signed in
   useEffect(() => {
     if (!loading && !user) router.push('/');
   }, [loading, user, router]);
+
+  // Load the crowdsourced price-accuracy leaderboard
+  useEffect(() => {
+    if (!user) return;
+    setLoadingLeaderboard(true);
+    fetch(apiUrl('/api/price-vote/leaderboard?limit=10'))
+      .then((res) => res.json())
+      .then((json) => {
+        if (Array.isArray(json.leaderboard)) {
+          setLeaderboard(json.leaderboard);
+        }
+      })
+      .catch(() => {
+        // silent — leaderboard is non-critical
+      })
+      .finally(() => setLoadingLeaderboard(false));
+  }, [user]);
 
   // Load display name and favourites with station details
   useEffect(() => {
@@ -242,6 +268,70 @@ export default function ProfilePage() {
           >
             Sign Out
           </button>
+        </section>
+
+        {/* Price Accuracy Leaderboard */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Top Contributors</h2>
+            <span className="text-[10px] text-gray-400 font-medium">Price accuracy votes</span>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200 rounded-2xl p-4">
+            {loadingLeaderboard ? (
+              <div className="flex justify-center py-6">
+                <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : leaderboard.length === 0 ? (
+              <div className="text-center py-6 px-2">
+                <div className="text-xs font-semibold text-gray-700 mb-1">Be the first contributor</div>
+                <div className="text-[11px] text-gray-500 leading-relaxed">
+                  Tap a station on the map → use the thumbs up / down buttons to verify fuel prices. Top contributors appear here.
+                </div>
+              </div>
+            ) : (
+              <ul className="space-y-1.5">
+                {leaderboard.map((entry, i) => {
+                  const isMe = user?.email && entry.email.toLowerCase() === user.email.toLowerCase();
+                  const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+                  // Truncate the email for display — first part only
+                  const display = entry.email.split('@')[0];
+                  return (
+                    <li
+                      key={entry.email}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-xl ${
+                        isMe ? 'bg-white border border-emerald-300 ring-2 ring-emerald-100' : 'bg-white/60'
+                      }`}
+                    >
+                      <div className="flex-shrink-0 w-8 text-center text-sm font-black text-gray-700">
+                        {medal}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-gray-900 truncate">
+                          {display}
+                          {isMe && (
+                            <span className="ml-1.5 text-[9px] uppercase tracking-wider font-black text-emerald-600">
+                              You
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-gray-500 tabular-nums">
+                          👍 {entry.up} · 👎 {entry.down}
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-base font-black text-emerald-700 tabular-nums leading-none">
+                          {entry.votes}
+                        </div>
+                        <div className="text-[9px] text-gray-400 uppercase font-bold tracking-wider mt-0.5">
+                          votes
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </section>
 
         {/* Delete account */}

@@ -326,6 +326,61 @@ export default function RoutePlanner({ stations, selectedFuels, open, onClose, o
             {/* Results */}
             {result && (
               <div className="pt-2">
+                {/* Journey cost — uses the cheapest primary-fuel price
+                    on the route and the user's real-world MPG (written
+                    by the Fuel Tracker) if available, otherwise a
+                    sensible default per fuel type. */}
+                {primaryFuel && result.stationsOnRoute.length > 0 && (() => {
+                  const cheapestOnRoute = result.stationsOnRoute.find(
+                    s => s.prices[primaryFuel] != null,
+                  );
+                  if (!cheapestOnRoute) return null;
+                  const ppl = cheapestOnRoute.prices[primaryFuel]!; // pence/L
+                  // Miles = km × 0.621371
+                  const miles = result.distance * 0.621371;
+                  // User's saved MPG, or a reasonable default
+                  const savedMpg = typeof window !== 'undefined'
+                    ? Number(localStorage.getItem('gcf-user-mpg') || 0)
+                    : 0;
+                  const isDiesel = primaryFuel === 'B7' || primaryFuel === 'SDV';
+                  const defaultMpg = isDiesel ? 50 : 45;
+                  const mpg = savedMpg > 10 && savedMpg < 150 ? savedMpg : defaultMpg;
+                  const usingSaved = savedMpg > 10 && savedMpg < 150;
+                  // Litres needed = miles / mpg × 4.546
+                  const litresNeeded = (miles / mpg) * 4.546;
+                  // Cost in £ = litres × (pence / 100)
+                  const costGBP = litresNeeded * (ppl / 100);
+
+                  return (
+                    <div className="mb-3 relative overflow-hidden bg-gradient-to-br from-emerald-600 to-green-700 text-white rounded-2xl p-4 shadow-lg shadow-emerald-600/20">
+                      <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none" />
+                      <div className="relative flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="text-[10px] uppercase tracking-widest font-bold text-emerald-100/90">
+                            Journey cost
+                          </div>
+                          <div className="text-3xl font-black tabular-nums leading-none mt-1">
+                            ~£{costGBP.toFixed(2)}
+                          </div>
+                          <div className="text-[10px] text-emerald-100/90 mt-1 font-medium">
+                            {litresNeeded.toFixed(1)}L · at {ppl.toFixed(1)}p/L {usingSaved ? `· your ${mpg.toFixed(1)} MPG` : `· est. ${mpg} MPG`}
+                          </div>
+                        </div>
+                        <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/20 flex-shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="1" x2="12" y2="23" />
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                          </svg>
+                        </div>
+                      </div>
+                      {!usingSaved && (
+                        <div className="relative mt-2 text-[9px] text-emerald-100/80">
+                          💡 Log your fill-ups with odometer in the Fuel Tracker for personalised estimates
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 {result.stationsOnRoute.length > 0 ? (
                   <>
                     <div className="flex items-center justify-between mb-3">

@@ -783,6 +783,7 @@ export default function HomeApp() {
               onToggleFavourite={toggleFavourite}
               userLocation={userLocation}
               routeGeometry={routeGeometry}
+              onRequestAuth={() => setAuthOpen(true)}
             />
           ) : (
             <div

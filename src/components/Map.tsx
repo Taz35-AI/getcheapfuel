@@ -16,6 +16,7 @@ import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
 import { FUEL_COLORS } from '@/lib/types';
 import ShareButton from './ShareButton';
 import PriceTrendChart from './PriceTrendChart';
+import PriceVoteButtons from './PriceVoteButtons';
 import OpenStatusBadge from './OpenStatusBadge';
 import StationAmenityIcons from './StationAmenityIcons';
 import BrandLogo from './BrandLogo';
@@ -48,6 +49,10 @@ interface MapProps {
   // as returned by OSRM. When non-null the map draws the line and
   // auto-fits the viewport to the route's bounding box.
   routeGeometry?: [number, number][] | null;
+  // Passed through to the station popup's thumbs-vote buttons so
+  // anonymous visitors get the sign-up / sign-in modal when they
+  // try to rate a price.
+  onRequestAuth?: () => void;
 }
 
 function getPriceColor(price: number | null | undefined): string {
@@ -285,11 +290,15 @@ function FuelPopupContent({
   isFav,
   onToggleFav,
   selectedFuels,
+  onRequestAuth,
 }: {
   station: FuelStation;
   isFav: boolean;
   onToggleFav: (id: string) => void;
   selectedFuels: FuelType[];
+  // Passed through to PriceVoteButtons so anonymous visitors get
+  // the sign-up / sign-in modal when they try to rate a price.
+  onRequestAuth?: () => void;
 }) {
   const fuels = [
     { key: 'E10', label: 'Unleaded' },
@@ -354,18 +363,25 @@ function FuelPopupContent({
                 return (
                   <div
                     key={f.key}
-                    className="flex items-center justify-between gap-1 px-1.5 sm:px-2 py-1 sm:py-1.5 bg-gray-50 border border-gray-100 rounded-lg"
+                    className="flex flex-col gap-1 px-1.5 sm:px-2 py-1 sm:py-1.5 bg-gray-50 border border-gray-100 rounded-lg"
                   >
-                    <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
-                      <span
-                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ring-1 sm:ring-2 ring-white"
-                        style={{ backgroundColor: FUEL_COLORS[f.key] }}
-                      />
-                      <span className="text-[9px] sm:text-[10px] font-bold text-gray-500 truncate">{f.label}</span>
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                        <span
+                          className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ring-1 sm:ring-2 ring-white"
+                          style={{ backgroundColor: FUEL_COLORS[f.key] }}
+                        />
+                        <span className="text-[9px] sm:text-[10px] font-bold text-gray-500 truncate">{f.label}</span>
+                      </div>
+                      <span className="text-[10px] sm:text-[11px] font-black text-gray-900 tabular-nums flex-shrink-0">
+                        {price.toFixed(1)}p
+                      </span>
                     </div>
-                    <span className="text-[10px] sm:text-[11px] font-black text-gray-900 tabular-nums flex-shrink-0">
-                      {price.toFixed(1)}p
-                    </span>
+                    <PriceVoteButtons
+                      stationId={station.id}
+                      fuelType={f.key}
+                      onRequestAuth={onRequestAuth}
+                    />
                   </div>
                 );
               })}
@@ -513,6 +529,7 @@ export default function Map({
   onToggleFavourite,
   userLocation,
   routeGeometry,
+  onRequestAuth,
 }: MapProps) {
   const mapRef = useRef<MapRef>(null);
   const [popupStation, setPopupStation] = useState<FuelStation | null>(null);
@@ -776,6 +793,7 @@ export default function Map({
             isFav={isFavourite(popupStation.id)}
             onToggleFav={onToggleFavourite}
             selectedFuels={selectedFuels}
+            onRequestAuth={onRequestAuth}
           />
         </Popup>
       )}

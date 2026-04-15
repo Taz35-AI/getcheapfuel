@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { FUEL_LABELS, FUEL_COLORS } from '@/lib/types';
 import { apiUrl } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,7 +16,22 @@ interface FuelLog {
   odometer: number | null;
   notes: string | null;
   logged_at: string;
+  // Local-only client-side tag so users can track multiple cars in
+  // one tracker. Cloud-synced logs default to the first vehicle.
+  vehicle_id?: string;
 }
+
+interface Vehicle {
+  id: string;
+  name: string;
+}
+
+// First vehicle created for every user. Legacy logs without a
+// vehicle_id get mapped to this one on load.
+const DEFAULT_VEHICLE: Vehicle = { id: 'default', name: 'Main car' };
+
+// 1 imperial gallon = 4.546 litres. UK drivers expect MPG.
+const LITRES_PER_IMPERIAL_GALLON = 4.546;
 
 interface FuelTrackerProps {
   open: boolean;
@@ -45,6 +60,12 @@ function formatMonth(d: string) {
 // localStorage keys
 const LOCAL_LOGS_KEY = 'gcf-fuel-logs-local';
 const SYNC_EMAIL_KEY = 'gcf-sync-email';
+const VEHICLES_KEY = 'gcf-vehicles';
+const ACTIVE_VEHICLE_KEY = 'gcf-active-vehicle';
+// Shared across the app — written by the tracker when the user has
+// enough fill-ups to compute real-world MPG, read by the Route
+// Planner's journey cost calculator.
+const USER_MPG_KEY = 'gcf-user-mpg';
 
 export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTrackerProps) {
   const { user } = useAuth();
@@ -62,6 +83,12 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
   // user, so we don't try to upload local logs on every render.
   const autoSyncedRef = useRef(false);
 
+  // Vehicle state — local-only for v1. Cloud sync of vehicle_id will
+  // come in a follow-up once the UX is proven.
+  const [vehicles, setVehicles] = useState<Vehicle[]>([DEFAULT_VEHICLE]);
+  const [activeVehicleId, setActiveVehicleId] = useState<string>(DEFAULT_VEHICLE.id);
+  const [vehicleMenuOpen, setVehicleMenuOpen] = useState(false);
+
   // Form state
   const [station, setStation] = useState('');
   const [fuelType, setFuelType] = useState('E10');
@@ -70,7 +97,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
   const [odometer, setOdometer] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Load saved email + any local logs from localStorage on mount
+  // Load saved email + any local logs + vehicles from localStorage on mount
   useEffect(() => {
     try {
       const savedEmail = localStorage.getItem(SYNC_EMAIL_KEY);
@@ -83,10 +110,82 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
         const parsed = JSON.parse(savedLocal) as FuelLog[];
         if (Array.isArray(parsed)) setLocalLogs(parsed);
       }
+      const savedVehicles = localStorage.getItem(VEHICLES_KEY);
+      if (savedVehicles) {
+        const parsed = JSON.parse(savedVehicles) as Vehicle[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setVehicles(parsed);
+        }
+      }
+      const savedActive = localStorage.getItem(ACTIVE_VEHICLE_KEY);
+      if (savedActive) setActiveVehicleId(savedActive);
     } catch {
       // ignore parse/storage errors
     }
   }, []);
+
+  // Persist vehicles whenever they change
+  const persistVehicles = useCallback((next: Vehicle[]) => {
+    setVehicles(next);
+    try {
+      localStorage.setItem(VEHICLES_KEY, JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const selectVehicle = useCallback((id: string) => {
+    setActiveVehicleId(id);
+    try {
+      localStorage.setItem(ACTIVE_VEHICLE_KEY, id);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const addVehicle = useCallback(() => {
+    const name = window.prompt('Name this vehicle (e.g. "Main car", "Van", "Motorbike")');
+    if (!name || name.trim().length === 0) return;
+    const id = `v-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const next = [...vehicles, { id, name: name.trim() }];
+    persistVehicles(next);
+    selectVehicle(id);
+    setVehicleMenuOpen(false);
+  }, [vehicles, persistVehicles, selectVehicle]);
+
+  const renameVehicle = useCallback((id: string) => {
+    const v = vehicles.find(x => x.id === id);
+    if (!v) return;
+    const name = window.prompt('Rename vehicle', v.name);
+    if (!name || name.trim().length === 0) return;
+    persistVehicles(vehicles.map(x => x.id === id ? { ...x, name: name.trim() } : x));
+  }, [vehicles, persistVehicles]);
+
+  const deleteVehicle = useCallback((id: string) => {
+    if (vehicles.length <= 1) {
+      window.alert('You need at least one vehicle.');
+      return;
+    }
+    if (!window.confirm('Delete this vehicle? Its fill-ups will be moved to your first remaining vehicle.')) return;
+    const next = vehicles.filter(x => x.id !== id);
+    persistVehicles(next);
+    if (activeVehicleId === id) {
+      selectVehicle(next[0].id);
+    }
+    // Re-tag any orphaned local logs to the first remaining vehicle
+    // so they don't disappear from the history list.
+    const reassigned = localLogs.map(l =>
+      (l.vehicle_id || DEFAULT_VEHICLE.id) === id
+        ? { ...l, vehicle_id: next[0].id }
+        : l,
+    );
+    setLocalLogs(reassigned);
+    try {
+      localStorage.setItem(LOCAL_LOGS_KEY, JSON.stringify(reassigned));
+    } catch {
+      // ignore
+    }
+  }, [vehicles, activeVehicleId, localLogs, persistVehicles, selectVehicle]);
 
   // Helper — persist local logs to both state and localStorage
   const persistLocalLogs = useCallback((next: FuelLog[]) => {
@@ -169,18 +268,6 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
     handleSync(user.email);
   }, [user?.email, synced, handleSync]);
 
-  const handleLogout = () => {
-    try {
-      localStorage.removeItem(SYNC_EMAIL_KEY);
-    } catch {
-      // ignore
-    }
-    setEmail('');
-    setSynced(false);
-    setLogs([]);
-    autoSyncedRef.current = false;
-  };
-
   const pricePerLitre = litres && totalCost
     ? (parseFloat(totalCost) / parseFloat(litres) * 100).toFixed(1)
     : '';
@@ -225,6 +312,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
         odometer: odoNum,
         notes: null,
         logged_at: new Date().toISOString(),
+        vehicle_id: activeVehicleId,
       };
       persistLocalLogs([log, ...localLogs]);
     }
@@ -251,7 +339,60 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
   };
 
   // Active source of logs — cloud when opted in, local otherwise.
-  const activeLogs = synced ? logs : localLogs;
+  // Filter by the currently-selected vehicle so the user only sees
+  // fill-ups for the car they're currently tracking. Legacy logs
+  // with no vehicle_id are treated as belonging to the default.
+  const rawLogs = synced ? logs : localLogs;
+  const activeLogs = useMemo(
+    () => rawLogs.filter(l => (l.vehicle_id || DEFAULT_VEHICLE.id) === activeVehicleId),
+    [rawLogs, activeVehicleId],
+  );
+
+  // MPG computation — for each fill-up with an odometer, look at the
+  // previous fill-up (same vehicle, ordered by date) and compute:
+  //    MPG = (miles_between_fills × 4.546) / current_litres
+  // Returns a map keyed by log id so each history card can show its
+  // own "38.2 MPG" chip inline.
+  const mpgByLogId = useMemo(() => {
+    const map: Record<string, number> = {};
+    // Need a date-ascending slice so we can pair each log with its
+    // immediate predecessor (activeLogs is displayed descending).
+    const sortedAsc = [...activeLogs]
+      .filter(l => l.odometer != null && l.litres > 0)
+      .sort((a, b) => a.logged_at.localeCompare(b.logged_at));
+    for (let i = 1; i < sortedAsc.length; i++) {
+      const prev = sortedAsc[i - 1];
+      const curr = sortedAsc[i];
+      if (prev.odometer == null || curr.odometer == null) continue;
+      const miles = curr.odometer - prev.odometer;
+      // Sanity guards: negative odometer (user correction), or a
+      // leap > 2000 mi which is almost certainly wrong data.
+      if (miles <= 0 || miles > 2000) continue;
+      const mpg = (miles * LITRES_PER_IMPERIAL_GALLON) / curr.litres;
+      if (mpg > 0 && mpg < 150) map[curr.id] = mpg;
+    }
+    return map;
+  }, [activeLogs]);
+
+  // Lifetime average MPG across this vehicle's fill-ups.
+  const lifetimeMpg = useMemo(() => {
+    const values = Object.values(mpgByLogId);
+    if (values.length === 0) return null;
+    return values.reduce((a, b) => a + b, 0) / values.length;
+  }, [mpgByLogId]);
+
+  // Mirror the lifetime MPG to localStorage so the Route Planner's
+  // journey cost calculator can use the user's real-world number
+  // instead of a generic default.
+  useEffect(() => {
+    if (lifetimeMpg != null && Number.isFinite(lifetimeMpg)) {
+      try {
+        localStorage.setItem(USER_MPG_KEY, lifetimeMpg.toFixed(1));
+      } catch {
+        // ignore
+      }
+    }
+  }, [lifetimeMpg]);
 
   // Stats calculations
   const thisMonth = new Date().toISOString().slice(0, 7);
@@ -363,6 +504,100 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
             </button>
           </div>
         )}
+
+        {/* ─── Vehicle picker ──────────────────────────────────────── */}
+        <div className="flex-shrink-0 px-3 pt-3 pb-2 bg-white border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <div className="text-[9px] uppercase tracking-widest font-bold text-gray-400 flex-shrink-0">
+              Vehicle
+            </div>
+            <div className="flex-1 relative">
+              <button
+                type="button"
+                onClick={() => setVehicleMenuOpen(!vehicleMenuOpen)}
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-gradient-to-br from-gray-50 to-white border border-gray-200 hover:border-emerald-300 transition-colors"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2" />
+                    <circle cx="6.5" cy="16.5" r="2.5" />
+                    <circle cx="16.5" cy="16.5" r="2.5" />
+                  </svg>
+                  <span className="text-[12px] font-bold text-gray-900 truncate">
+                    {vehicles.find(v => v.id === activeVehicleId)?.name || 'Main car'}
+                  </span>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`w-3.5 h-3.5 text-gray-400 transition-transform ${vehicleMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              {vehicleMenuOpen && (
+                <>
+                  {/* Click-outside backdrop */}
+                  <div
+                    className="fixed inset-0 z-[1]"
+                    onClick={() => setVehicleMenuOpen(false)}
+                  />
+                  <div className="absolute left-0 right-0 top-full mt-1 z-[2] bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
+                    {vehicles.map(v => {
+                      const active = v.id === activeVehicleId;
+                      return (
+                        <div
+                          key={v.id}
+                          className={`flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 last:border-b-0 ${
+                            active ? 'bg-emerald-50' : 'bg-white'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              selectVehicle(v.id);
+                              setVehicleMenuOpen(false);
+                            }}
+                            className="flex-1 text-left flex items-center gap-2 min-w-0"
+                          >
+                            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${active ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                            <span className={`text-[12px] font-bold truncate ${active ? 'text-emerald-700' : 'text-gray-700'}`}>
+                              {v.name}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => renameVehicle(v.id)}
+                            className="flex-shrink-0 text-[10px] font-bold text-gray-400 hover:text-gray-700 px-1.5"
+                            title="Rename"
+                          >
+                            ✎
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteVehicle(v.id)}
+                            className="flex-shrink-0 text-[10px] font-bold text-gray-400 hover:text-red-500 px-1.5"
+                            title="Delete"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={addVehicle}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-[12px] font-bold text-emerald-700 hover:bg-emerald-50 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      Add vehicle
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* ─── Tabs (with custom icons) ─────────────────────────────── */}
         <div className="flex-shrink-0 flex gap-1.5 px-3 pt-3 pb-2 bg-white border-b border-gray-100">
@@ -512,6 +747,12 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] text-gray-400 font-semibold pointer-events-none">mi</span>
                 </div>
+                <div className="flex items-start gap-1.5 mt-1.5 px-1">
+                  <span className="text-[11px] flex-shrink-0">💡</span>
+                  <p className="text-[10px] text-gray-500 leading-snug">
+                    Save your odometer on each fill-up — we&apos;ll auto-calculate your real-world MPG from the next one onwards.
+                  </p>
+                </div>
               </div>
 
               <button
@@ -583,6 +824,16 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
                             <div className="text-[11px] text-gray-500 mt-0.5 tabular-nums">
                               {log.litres.toFixed(1)}L · {log.price_per_litre.toFixed(1)}p/L · {formatDate(log.logged_at)}
                             </div>
+                            {mpgByLogId[log.id] != null && (
+                              <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-2.5 h-2.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                                </svg>
+                                <span className="text-[10px] font-black text-emerald-700 tabular-nums">
+                                  {mpgByLogId[log.id].toFixed(1)} MPG
+                                </span>
+                              </div>
+                            )}
                           </div>
                           <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
                             <div className="text-lg font-black text-gray-900 tabular-nums leading-none">
@@ -639,6 +890,33 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
                     </div>
                   </div>
 
+                  {/* Real-world MPG card — only shown once the user has
+                      logged at least two fill-ups with odometer readings
+                      so we have an actual number to display. */}
+                  {lifetimeMpg != null && (
+                    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 to-green-700 text-white rounded-2xl p-4 shadow-lg shadow-emerald-600/20">
+                      <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none" />
+                      <div className="relative flex items-center justify-between">
+                        <div>
+                          <div className="text-[10px] uppercase tracking-widest font-bold text-emerald-100/90">
+                            Real-world MPG
+                          </div>
+                          <div className="text-3xl font-black tabular-nums leading-none mt-1">
+                            {lifetimeMpg.toFixed(1)}<span className="text-base font-bold ml-1">mpg</span>
+                          </div>
+                          <div className="text-[10px] text-emerald-100/90 mt-1 font-medium">
+                            Based on {Object.keys(mpgByLogId).length} fill-up{Object.keys(mpgByLogId).length === 1 ? '' : 's'} with odometer
+                          </div>
+                        </div>
+                        <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/20 flex-shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Monthly spending chart */}
                   {months.length > 1 && (
                     <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
@@ -694,23 +972,18 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
         </div>
 
         {/* ─── Footer (only when cloud-synced) ──────────────────────── */}
+        {/* Sign-out has intentionally been moved to the Profile page —
+            users shouldn't be able to sign out from here. The footer
+            stays as a pure "you are synced as X" status row. */}
         {synced && (
-          <div className="flex-shrink-0 px-4 py-2.5 bg-white border-t border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="relative flex-shrink-0">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-500 animate-ping opacity-75" />
-              </div>
-              <div className="text-[11px] text-gray-500 truncate">
-                Synced as <span className="font-bold text-gray-800">{email}</span>
-              </div>
+          <div className="flex-shrink-0 px-4 py-2.5 bg-white border-t border-gray-100 flex items-center gap-2">
+            <div className="relative flex-shrink-0">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-500 animate-ping opacity-75" />
             </div>
-            <button
-              onClick={handleLogout}
-              className="text-[11px] text-gray-400 hover:text-red-500 font-semibold transition-colors"
-            >
-              Sign out
-            </button>
+            <div className="text-[11px] text-gray-500 truncate">
+              Synced as <span className="font-bold text-gray-800">{email}</span>
+            </div>
           </div>
         )}
       </div>

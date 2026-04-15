@@ -158,3 +158,56 @@ alter table fuel_stations_ff enable row level security;
 
 create policy "Allow public reads ff" on fuel_stations_ff
   for select using (true);
+
+-- ============================================
+-- Crowdsourced price-accuracy votes (auth required)
+-- Signed-in users can thumbs-up/down the price shown for a given
+-- fuel at a given station. Each vote is recorded against the user's
+-- email so we can build a leaderboard of top contributors. The
+-- warning-count UI only reads votes from the last 24 hours so old
+-- verdicts automatically fall off and the warning resets daily.
+-- ============================================
+create table if not exists station_price_votes (
+  id bigint generated always as identity primary key,
+  station_id text not null,
+  fuel_type text not null check (fuel_type in ('E10', 'E5', 'B7', 'SDV')),
+  vote text not null check (vote in ('up', 'down')),
+  voter_email text not null,
+  voted_at timestamptz not null default now()
+);
+
+-- Fast lookup: "how many thumbs down for station X fuel Y in the
+-- last 24 hours?" hits this index cleanly.
+create index if not exists idx_station_price_votes_lookup
+  on station_price_votes (station_id, fuel_type, voted_at desc);
+
+-- Leaderboard lookup — count total votes per user
+create index if not exists idx_station_price_votes_voter
+  on station_price_votes (voter_email);
+
+-- Also useful for cleanup jobs
+create index if not exists idx_station_price_votes_voted_at
+  on station_price_votes (voted_at);
+
+alter table station_price_votes enable row level security;
+
+-- Inserts come from authenticated clients — for v1 we trust the
+-- email the client sends (validated UI-side by `useAuth`). We could
+-- later tighten this via an RLS policy checking auth.uid().
+create policy "Allow insert votes" on station_price_votes
+  for insert with check (true);
+
+-- Anyone can read the aggregated counts and leaderboard
+create policy "Allow select votes" on station_price_votes
+  for select using (true);
+
+-- Cleanup: delete votes older than 90 days (run periodically)
+-- delete from station_price_votes where voted_at < now() - interval '90 days';
+
+-- ============================================
+-- Migration for existing installs — drop anonymous-fingerprint
+-- column (if we shipped that earlier) and add voter_email.
+-- Safe to re-run.
+-- ============================================
+alter table station_price_votes add column if not exists voter_email text;
+alter table station_price_votes drop column if exists voter_fingerprint;
