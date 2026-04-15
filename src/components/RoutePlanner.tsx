@@ -133,132 +133,253 @@ export default function RoutePlanner({ stations, selectedFuels, open, onClose, o
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-          <h2 className="text-base font-bold text-gray-900">Route Planner</h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center p-0 md:p-6">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white w-full md:w-[460px] h-[94vh] md:h-auto md:max-h-[90vh] md:rounded-[28px] rounded-t-[28px] shadow-2xl flex flex-col overflow-hidden ring-1 ring-black/5">
 
-        <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(85vh - 56px)' }}>
-          {/* Inputs */}
-          <div className="space-y-3 mb-4">
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-green-500" />
-              <input
-                type="text"
-                value={from}
-                onChange={e => setFrom(e.target.value)}
-                placeholder="From (city, town, postcode)..."
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+        {/* ─── Premium gradient header ──────────────────────────────── */}
+        <div className="relative flex-shrink-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-700 text-white px-5 pt-5 pb-5 overflow-hidden">
+          <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-10 w-40 h-40 rounded-full bg-emerald-400/20 blur-2xl pointer-events-none" />
+
+          <div className="relative flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/20 flex-shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/route.svg" alt="" className="w-6 h-6" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-lg font-black tracking-tight truncate">Route Planner</h2>
+                <p className="text-[11px] text-emerald-100/90 font-medium truncate">
+                  Find the cheapest fuel along your journey
+                </p>
+              </div>
             </div>
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-red-500" />
-              <input
-                type="text"
-                value={to}
-                onChange={e => setTo(e.target.value)}
-                placeholder="To (city, town, postcode)..."
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <label className="text-xs text-gray-500 whitespace-nowrap">Max detour:</label>
-              <select
-                value={detourRadius}
-                onChange={e => setDetourRadius(Number(e.target.value))}
-                className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-700"
-              >
-                <option value={1}>1 km</option>
-                <option value={2}>2 km</option>
-                <option value={5}>5 km</option>
-                <option value={10}>10 km</option>
-              </select>
-              <button
-                onClick={planRoute}
-                disabled={loading || !from || !to}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-              >
-                {loading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="3 11 22 2 13 21 11 13 3 11" />
-                  </svg>
-                )}
-                Find Stations
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="flex-shrink-0 p-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/30 ring-1 ring-white/20 transition-colors"
+              aria-label="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
 
-          {error && (
-            <div className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-4">{error}</div>
-          )}
-
+          {/* Route summary shown inside header once planned */}
           {result && (
-            <>
-              <div className="bg-gray-50 rounded-lg p-3 mb-4 flex items-center gap-4">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-gray-900">{result.distance.toFixed(0)} km</div>
-                  <div className="text-xs text-gray-500">distance</div>
-                </div>
-                <div className="w-px h-8 bg-gray-300" />
-                <div className="text-center">
-                  <div className="text-lg font-bold text-gray-900">
-                    {result.duration >= 60
-                      ? `${Math.floor(result.duration / 60)}h ${Math.round(result.duration % 60)}m`
-                      : `${Math.round(result.duration)}m`}
-                  </div>
-                  <div className="text-xs text-gray-500">drive time</div>
-                </div>
-                <div className="w-px h-8 bg-gray-300" />
-                <div className="text-center">
-                  <div className="text-lg font-bold text-green-600">{result.stationsOnRoute.length}</div>
-                  <div className="text-xs text-gray-500">stations</div>
+            <div className="relative mt-4 grid grid-cols-3 gap-3">
+              <div className="bg-white/10 backdrop-blur-sm ring-1 ring-white/15 rounded-xl px-3 py-2">
+                <div className="text-[9px] uppercase tracking-widest text-emerald-100/80 font-bold">Distance</div>
+                <div className="text-base font-black tabular-nums mt-0.5">{result.distance.toFixed(0)} km</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm ring-1 ring-white/15 rounded-xl px-3 py-2">
+                <div className="text-[9px] uppercase tracking-widest text-emerald-100/80 font-bold">Drive time</div>
+                <div className="text-base font-black tabular-nums mt-0.5">
+                  {result.duration >= 60
+                    ? `${Math.floor(result.duration / 60)}h ${Math.round(result.duration % 60)}m`
+                    : `${Math.round(result.duration)}m`}
                 </div>
               </div>
+              <div className="bg-white/10 backdrop-blur-sm ring-1 ring-white/15 rounded-xl px-3 py-2">
+                <div className="text-[9px] uppercase tracking-widest text-emerald-100/80 font-bold">Stations</div>
+                <div className="text-base font-black tabular-nums mt-0.5">{result.stationsOnRoute.length}</div>
+              </div>
+            </div>
+          )}
+        </div>
 
-              {result.stationsOnRoute.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Cheapest on route {primaryFuel && `(${FUEL_LABELS[primaryFuel]})`}
-                  </div>
-                  {result.stationsOnRoute.map((station, i) => (
+        {/* ─── Scrollable body ──────────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto bg-gray-50/40">
+          <div className="p-5 space-y-4">
+
+            {/* Inputs */}
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+                Start point
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-100" />
+                </div>
+                <input
+                  type="text"
+                  value={from}
+                  onChange={e => setFrom(e.target.value)}
+                  placeholder="City, town or postcode"
+                  className="w-full pl-10 pr-4 py-3 bg-white border-2 border-gray-200 rounded-2xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none transition-all shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+                Destination
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-red-100" />
+                </div>
+                <input
+                  type="text"
+                  value={to}
+                  onChange={e => setTo(e.target.value)}
+                  placeholder="City, town or postcode"
+                  className="w-full pl-10 pr-4 py-3 bg-white border-2 border-gray-200 rounded-2xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none transition-all shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+                Max detour off route
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[1, 2, 5, 10].map(km => {
+                  const active = detourRadius === km;
+                  return (
                     <button
-                      key={station.id}
-                      onClick={() => onStationClick(station)}
-                      className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 hover:bg-green-50 transition-colors text-left"
+                      key={km}
+                      type="button"
+                      onClick={() => setDetourRadius(km)}
+                      className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
+                        active
+                          ? 'bg-gradient-to-br from-emerald-600 to-green-600 text-white shadow-md shadow-emerald-600/25'
+                          : 'bg-white text-gray-600 border-2 border-gray-200 hover:border-gray-300'
+                      }`}
                     >
-                      <div className="text-sm font-bold text-gray-400 w-5 text-center">{i + 1}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-gray-900">{station.brand}</div>
-                        <div className="text-xs text-gray-500 truncate">{station.address}</div>
-                        <div className="text-xs text-gray-400">{station.routeDistance.toFixed(1)} km off route</div>
+                      {km} km
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button
+              onClick={planRoute}
+              disabled={loading || !from || !to}
+              className="w-full py-4 bg-gradient-to-br from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 active:from-emerald-800 active:to-green-900 text-white rounded-2xl text-sm font-black shadow-xl shadow-emerald-600/30 disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  Planning route…
+                </>
+              ) : (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/route.svg" alt="" className="w-4 h-4 brightness-0 invert" aria-hidden="true" />
+                  Find Cheapest Fuel on Route
+                </>
+              )}
+            </button>
+
+            {error && (
+              <div className="flex items-center gap-2.5 text-[12px] font-semibold text-red-700 bg-red-50 border border-red-200 px-3 py-2.5 rounded-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                {error}
+              </div>
+            )}
+
+            {/* Results */}
+            {result && (
+              <div className="pt-2">
+                {result.stationsOnRoute.length > 0 ? (
+                  <>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                        Cheapest on route
                       </div>
-                      {primaryFuel && station.prices[primaryFuel] != null && (
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-sm font-bold" style={{ color: FUEL_COLORS[primaryFuel] }}>
-                            {station.prices[primaryFuel]!.toFixed(1)}p
-                          </div>
+                      {primaryFuel && (
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-700">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: FUEL_COLORS[primaryFuel] }} />
+                          {FUEL_LABELS[primaryFuel]}
                         </div>
                       )}
-                    </button>
-                  ))}
+                    </div>
+                    <div className="space-y-2">
+                      {result.stationsOnRoute.map((station, i) => {
+                        const color = primaryFuel ? FUEL_COLORS[primaryFuel] : '#6b7280';
+                        const cheapest = i === 0;
+                        return (
+                          <button
+                            key={station.id}
+                            onClick={() => onStationClick(station)}
+                            className={`relative w-full bg-white border rounded-2xl p-4 shadow-sm hover:shadow-md transition-all text-left overflow-hidden group ${
+                              cheapest ? 'border-emerald-300 ring-2 ring-emerald-100' : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <div
+                              className="absolute left-0 top-0 bottom-0 w-1"
+                              style={{ backgroundColor: color }}
+                            />
+                            <div className="pl-2 flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black ${
+                                    cheapest ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500'
+                                  }`}>
+                                    {i + 1}
+                                  </span>
+                                  {cheapest && (
+                                    <span className="text-[9px] uppercase tracking-widest text-emerald-700 font-black">
+                                      Cheapest
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm font-black text-gray-900 truncate">{station.brand}</div>
+                                <div className="text-[11px] text-gray-500 truncate mt-0.5">{station.address}</div>
+                                <div className="text-[10px] text-gray-400 mt-0.5 tabular-nums">
+                                  {station.routeDistance.toFixed(1)} km off route
+                                </div>
+                              </div>
+                              {primaryFuel && station.prices[primaryFuel] != null && (
+                                <div className="flex-shrink-0 text-right">
+                                  <div className="text-lg font-black tabular-nums leading-none" style={{ color }}>
+                                    {station.prices[primaryFuel]!.toFixed(1)}<span className="text-xs">p</span>
+                                  </div>
+                                  <div className="text-[9px] text-gray-400 uppercase tracking-wider font-bold mt-1">per litre</div>
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-10 px-6">
+                    <div className="w-14 h-14 mx-auto rounded-3xl bg-gradient-to-br from-emerald-50 to-green-100 flex items-center justify-center mb-3 ring-1 ring-emerald-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/route.svg" alt="" className="w-6 h-6 opacity-60" aria-hidden="true" />
+                    </div>
+                    <div className="text-sm font-black text-gray-900 mb-1">No stations on route</div>
+                    <div className="text-[11px] text-gray-500 max-w-[240px] mx-auto leading-relaxed">
+                      Try increasing the max detour distance.
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty-state prompt when nothing planned yet */}
+            {!result && !error && !loading && (
+              <div className="text-center py-6 px-4">
+                <div className="w-14 h-14 mx-auto rounded-3xl bg-gradient-to-br from-emerald-50 to-green-100 flex items-center justify-center mb-3 ring-1 ring-emerald-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/route.svg" alt="" className="w-7 h-7 opacity-70" aria-hidden="true" />
                 </div>
-              ) : (
-                <div className="text-center text-sm text-gray-400 py-4">
-                  No stations found along this route
+                <div className="text-[11px] text-gray-500 max-w-[260px] mx-auto leading-relaxed">
+                  Enter your start and destination, then we'll find the cheapest stations along the way.
                 </div>
-              )}
-            </>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

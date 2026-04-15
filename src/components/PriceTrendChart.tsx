@@ -15,12 +15,45 @@ interface PriceTrendChartProps {
 }
 
 export default function PriceTrendChart({ stationId, fuelType, color = '#22c55e' }: PriceTrendChartProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [data, setData] = useState<PricePoint[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  // Defer the price-history fetch until the card is actually near the
+  // viewport. Without this, every station card in the list fires its
+  // own /api/price-history request on mount — when the landing page
+  // pre-fetches ~60 London stations, that's ~60 parallel requests for
+  // charts the user may never scroll to.
+  const [inView, setInView] = useState(false);
 
   useEffect(() => {
+    if (inView) return;
+    const el = containerRef.current;
+    if (!el) return;
+    // Guard older browsers that don't support IntersectionObserver —
+    // fall back to fetching immediately like before.
+    if (typeof IntersectionObserver === 'undefined') {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      // Start the fetch a little before the card enters the viewport
+      // so the chart is ready by the time the user sees it.
+      { rootMargin: '200px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [inView]);
+
+  useEffect(() => {
+    if (!inView) return;
     setLoading(true);
     setError(false);
     fetch(apiUrl(`/api/price-history?stationId=${encodeURIComponent(stationId)}&fuelType=${fuelType}&days=30`))
@@ -33,7 +66,7 @@ export default function PriceTrendChart({ stationId, fuelType, color = '#22c55e'
         setError(true);
         setLoading(false);
       });
-  }, [stationId, fuelType]);
+  }, [inView, stationId, fuelType]);
 
   useEffect(() => {
     if (!data || data.length < 2 || !canvasRef.current) return;
@@ -111,10 +144,13 @@ export default function PriceTrendChart({ stationId, fuelType, color = '#22c55e'
     ctx.fillText(`${min.toFixed(1)}p`, w - 1, h - 1);
   }, [data, color]);
 
-  if (loading) {
+  // Placeholder (and observer target) until the card is in view.
+  if (!inView || loading) {
     return (
-      <div className="h-12 flex items-center justify-center">
-        <div className="w-3 h-3 border border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+      <div ref={containerRef} className="mt-2 h-12 flex items-center justify-center">
+        {loading && (
+          <div className="w-3 h-3 border border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+        )}
       </div>
     );
   }

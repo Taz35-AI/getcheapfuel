@@ -70,7 +70,7 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+    <div className="fixed inset-0 z-[10000] flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">

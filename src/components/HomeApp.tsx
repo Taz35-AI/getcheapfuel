@@ -39,8 +39,10 @@ const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false }
 type MapStyle = 'dark' | 'bright' | 'positron' | 'liberty';
 
 export default function HomeApp() {
-  const [center, setCenter] = useState<[number, number]>([54.5, -2]);
-  const [zoom, setZoom] = useState(6);
+  // Default landing region — central London at street-level zoom so
+  // first paint shows a real city with visible pins, not a blank UK map.
+  const [center, setCenter] = useState<[number, number]>([51.5074, -0.1278]);
+  const [zoom, setZoom] = useState(11);
   const [stations, setStations] = useState<FuelStation[]>([]);
   const [evChargers, setEvChargers] = useState<EVCharger[]>([]);
   const [selectedFuels, setSelectedFuels] = useState<FuelType[]>(['E10', 'B7']);
@@ -49,9 +51,12 @@ export default function HomeApp() {
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'distance' | 'price'>('distance');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationName, setLocationName] = useState('');
+  const [locationName, setLocationName] = useState('London');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [radius, setRadius] = useState(10);
+  // Default to 5km (~3 miles) so the initial London landing loads
+  // roughly half as many stations as the previous 10km default. Fewer
+  // markers + fewer trend-chart fetches = faster first paint.
+  const [radius, setRadius] = useState(5);
   const [mapStyle, setMapStyle] = useState<MapStyle>('liberty');
 
   // Feature states
@@ -216,7 +221,10 @@ export default function HomeApp() {
     }
   }, []);
 
-  // Read URL params (from city pages) and navigate to location
+  // Read URL params (from city pages) and navigate to location.
+  // If no URL params are present, pre-fetch London stations so the
+  // default landing view shows real pins on the map instead of a blank
+  // canvas — the biggest bounce-rate lever on the homepage.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const lat = parseFloat(params.get('lat') || '');
@@ -227,7 +235,12 @@ export default function HomeApp() {
       setZoom(isNaN(z) ? 13 : z);
       setUserLocation({ lat, lng });
       setLocationName(params.get('name') || '');
-      fetchStations(lat, lng, radius);
+      // fetchStations is fired by the effect below that watches userLocation.
+    } else {
+      // Default landing — setting userLocation triggers the re-fetch
+      // effect below, which loads stations around central London so
+      // visitors see pins immediately on first paint.
+      setUserLocation({ lat: 51.5074, lng: -0.1278 });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -369,7 +382,7 @@ export default function HomeApp() {
                 </button>
               )}
               <button
-                onClick={() => user ? setTrackerOpen(true) : setAuthOpen(true)}
+                onClick={() => setTrackerOpen(true)}
                 className="px-3 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm"
                 title="Fuel Spending Tracker"
               >
@@ -485,7 +498,7 @@ export default function HomeApp() {
               <img src="/icons/route-planner.svg" alt="Route Planner" className="w-4 h-4" />
             </button>
             <button
-              onClick={() => user ? setTrackerOpen(true) : setAuthOpen(true)}
+              onClick={() => setTrackerOpen(true)}
               className="flex-1 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center"
               title="Fuel Spending Tracker"
               aria-label="Fuel Spending Tracker"
@@ -753,6 +766,7 @@ export default function HomeApp() {
         <FuelTracker
           open={trackerOpen}
           onClose={() => setTrackerOpen(false)}
+          onRequestAuth={() => setAuthOpen(true)}
         />
       )}
       {showInstallPrompt && <InstallPrompt />}
