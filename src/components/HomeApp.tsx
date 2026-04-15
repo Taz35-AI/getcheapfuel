@@ -44,6 +44,11 @@ type MapStyle = 'dark' | 'bright' | 'positron' | 'liberty';
 const PETROL_FUELS: FuelType[] = ['E10', 'E5'];
 const DIESEL_FUELS: FuelType[] = ['B7', 'SDV'];
 
+// Allowed search-radius values (stored internally as kilometres).
+// Kept in sync with the radius dropdown options and /settings page.
+const ALLOWED_RADII = [2.5, 5, 16] as const;
+const DEFAULT_RADIUS = 5; // 5 km ≈ 3 miles
+
 function normaliseFuelSelection(raw: unknown): FuelType[] {
   if (!Array.isArray(raw)) return ['E10'];
   const fuels = raw.filter((f): f is FuelType =>
@@ -84,7 +89,7 @@ export default function HomeApp() {
   // Default to 5km (~3 miles) so the initial London landing loads
   // roughly half as many stations as the previous 10km default. Fewer
   // markers + fewer trend-chart fetches = faster first paint.
-  const [radius, setRadius] = useState(5);
+  const [radius, setRadius] = useState(DEFAULT_RADIUS);
   const [mapStyle, setMapStyle] = useState<MapStyle>('liberty');
 
   // Feature states
@@ -127,7 +132,19 @@ export default function HomeApp() {
         localStorage.setItem('gcf_default_fuels', JSON.stringify(cleaned));
       }
       const r = localStorage.getItem('gcf_radius');
-      if (r) setRadius(Number(r));
+      if (r) {
+        const savedRadius = Number(r);
+        // If the saved value isn't one of the current allowed radii
+        // (e.g. a returning user with the old 10 / 20 / 50 km values
+        // saved), snap back to the default so they don't stay stuck
+        // on "30 miles" forever.
+        if ((ALLOWED_RADII as readonly number[]).includes(savedRadius)) {
+          setRadius(savedRadius);
+        } else {
+          setRadius(DEFAULT_RADIUS);
+          localStorage.setItem('gcf_radius', String(DEFAULT_RADIUS));
+        }
+      }
       const s = localStorage.getItem('gcf_sort_by');
       if (s) setSortBy(s as 'distance' | 'price');
       const u = localStorage.getItem('gcf_unit_system');
@@ -476,17 +493,15 @@ export default function HomeApp() {
             >
               {unitSystem === 'km' ? (
                 <>
+                  <option value={2.5}>2.5 km</option>
                   <option value={5}>5 km</option>
-                  <option value={10}>10 km</option>
-                  <option value={20}>20 km</option>
-                  <option value={50}>50 km</option>
+                  <option value={16}>16 km</option>
                 </>
               ) : (
                 <>
+                  <option value={2.5}>1.5 mi</option>
                   <option value={5}>3 mi</option>
-                  <option value={10}>6 mi</option>
-                  <option value={20}>12 mi</option>
-                  <option value={50}>30 mi</option>
+                  <option value={16}>10 mi</option>
                 </>
               )}
             </select>
@@ -504,17 +519,15 @@ export default function HomeApp() {
             >
               {unitSystem === 'km' ? (
                 <>
+                  <option value={2.5}>2.5 km</option>
                   <option value={5}>5 km</option>
-                  <option value={10}>10 km</option>
-                  <option value={20}>20 km</option>
-                  <option value={50}>50 km</option>
+                  <option value={16}>16 km</option>
                 </>
               ) : (
                 <>
+                  <option value={2.5}>1.5 mi</option>
                   <option value={5}>3 mi</option>
-                  <option value={10}>6 mi</option>
-                  <option value={20}>12 mi</option>
-                  <option value={50}>30 mi</option>
+                  <option value={16}>10 mi</option>
                 </>
               )}
             </select>

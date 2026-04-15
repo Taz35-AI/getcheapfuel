@@ -24,11 +24,12 @@ const FUEL_OPTIONS = [
   { key: 'EV', label: 'EV Charging', color: 'bg-violet-500' },
 ];
 
+// Allowed search radii — stored internally in kilometres with
+// imperial-first labels to match the dropdown on the home page.
 const RADIUS_OPTIONS = [
+  { value: 2.5, label: '1.5 miles' },
   { value: 5, label: '3 miles' },
-  { value: 10, label: '6 miles' },
-  { value: 20, label: '12 miles' },
-  { value: 50, label: '30 miles' },
+  { value: 16, label: '10 miles' },
 ];
 
 const SORT_OPTIONS = [

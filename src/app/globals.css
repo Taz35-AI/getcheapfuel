@@ -41,7 +41,10 @@ body {
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
     max-width: 92vw !important;
-    z-index: 50;
+    /* Sit above every other map overlay (the location-name chip,
+       the notification bell, the loading indicator — all of which
+       can be as high as z-[1000]) so the modal is always on top. */
+    z-index: 1100 !important;
   }
   .maplibregl-popup-tip {
     display: none !important;
