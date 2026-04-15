@@ -630,6 +630,7 @@ export default function HomeApp() {
 
         {/* Mobile privacy/terms links */}
         <div className="md:hidden fixed bottom-16 left-1/2 -translate-x-1/2 z-20 flex gap-3 text-[10px] text-gray-400">
+          <Link href="/about" className="hover:text-gray-600 underline">About</Link>
           <Link href="/privacy" className="hover:text-gray-600 underline">Privacy</Link>
           <Link href="/terms" className="hover:text-gray-600 underline">Terms</Link>
         </div>
@@ -766,6 +767,7 @@ export default function HomeApp() {
       <footer className="hidden md:block flex-shrink-0 bg-gray-50 border-t border-gray-200 px-4 py-3">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-gray-500 mb-2">
           <span>&copy; {new Date().getFullYear()} GetCheapFuel</span>
+          <Link href="/about" className="hover:text-gray-700 hover:underline">About</Link>
           <Link href="/privacy" className="hover:text-gray-700 hover:underline">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-gray-700 hover:underline">Terms of Service</Link>
           <a href="mailto:support@getcheapfuel.co.uk" className="hover:text-gray-700 hover:underline">Contact</a>
