@@ -59,9 +59,9 @@ export default function PriceVoteButtons({
   const [localVote, setLocalVote] = useState<'up' | 'down' | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  // When an anonymous visitor taps a thumb we show a friendly
-  // "sign in to rate" card inline instead of yanking them straight
-  // into the auth modal. Gives context for why they need an account.
+  // Shown as a small centred modal (NOT inside the fuel tile) when
+  // an anonymous visitor taps a thumb, so the station popup stays
+  // compact and only explodes into the explainer when we need it.
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   useEffect(() => {
@@ -104,9 +104,7 @@ export default function PriceVoteButtons({
 
   const submit = useCallback(
     async (vote: 'up' | 'down') => {
-      // ── Auth gate ────────────────────────────────────────────
-      // Anonymous visitors see an inline explainer instead of
-      // the modal jumping up unexplained.
+      // Anonymous visitors → pop the centred sign-in dialog.
       if (!user?.email) {
         setShowAuthPrompt(true);
         return;
@@ -155,134 +153,154 @@ export default function PriceVoteButtons({
   const showWarning = !loading && down >= WARNING_THRESHOLD;
 
   return (
-    <div className="mt-2">
-      {/* Warning banner — only when down >= threshold in window */}
-      {showWarning && (
-        <div className="mb-2 flex items-start gap-1.5 px-2 py-1.5 rounded-lg bg-amber-50 border border-amber-200">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-3 h-3 text-amber-600 flex-shrink-0 mt-0.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
-          </svg>
-          <p className="text-[9px] text-amber-800 font-semibold leading-tight">
-            Price may be outdated. Please verify with the station.
-          </p>
-        </div>
-      )}
+    <>
+      <div className="mt-1.5">
+        {/* Warning banner — only when down >= threshold in window */}
+        {showWarning && (
+          <div className="mb-1 flex items-start gap-1 px-1.5 py-1 rounded-md bg-amber-50 border border-amber-200">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-2.5 h-2.5 text-amber-600 flex-shrink-0 mt-0.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <p className="text-[8px] text-amber-800 font-semibold leading-tight">
+              Price may be outdated — verify at the station
+            </p>
+          </div>
+        )}
 
-      {/* Sign-in prompt for anonymous visitors — a friendly inline
-          card instead of a jarring auth-modal ambush. */}
-      {showAuthPrompt && !user?.email ? (
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-50 border border-emerald-200 p-2.5 shadow-sm">
-          <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-emerald-200/40 blur-xl pointer-events-none" />
-          <div className="relative flex items-start gap-2">
-            <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2 15.09 8.26 22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[11px] font-black text-gray-900 leading-tight">
-                Help fellow drivers 🙌
+        {/* Compact inline thumbs row — small footprint so the tile
+            stays tight. Just two pill buttons with a thumb + count. */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => submit('up')}
+            disabled={submitting}
+            className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-md border text-[10px] font-black transition-all ${
+              localVote === 'up'
+                ? 'bg-emerald-600 border-emerald-600 text-white'
+                : 'bg-white border-gray-200 text-gray-500 hover:border-emerald-300 hover:text-emerald-600 active:scale-95'
+            } ${submitting ? 'opacity-60' : ''}`}
+            aria-label={user?.email ? 'Price is accurate' : 'Sign in to rate'}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill={localVote === 'up' ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M7 10v12" />
+              <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H7V10l4-9 1.5.5a2 2 0 0 1 1.5 1.88z" />
+            </svg>
+            <span className="tabular-nums">{up}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => submit('down')}
+            disabled={submitting}
+            className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-md border text-[10px] font-black transition-all ${
+              localVote === 'down'
+                ? 'bg-red-600 border-red-600 text-white'
+                : 'bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-600 active:scale-95'
+            } ${submitting ? 'opacity-60' : ''}`}
+            aria-label={user?.email ? 'Price is wrong' : 'Sign in to rate'}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill={localVote === 'down' ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M17 14V2" />
+              <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H17v12l-4 9-1.5-.5a2 2 0 0 1-1.5-1.88z" />
+            </svg>
+            <span className="tabular-nums">{down}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Centred sign-in prompt dialog ──────────────────────────
+          Renders above the station popup (z-index high enough to
+          cover it) so the petrol-station modal itself stays lean. */}
+      {showAuthPrompt && !user?.email && (
+        <div
+          className="fixed inset-0 z-[11000] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowAuthPrompt(false)}
+          />
+          <div className="relative w-full max-w-[320px] bg-white rounded-2xl shadow-2xl overflow-hidden ring-1 ring-black/10">
+            {/* Gradient header with a friendly star */}
+            <div className="relative bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-700 text-white px-5 pt-5 pb-5 overflow-hidden">
+              <div className="absolute -top-12 -right-12 w-28 h-28 rounded-full bg-white/15 blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-14 -left-10 w-28 h-28 rounded-full bg-emerald-400/25 blur-2xl pointer-events-none" />
+              <div className="relative flex items-center justify-center">
+                <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/20">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-7 h-7"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M12 2 15.09 8.26 22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                </div>
               </div>
-              <p className="text-[9px] text-gray-600 leading-snug mt-0.5">
-                Only signed-up users can rate prices. Takes 10 seconds — your vote keeps data accurate for everyone.
+            </div>
+
+            {/* Body */}
+            <div className="px-5 pt-4 pb-5 text-center">
+              <h3 className="text-base font-black text-gray-900 leading-tight">
+                Help fellow drivers 🙌
+              </h3>
+              <p className="text-[12px] text-gray-600 leading-snug mt-2">
+                Only signed-up users can rate fuel prices. It takes <span className="font-bold text-gray-900">10 seconds</span> — your vote keeps prices accurate for everyone on the road.
               </p>
-              <div className="flex items-center gap-1.5 mt-2">
+
+              {/* Actions */}
+              <div className="mt-4 flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={() => {
                     onRequestAuth?.();
                     setShowAuthPrompt(false);
                   }}
-                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black shadow-sm shadow-emerald-600/25 transition-colors"
+                  className="w-full py-3 rounded-xl bg-gradient-to-br from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white text-sm font-black shadow-lg shadow-emerald-600/25 transition-all"
                 >
                   Sign up / Sign in
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAuthPrompt(false)}
-                  className="px-2 py-1.5 text-[10px] font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+                  className="w-full py-2 text-[11px] font-semibold text-gray-500 hover:text-gray-800 transition-colors"
                 >
-                  Later
+                  Not now
                 </button>
               </div>
             </div>
           </div>
         </div>
-      ) : (
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[9px] uppercase tracking-wider font-bold text-gray-400">
-              Is this price accurate?
-            </span>
-          </div>
-          {/* Chunky mobile-friendly pill buttons */}
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => submit('up')}
-              disabled={submitting}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border-2 font-black transition-all ${
-                localVote === 'up'
-                  ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-600/25 scale-[1.02]'
-                  : 'bg-white border-gray-200 text-gray-500 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95'
-              } ${submitting ? 'opacity-60' : ''}`}
-              aria-label={user?.email ? 'Price is accurate' : 'Sign in to rate'}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill={localVote === 'up' ? 'currentColor' : 'none'}
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M7 10v12" />
-                <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H7V10l4-9 1.5.5a2 2 0 0 1 1.5 1.88z" />
-              </svg>
-              <span className="text-[11px] tabular-nums">{up}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => submit('down')}
-              disabled={submitting}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border-2 font-black transition-all ${
-                localVote === 'down'
-                  ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-600/25 scale-[1.02]'
-                  : 'bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:bg-red-50 hover:text-red-700 active:scale-95'
-              } ${submitting ? 'opacity-60' : ''}`}
-              aria-label={user?.email ? 'Price is wrong' : 'Sign in to rate'}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill={localVote === 'down' ? 'currentColor' : 'none'}
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M17 14V2" />
-                <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H17v12l-4 9-1.5-.5a2 2 0 0 1-1.5-1.88z" />
-              </svg>
-              <span className="text-[11px] tabular-nums">{down}</span>
-            </button>
-          </div>
-        </div>
       )}
-    </div>
+    </>
   );
 }
