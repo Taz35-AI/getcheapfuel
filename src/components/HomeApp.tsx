@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import SearchBar from '@/components/SearchBar';
 import FuelFilter from '@/components/FuelFilter';
@@ -38,6 +38,31 @@ const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false }
 
 type MapStyle = 'dark' | 'bright' | 'positron' | 'liberty';
 
+// Mutually-exclusive fuel groups — kept in sync with FuelFilter.
+// Used to clean up any legacy "all 4 fuels" selection saved before
+// this rule existed so returning users don't land on an invalid mix.
+const PETROL_FUELS: FuelType[] = ['E10', 'E5'];
+const DIESEL_FUELS: FuelType[] = ['B7', 'SDV'];
+
+function normaliseFuelSelection(raw: unknown): FuelType[] {
+  if (!Array.isArray(raw)) return ['E10'];
+  const fuels = raw.filter((f): f is FuelType =>
+    typeof f === 'string' && ['E10', 'E5', 'B7', 'SDV', 'EV'].includes(f),
+  );
+  if (fuels.length === 0) return ['E10'];
+  const petrol = fuels.filter(f => PETROL_FUELS.includes(f));
+  const diesel = fuels.filter(f => DIESEL_FUELS.includes(f));
+  const ev = fuels.filter(f => f === 'EV');
+  // If the saved selection mixes both petrol and diesel, keep the
+  // larger of the two (tie → petrol by default) and discard the
+  // other. EV is orthogonal and always preserved.
+  if (petrol.length > 0 && diesel.length > 0) {
+    const keepPetrol = petrol.length >= diesel.length;
+    return keepPetrol ? [...petrol, ...ev] : [...diesel, ...ev];
+  }
+  return [...petrol, ...diesel, ...ev];
+}
+
 export default function HomeApp() {
   // Default landing region — central London at street-level zoom so
   // first paint shows a real city with visible pins, not a blank UK map.
@@ -45,7 +70,10 @@ export default function HomeApp() {
   const [zoom, setZoom] = useState(11);
   const [stations, setStations] = useState<FuelStation[]>([]);
   const [evChargers, setEvChargers] = useState<EVCharger[]>([]);
-  const [selectedFuels, setSelectedFuels] = useState<FuelType[]>(['E10', 'B7']);
+  // Default to Unleaded only — the petrol/diesel groups are now
+  // mutually exclusive, so ['E10', 'B7'] is no longer a valid initial
+  // state. Users with a diesel vehicle tap the Diesel chip once.
+  const [selectedFuels, setSelectedFuels] = useState<FuelType[]>(['E10']);
   const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
@@ -70,6 +98,14 @@ export default function HomeApp() {
   // contribute to TBT during the initial paint window.
   const [mapReady, setMapReady] = useState(false);
   const [routeOpen, setRouteOpen] = useState(false);
+  // Planned-route polyline passed to the Map so it can draw the
+  // trail and auto-fit the viewport around it. Cleared when the
+  // RoutePlanner modal is closed.
+  const [routeGeometry, setRouteGeometry] = useState<[number, number][] | null>(null);
+  // Stations the RoutePlanner found along the planned route. Merged
+  // into the map markers so the pins appear along the trail even
+  // when the corridor is outside the user's current-location radius.
+  const [routeStations, setRouteStations] = useState<FuelStation[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [trackerOpen, setTrackerOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -83,7 +119,13 @@ export default function HomeApp() {
       const ms = localStorage.getItem('gcf_map_style');
       if (ms) setMapStyle(ms as MapStyle);
       const fuels = localStorage.getItem('gcf_default_fuels');
-      if (fuels) setSelectedFuels(JSON.parse(fuels));
+      if (fuels) {
+        const cleaned = normaliseFuelSelection(JSON.parse(fuels));
+        setSelectedFuels(cleaned);
+        // Persist the cleaned value so returning users don't keep
+        // paying the normalisation cost on every load.
+        localStorage.setItem('gcf_default_fuels', JSON.stringify(cleaned));
+      }
       const r = localStorage.getItem('gcf_radius');
       if (r) setRadius(Number(r));
       const s = localStorage.getItem('gcf_sort_by');
@@ -292,6 +334,19 @@ export default function HomeApp() {
       fetchStations(userLocation.lat, userLocation.lng, radius);
     }
   }, [selectedFuels, radius, userLocation, fetchStations]);
+
+  // Merge the main station list with any route-corridor stations the
+  // RoutePlanner found, deduped by id, so planned-route pins show up
+  // on the map even when the corridor is outside the location radius.
+  // Note: uses a plain object as a lookup because `Map` is already
+  // bound to the imported map component at module scope.
+  const mapStations = useMemo<FuelStation[]>(() => {
+    if (routeStations.length === 0) return stations;
+    const byId: Record<string, FuelStation> = {};
+    for (const s of stations) byId[s.id] = s;
+    for (const s of routeStations) byId[s.id] = s;
+    return Object.values(byId);
+  }, [stations, routeStations]);
 
   const stationListProps = {
     stations,
@@ -705,7 +760,7 @@ export default function HomeApp() {
             <Map
               center={center}
               zoom={zoom}
-              stations={stations}
+              stations={mapStations}
               evChargers={evChargers}
               selectedFuels={selectedFuels}
               selectedStation={selectedStation}
@@ -714,6 +769,7 @@ export default function HomeApp() {
               isFavourite={isFavourite}
               onToggleFavourite={toggleFavourite}
               userLocation={userLocation}
+              routeGeometry={routeGeometry}
             />
           ) : (
             <div
@@ -752,8 +808,14 @@ export default function HomeApp() {
           stations={stations}
           selectedFuels={selectedFuels}
           open={routeOpen}
-          onClose={() => setRouteOpen(false)}
+          onClose={() => {
+            setRouteOpen(false);
+            setRouteGeometry(null);
+            setRouteStations([]);
+          }}
           onStationClick={handleStationClick}
+          onRouteGeometry={setRouteGeometry}
+          onRouteStations={(next) => setRouteStations(next ?? [])}
         />
       )}
       {notifOpen && (

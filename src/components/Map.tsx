@@ -6,6 +6,8 @@ import MapGL, {
   Popup,
   NavigationControl,
   GeolocateControl,
+  Source,
+  Layer,
   type MapRef,
   type ViewStateChangeEvent,
 } from 'react-map-gl/maplibre';
@@ -42,6 +44,10 @@ interface MapProps {
   isFavourite: (id: string) => boolean;
   onToggleFavourite: (id: string) => void;
   userLocation?: { lat: number; lng: number } | null;
+  // Optional planned-route polyline. Coordinates are [lng, lat] tuples
+  // as returned by OSRM. When non-null the map draws the line and
+  // auto-fits the viewport to the route's bounding box.
+  routeGeometry?: [number, number][] | null;
 }
 
 function getPriceColor(price: number | null | undefined): string {
@@ -274,103 +280,169 @@ function FavouriteButton({ id, isFav, onToggle }: { id: string; isFav: boolean; 
   );
 }
 
-function FuelPopupContent({ station, isFav, onToggleFav }: { station: FuelStation; isFav: boolean; onToggleFav: (id: string) => void }) {
+function FuelPopupContent({
+  station,
+  isFav,
+  onToggleFav,
+  selectedFuels,
+}: {
+  station: FuelStation;
+  isFav: boolean;
+  onToggleFav: (id: string) => void;
+  selectedFuels: FuelType[];
+}) {
   const fuels = [
-    { key: 'E10', label: 'Unleaded (E10)' },
-    { key: 'E5', label: 'Premium (E5)' },
-    { key: 'B7', label: 'Diesel (B7)' },
-    { key: 'SDV', label: 'Super Diesel' },
+    { key: 'E10', label: 'Unleaded' },
+    { key: 'E5', label: 'Premium' },
+    { key: 'B7', label: 'Diesel' },
+    { key: 'SDV', label: 'Super' },
   ] as const;
 
-  const chartFuel = fuels.find(f => station.prices[f.key] != null);
+  // Decide which fuel group to plot in the trend chart based on the
+  // user's current filter selection. Petrol-selected → [E10, E5],
+  // diesel-selected → [B7, SDV]. If only EV is selected, fall back to
+  // whatever fuel the station actually has data for.
+  const hasPetrolSelected = selectedFuels.some(f => f === 'E10' || f === 'E5');
+  const hasDieselSelected = selectedFuels.some(f => f === 'B7' || f === 'SDV');
+  const groupFuels: Exclude<FuelType, 'EV'>[] = hasDieselSelected
+    ? ['B7', 'SDV']
+    : hasPetrolSelected
+      ? ['E10', 'E5']
+      : ['E10', 'E5']; // EV-only fallback — show petrol by default
+  // Primary fuel to highlight within the group: first selected fuel
+  // that's in the same group, otherwise the first of the group.
+  const highlightFuel: Exclude<FuelType, 'EV'> =
+    (selectedFuels.find(f => groupFuels.includes(f as Exclude<FuelType, 'EV'>)) as Exclude<FuelType, 'EV'> | undefined) ||
+    groupFuels[0];
+  // The chart will auto-filter fuels with no data, so we just pass
+  // the full group and let PriceTrendChart handle empty series.
+  const anyFuelHasData = fuels.some(f => station.prices[f.key] != null);
   const freshness = getStationFreshness(station);
   const freshnessStyle = freshnessClasses(freshness.tier);
+  const hasAmenities = station.amenities && Object.values(station.amenities).some(Boolean);
 
   return (
-    <div className="w-full min-w-[240px] sm:min-w-[340px] max-w-[400px]">
+    <div className="w-full sm:w-[560px] sm:max-w-[560px]">
+      {/* ─── Header (full-width) ─────────────────────────────── */}
       <div className="flex items-start gap-2 sm:gap-3">
         <div className="flex-shrink-0">
-          <div className="block sm:hidden"><BrandLogo brand={station.brand} size={40} /></div>
-          <div className="hidden sm:block"><BrandLogo brand={station.brand} size={56} /></div>
+          <BrandLogo brand={station.brand} size={36} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <div className="font-bold text-sm sm:text-base text-gray-900 leading-tight">{station.brand}</div>
+            <div className="font-black text-sm sm:text-base text-gray-900 leading-tight truncate">{station.brand}</div>
             {station.openingHours && (
               <OpenStatusBadge hours={station.openingHours} variant="badge" />
             )}
           </div>
-          <div className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 sm:mt-1 leading-snug">
+          <div className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 leading-snug">
             {toTitleCase(station.address)}
-            {station.postcode && <><br />{station.postcode}</>}
+            {station.postcode && <> · <span className="font-semibold text-gray-700">{station.postcode}</span></>}
           </div>
         </div>
       </div>
-      <div className="mb-2 sm:mb-3" />
 
-      <div className="space-y-1 sm:space-y-1.5">
-        {fuels
-          .filter(f => station.prices[f.key] != null)
-          .map(f => {
-            const price = station.prices[f.key]!;
-            return (
-              <div key={f.key} className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span
-                    className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full"
-                    style={{ backgroundColor: FUEL_COLORS[f.key] }}
-                  />
-                  <span className="text-xs sm:text-sm text-gray-600">{f.label}</span>
-                </div>
-                <span className="text-xs sm:text-sm font-bold text-gray-900">{price.toFixed(1)}p</span>
+      {/* ─── Two-column body on desktop, stacked on mobile ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mt-2 sm:mt-3">
+        {/* LEFT column — prices + trend chart */}
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-1 sm:gap-1.5">
+            {fuels
+              .filter(f => station.prices[f.key] != null)
+              .map(f => {
+                const price = station.prices[f.key]!;
+                return (
+                  <div
+                    key={f.key}
+                    className="flex items-center justify-between gap-1 px-1.5 sm:px-2 py-1 sm:py-1.5 bg-gray-50 border border-gray-100 rounded-lg"
+                  >
+                    <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                      <span
+                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ring-1 sm:ring-2 ring-white"
+                        style={{ backgroundColor: FUEL_COLORS[f.key] }}
+                      />
+                      <span className="text-[9px] sm:text-[10px] font-bold text-gray-500 truncate">{f.label}</span>
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] font-black text-gray-900 tabular-nums flex-shrink-0">
+                      {price.toFixed(1)}p
+                    </span>
+                  </div>
+                );
+              })}
+          </div>
+
+          {anyFuelHasData && (
+            <>
+              {/* Mobile: compact variant of the multi-fuel chart with
+                  both fuels in the user's selected group. Desktop:
+                  full-size version of the same chart. */}
+              <div className="block sm:hidden">
+                <PriceTrendChart
+                  stationId={station.id}
+                  fuels={groupFuels}
+                  highlightFuel={highlightFuel}
+                  compact
+                />
               </div>
-            );
-          })}
+              <div className="hidden sm:block">
+                <PriceTrendChart
+                  stationId={station.id}
+                  fuels={groupFuels}
+                  highlightFuel={highlightFuel}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* RIGHT column — hours, amenities, freshness */}
+        <div className="space-y-2 sm:space-y-3">
+          {station.openingHours && (
+            <div>
+              <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1">
+                Opening hours
+              </div>
+              <OpenStatusBadge hours={station.openingHours} variant="full" />
+            </div>
+          )}
+
+          {hasAmenities && (
+            <div>
+              <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1.5">
+                Amenities
+              </div>
+              <StationAmenityIcons amenities={station.amenities!} size="sm" />
+            </div>
+          )}
+
+          {/* Data freshness badge */}
+          <div>
+            <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1.5">
+              Data freshness
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold ${freshnessStyle.bg} ${freshnessStyle.text}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${freshnessStyle.dot}`} />
+                {freshnessLabel(freshness.tier)}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {chartFuel && (
-        <PriceTrendChart
-          stationId={station.id}
-          fuelType={chartFuel.key}
-          color={FUEL_COLORS[chartFuel.key]}
-        />
-      )}
-
-      {station.openingHours && (
-        <div className="mt-2 sm:mt-3">
-          <OpenStatusBadge hours={station.openingHours} variant="full" />
+      {/* ─── Actions (full-width) ──────────────────────────── */}
+      <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100">
+        <div className="flex gap-2">
+          <FavouriteButton id={station.id} isFav={isFav} onToggle={onToggleFav} />
+          <ShareButton
+            title={station.brand}
+            text={`${station.brand} — ${station.postcode}`}
+            lat={station.latitude}
+            lng={station.longitude}
+          />
         </div>
-      )}
-
-      {station.amenities && Object.values(station.amenities).some(Boolean) && (
-        <div className="mt-2 sm:mt-3">
-          <div className="text-[9px] sm:text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1 sm:mb-1.5">Amenities</div>
-          <StationAmenityIcons amenities={station.amenities} size="md" />
-        </div>
-      )}
-
-      {/* Data freshness badge */}
-      <div className={`mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-gray-100`}>
-        <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold ${freshnessStyle.bg} ${freshnessStyle.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${freshnessStyle.dot}`} />
-            {freshnessLabel(freshness.tier)}
-          </span>
-          <span className="text-[9px] sm:text-[10px] text-gray-400">
-            {freshness.label}
-          </span>
-        </div>
+        <DirectionButtons lat={station.latitude} lng={station.longitude} label={`${station.brand} ${station.postcode}`} />
       </div>
-      <div className="flex gap-2 mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-gray-100">
-        <FavouriteButton id={station.id} isFav={isFav} onToggle={onToggleFav} />
-        <ShareButton
-          title={station.brand}
-          text={`${station.brand} — ${station.postcode}`}
-          lat={station.latitude}
-          lng={station.longitude}
-        />
-      </div>
-      <DirectionButtons lat={station.latitude} lng={station.longitude} label={`${station.brand} ${station.postcode}`} />
     </div>
   );
 }
@@ -440,6 +512,7 @@ export default function Map({
   isFavourite,
   onToggleFavourite,
   userLocation,
+  routeGeometry,
 }: MapProps) {
   const mapRef = useRef<MapRef>(null);
   const [popupStation, setPopupStation] = useState<FuelStation | null>(null);
@@ -463,6 +536,36 @@ export default function Map({
       duration: 1500,
     });
   }, [center, zoom]);
+
+  // When a planned route arrives, fit the viewport to its bounding
+  // box so the whole trip is visible. Adds extra padding at the
+  // bottom so the route doesn't get hidden behind the compact
+  // RoutePlanner bottom sheet on mobile.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !routeGeometry || routeGeometry.length < 2) return;
+    let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+    for (const [lng, lat] of routeGeometry) {
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+    }
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    map.fitBounds(
+      [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ],
+      {
+        padding: isMobile
+          ? { top: 60, left: 30, right: 30, bottom: Math.round(window.innerHeight * 0.55) }
+          : { top: 80, left: 80, right: 80, bottom: 80 },
+        duration: 1200,
+        maxZoom: 13,
+      },
+    );
+  }, [routeGeometry]);
 
   // Pan the map so a clicked marker is positioned with enough room above
   // for the popup (which is anchored to the bottom of the marker). The
@@ -569,6 +672,52 @@ export default function Map({
       <NavigationControl position="bottom-right" showCompass visualizePitch />
       <GeolocateControl position="bottom-right" trackUserLocation />
 
+      {/* Planned-route polyline — glowing emerald trail from start to end.
+          Rendered as two stacked line layers: a soft outer halo and a
+          solid inner line, so it stays readable over any map style. */}
+      {routeGeometry && routeGeometry.length >= 2 && (
+        <Source
+          id="planned-route"
+          type="geojson"
+          data={{
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: routeGeometry,
+            },
+          }}
+        >
+          <Layer
+            id="planned-route-halo"
+            type="line"
+            paint={{
+              'line-color': '#ffffff',
+              'line-width': 10,
+              'line-opacity': 0.6,
+              'line-blur': 2,
+            }}
+            layout={{
+              'line-cap': 'round',
+              'line-join': 'round',
+            }}
+          />
+          <Layer
+            id="planned-route-line"
+            type="line"
+            paint={{
+              'line-color': '#059669',
+              'line-width': 5,
+              'line-opacity': 0.95,
+            }}
+            layout={{
+              'line-cap': 'round',
+              'line-join': 'round',
+            }}
+          />
+        </Source>
+      )}
+
       {userLocation && (
         <Marker
           longitude={userLocation.lng}
@@ -622,7 +771,12 @@ export default function Map({
           }}
           className="fuel-popup"
         >
-          <FuelPopupContent station={popupStation} isFav={isFavourite(popupStation.id)} onToggleFav={onToggleFavourite} />
+          <FuelPopupContent
+            station={popupStation}
+            isFav={isFavourite(popupStation.id)}
+            onToggleFav={onToggleFavourite}
+            selectedFuels={selectedFuels}
+          />
         </Popup>
       )}
 

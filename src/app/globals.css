@@ -11,30 +11,45 @@ body {
 
 /* MapLibre GL popup styling */
 .maplibregl-popup {
-  /* Wider on desktop so icons and prices have room to breathe;
-     stays narrow on mobile to fit the viewport. */
-  max-width: min(92vw, 420px) !important;
+  /* Wider on desktop so the popup can lay out as two columns and fit
+     everything in one glance. Mobile stays capped to the viewport. */
+  max-width: min(94vw, 600px) !important;
   /* Prevent browser pinch-zoom on the popup; only the map handles zoom */
   touch-action: pan-x pan-y;
 }
 
 .maplibregl-popup-content {
-  border-radius: 12px !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2) !important;
-  padding: 12px 14px !important;
-  /* Cap height so the popup never exceeds the visible area on small
-     screens. Internal scroll on the Y axis only — horizontal overflow
-     should never happen and is hidden defensively. */
-  max-height: 75vh;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18) !important;
+  padding: 14px 16px !important;
+  /* Cap height so the popup never exceeds the visible area. The
+     two-column layout on desktop keeps content short enough that
+     scrolling is rare. */
+  max-height: 86vh;
   overflow-y: auto;
   overflow-x: hidden;
   touch-action: pan-x pan-y;
 }
 
-/* Tighter padding on small screens */
-@media (max-width: 480px) {
+/* On mobile the marker-anchored popup almost always ends up clipped
+   against a viewport edge. Pin it to the visible centre instead and
+   hide the tail so it reads as a proper modal. */
+@media (max-width: 640px) {
+  .maplibregl-popup {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    max-width: 92vw !important;
+    z-index: 50;
+  }
+  .maplibregl-popup-tip {
+    display: none !important;
+  }
   .maplibregl-popup-content {
-    padding: 10px 12px !important;
+    padding: 12px 14px !important;
+    max-height: 86vh;
+    width: 92vw;
   }
 }
 

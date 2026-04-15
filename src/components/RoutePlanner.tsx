@@ -11,6 +11,14 @@ interface RoutePlannerProps {
   open: boolean;
   onClose: () => void;
   onStationClick: (station: FuelStation) => void;
+  // Emit the OSRM route polyline (array of [lng, lat] pairs) up to the
+  // host so the map can draw it. Pass null to clear the line.
+  onRouteGeometry?: (coords: [number, number][] | null) => void;
+  // Emit the top N stations that were found along the planned route
+  // so the host can merge them into the map's visible markers. These
+  // are usually outside the user's current-location radius, so they
+  // wouldn't otherwise show up as pins.
+  onRouteStations?: (stations: FuelStation[] | null) => void;
 }
 
 interface RouteResult {
@@ -57,7 +65,7 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export default function RoutePlanner({ stations, selectedFuels, open, onClose, onStationClick }: RoutePlannerProps) {
+export default function RoutePlanner({ stations, selectedFuels, open, onClose, onStationClick, onRouteGeometry, onRouteStations }: RoutePlannerProps) {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [loading, setLoading] = useState(false);
@@ -94,6 +102,11 @@ export default function RoutePlanner({ stations, selectedFuels, open, onClose, o
       const distanceKm = route.distance / 1000;
       const durationMin = route.duration / 60;
 
+      // Push the polyline up to the host immediately so the map can
+      // draw it and fit the viewport while we're still computing the
+      // nearby-stations list below.
+      onRouteGeometry?.(coords);
+
       // Fetch stations along the route corridor
       const midLat = (fromGeo.lat + toGeo.lat) / 2;
       const midLng = (fromGeo.lng + toGeo.lng) / 2;
@@ -123,19 +136,43 @@ export default function RoutePlanner({ stations, selectedFuels, open, onClose, o
         duration: durationMin,
         stationsOnRoute: nearbyStations,
       });
+
+      // Push the route stations up so the host can merge them into the
+      // map's visible markers. The cheapest-sorted top 10 is enough to
+      // light up the whole corridor without cluttering the map.
+      onRouteStations?.(nearbyStations);
     } catch {
       setError('Failed to plan route. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [from, to, detourRadius, primaryFuel]);
+  }, [from, to, detourRadius, primaryFuel, onRouteGeometry, onRouteStations]);
 
   if (!open) return null;
 
+  // Once a route has been planned, shrink the modal so the map
+  // (with the freshly drawn trail) is visible behind/above it.
+  // Mobile → bottom sheet at 55vh. Desktop → side-docked panel.
+  const compact = result !== null;
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center p-0 md:p-6">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full md:w-[460px] h-[94vh] md:h-auto md:max-h-[90vh] md:rounded-[28px] rounded-t-[28px] shadow-2xl flex flex-col overflow-hidden ring-1 ring-black/5">
+    <div
+      className={`fixed inset-0 z-[9999] flex justify-center ${
+        compact
+          ? 'items-end md:items-stretch md:justify-start md:p-6 pointer-events-none'
+          : 'items-end md:items-center p-0 md:p-6'
+      }`}
+    >
+      {!compact && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto" onClick={onClose} />
+      )}
+      <div
+        className={`relative bg-white shadow-2xl flex flex-col overflow-hidden ring-1 ring-black/5 pointer-events-auto transition-all duration-500 ${
+          compact
+            ? 'w-full md:w-[440px] h-[55vh] md:h-full md:max-h-[calc(100vh-3rem)] rounded-t-[28px] md:rounded-[28px]'
+            : 'w-full md:w-[460px] h-[94vh] md:h-auto md:max-h-[90vh] rounded-t-[28px] md:rounded-[28px]'
+        }`}
+      >
 
         {/* ─── Premium gradient header ──────────────────────────────── */}
         <div className="relative flex-shrink-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-700 text-white px-5 pt-5 pb-5 overflow-hidden">

@@ -7,6 +7,20 @@ interface FuelFilterProps {
   onChange: (fuels: FuelType[]) => void;
 }
 
+// Mutually-exclusive fuel groups. A user who owns a petrol car
+// doesn't want diesel prices in their results (and vice versa), so
+// we only allow one group's fuels to be active at a time. EV is
+// orthogonal and can be combined with either group.
+const PETROL_GROUP: readonly FuelType[] = ['E10', 'E5'];
+const DIESEL_GROUP: readonly FuelType[] = ['B7', 'SDV'];
+
+function isPetrol(f: FuelType): boolean {
+  return PETROL_GROUP.includes(f);
+}
+function isDiesel(f: FuelType): boolean {
+  return DIESEL_GROUP.includes(f);
+}
+
 /** Small colored chip showing the fuel code — acts as the visual anchor. */
 function FuelCodeChip({ code, isActive, activeBg, inactiveText }: { code: string; isActive: boolean; activeBg: string; inactiveText: string }) {
   return (
@@ -82,45 +96,105 @@ const FUEL_CONFIG: { key: FuelType; label: string; mobileLabel: string; color: s
 ];
 
 export default function FuelFilter({ selected, onChange }: FuelFilterProps) {
+  // Which fuel group is currently "active" — i.e. has at least one
+  // member selected. Drives the dimming so the other (non-active)
+  // group is visually muted but still tappable.
+  const hasPetrolSelected = selected.some(isPetrol);
+  const hasDieselSelected = selected.some(isDiesel);
+
   const toggle = (fuel: FuelType) => {
+    // EV is orthogonal — toggle independently, no group swapping.
+    if (fuel === 'EV') {
+      if (selected.includes('EV')) {
+        if (selected.length === 1) return;
+        onChange(selected.filter(f => f !== 'EV'));
+      } else {
+        onChange([...selected, 'EV']);
+      }
+      return;
+    }
+
+    const clickedIsPetrol = isPetrol(fuel);
+    const otherGroupHasMembers = clickedIsPetrol ? hasDieselSelected : hasPetrolSelected;
+
+    if (otherGroupHasMembers) {
+      // Swap groups — drop everything from the other fuel group and
+      // replace with just the clicked fuel. EV stays if it was on.
+      const next: FuelType[] = [fuel];
+      if (selected.includes('EV')) next.push('EV');
+      onChange(next);
+      return;
+    }
+
+    // Normal in-group toggle
     if (selected.includes(fuel)) {
-      if (selected.length === 1) return;
-      onChange(selected.filter(f => f !== fuel));
+      // Prevent dropping the last fuel — always leave at least one
+      // member of the active group selected.
+      const next = selected.filter(f => f !== fuel);
+      const nonEv = next.filter(f => f !== 'EV');
+      if (nonEv.length === 0) return;
+      onChange(next);
     } else {
       onChange([...selected, fuel]);
     }
   };
 
+  const renderChip = (fuel: typeof FUEL_CONFIG[number]) => {
+    const isActive = selected.includes(fuel.key);
+    // Fuels in the OTHER group get dimmed so users can see at a
+    // glance which group is currently active. Still clickable —
+    // tapping one triggers a clean group swap.
+    const isDimmed =
+      (fuel.key === 'B7' || fuel.key === 'SDV') && hasPetrolSelected ||
+      (fuel.key === 'E10' || fuel.key === 'E5') && hasDieselSelected;
+
+    return (
+      <button
+        key={fuel.key}
+        onClick={() => toggle(fuel.key)}
+        className={`
+          inline-flex items-center gap-1.5
+          px-1.5 py-1 md:px-2.5 md:py-1.5
+          rounded-lg
+          text-[10px] md:text-xs font-semibold
+          border transition-all whitespace-nowrap
+          ${isActive
+            ? `${fuel.inactiveBg} ${fuel.inactiveText} ${fuel.inactiveBorder} shadow-sm`
+            : isDimmed
+              ? 'bg-white text-gray-300 border-gray-200 opacity-40 hover:opacity-70'
+              : 'bg-white/50 text-gray-400 border-gray-200 opacity-60 hover:opacity-100'
+          }
+        `}
+        aria-pressed={isActive}
+      >
+        <FuelCodeChip
+          code={fuel.mobileLabel}
+          isActive={isActive}
+          activeBg={fuel.activeBg}
+          inactiveText={fuel.inactiveText}
+        />
+        <span className="hidden md:inline">{fuel.label}</span>
+      </button>
+    );
+  };
+
+  const petrolChips = FUEL_CONFIG.filter(f => isPetrol(f.key));
+  const dieselChips = FUEL_CONFIG.filter(f => isDiesel(f.key));
+  const evChips = FUEL_CONFIG.filter(f => f.key === 'EV');
+
   return (
-    <div className="flex gap-1.5 md:gap-2">
-      {FUEL_CONFIG.map(fuel => {
-        const isActive = selected.includes(fuel.key);
-        return (
-          <button
-            key={fuel.key}
-            onClick={() => toggle(fuel.key)}
-            className={`
-              inline-flex items-center gap-1.5
-              px-1.5 py-1 md:px-2.5 md:py-1.5
-              rounded-lg
-              text-[10px] md:text-xs font-semibold
-              border transition-all whitespace-nowrap
-              ${isActive
-                ? `${fuel.inactiveBg} ${fuel.inactiveText} ${fuel.inactiveBorder} shadow-sm`
-                : `bg-white/50 text-gray-400 border-gray-200 opacity-60 hover:opacity-100`
-              }
-            `}
-          >
-            <FuelCodeChip
-              code={fuel.mobileLabel}
-              isActive={isActive}
-              activeBg={fuel.activeBg}
-              inactiveText={fuel.inactiveText}
-            />
-            <span className="hidden md:inline">{fuel.label}</span>
-          </button>
-        );
-      })}
+    <div className="flex items-center gap-1.5 md:gap-2">
+      <div className="flex gap-1 md:gap-1.5">{petrolChips.map(renderChip)}</div>
+      <span
+        className="w-px h-5 md:h-6 bg-gray-300 mx-0.5 md:mx-1 flex-shrink-0"
+        aria-hidden="true"
+      />
+      <div className="flex gap-1 md:gap-1.5">{dieselChips.map(renderChip)}</div>
+      <span
+        className="w-px h-5 md:h-6 bg-gray-300 mx-0.5 md:mx-1 flex-shrink-0"
+        aria-hidden="true"
+      />
+      <div className="flex gap-1 md:gap-1.5">{evChips.map(renderChip)}</div>
     </div>
   );
 }
