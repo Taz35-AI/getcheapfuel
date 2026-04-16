@@ -241,14 +241,14 @@ function DirectionButtons({ lat, lng, label }: { lat: number; lng: number; label
   const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes&q=${encodeURIComponent(label)}`;
 
   return (
-    <div className="flex gap-1.5 mt-1.5">
+    <div className="flex gap-1 sm:gap-1.5 mt-1 sm:mt-1.5">
       <a
         href={googleUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-blue-500 text-white text-[10px] sm:text-xs font-semibold hover:bg-blue-600 transition-colors"
+        className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-0.5 sm:py-1.5 rounded-lg bg-blue-500 text-white text-[9px] sm:text-xs font-semibold hover:bg-blue-600 transition-colors"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="3 11 22 2 13 21 11 13 3 11" />
         </svg>
         Google Maps
@@ -257,9 +257,9 @@ function DirectionButtons({ lat, lng, label }: { lat: number; lng: number; label
         href={wazeUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-cyan-500 text-white text-[10px] sm:text-xs font-semibold hover:bg-cyan-600 transition-colors"
+        className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-0.5 sm:py-1.5 rounded-lg bg-cyan-500 text-white text-[9px] sm:text-xs font-semibold hover:bg-cyan-600 transition-colors"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="3 11 22 2 13 21 11 13 3 11" />
         </svg>
         Waze
@@ -333,19 +333,19 @@ function FuelPopupContent({
   return (
     <div className="w-full sm:max-w-[560px]">
       {/* ─── Header (full-width) ─────────────────────────────── */}
-      <div className="flex items-start gap-2 sm:gap-3">
+      <div className="flex items-start gap-1.5 sm:gap-3">
         <div className="flex-shrink-0">
-          <BrandLogo brand={station.brand} size={32} />
+          <BrandLogo brand={station.brand} size={26} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <div className="font-black text-[13px] sm:text-base text-gray-900 leading-tight truncate">{station.brand}</div>
+            <div className="font-black text-[12px] sm:text-base text-gray-900 leading-tight truncate">{station.brand}</div>
             {/* Header status pill removed — the full "Open 24 hours"
                 badge in the right column already shows the same info,
                 and the pill was sitting behind the circular close
                 button in the top-right corner. */}
           </div>
-          <div className="text-[10px] sm:text-[11px] text-gray-500 leading-snug">
+          <div className="text-[9px] sm:text-[11px] text-gray-500 leading-snug">
             {toTitleCase(station.address)}
             {station.postcode && <> · <span className="font-semibold text-gray-700">{station.postcode}</span></>}
           </div>
@@ -353,9 +353,9 @@ function FuelPopupContent({
       </div>
 
       {/* ─── Two-column body on desktop, stacked on mobile ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-4 mt-1.5 sm:mt-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-4 mt-1 sm:mt-3">
         {/* LEFT column — prices + trend chart */}
-        <div className="space-y-1.5">
+        <div className="space-y-1 sm:space-y-1.5">
           <div className="grid grid-cols-2 gap-1 sm:gap-1.5">
             {fuels
               .filter(f => station.prices[f.key] != null)
@@ -364,7 +364,7 @@ function FuelPopupContent({
                 return (
                   <div
                     key={f.key}
-                    className="flex flex-col gap-0.5 px-1.5 py-1 sm:py-1.5 bg-gray-50 border border-gray-100 rounded-lg"
+                    className="flex flex-col gap-0.5 px-1 py-0.5 sm:px-1.5 sm:py-1.5 bg-gray-50 border border-gray-100 rounded-lg"
                   >
                     <div className="flex items-center justify-between gap-1">
                       <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
@@ -372,9 +372,9 @@ function FuelPopupContent({
                           className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ring-1 sm:ring-2 ring-white"
                           style={{ backgroundColor: FUEL_COLORS[f.key] }}
                         />
-                        <span className="text-[9px] sm:text-[10px] font-bold text-gray-500 truncate">{f.label}</span>
+                        <span className="text-[8px] sm:text-[10px] font-bold text-gray-500 truncate">{f.label}</span>
                       </div>
-                      <span className="text-[10px] sm:text-[11px] font-black text-gray-900 tabular-nums flex-shrink-0">
+                      <span className="text-[9px] sm:text-[11px] font-black text-gray-900 tabular-nums flex-shrink-0">
                         {price.toFixed(1)}p
                       </span>
                     </div>
@@ -413,7 +413,7 @@ function FuelPopupContent({
         </div>
 
         {/* RIGHT column — hours, amenities, freshness */}
-        <div className="space-y-1.5 sm:space-y-3">
+        <div className="space-y-1 sm:space-y-3">
           {station.openingHours && (
             <div>
               <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1">
@@ -440,8 +440,8 @@ function FuelPopupContent({
               <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1.5">
                 Data freshness
               </div>
-              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold ${freshnessStyle.bg} ${freshnessStyle.text}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${freshnessStyle.dot}`} />
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[11px] font-bold ${freshnessStyle.bg} ${freshnessStyle.text}`}>
+                <span className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${freshnessStyle.dot}`} />
                 {freshnessLabel(freshness.tier)}
               </span>
             </div>
@@ -450,8 +450,8 @@ function FuelPopupContent({
       </div>
 
       {/* ─── Actions (full-width) ──────────────────────────── */}
-      <div className="mt-1.5 sm:mt-3 pt-1.5 sm:pt-3 border-t border-gray-100">
-        <div className="flex gap-1.5">
+      <div className="mt-1 sm:mt-3 pt-1 sm:pt-3 border-t border-gray-100">
+        <div className="flex gap-1 sm:gap-1.5">
           <FavouriteButton id={station.id} isFav={isFav} onToggle={onToggleFav} />
           <ShareButton
             title={station.brand}
