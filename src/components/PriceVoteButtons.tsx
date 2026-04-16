@@ -10,6 +10,11 @@ interface PriceVoteButtonsProps {
   fuelType: Exclude<FuelType, 'EV'>;
   // Host-provided callback that opens the sign-up / sign-in modal.
   onRequestAuth?: () => void;
+  // 'horizontal' (default) stacks the two thumbs side-by-side and fills
+  // the parent width. 'vertical' stacks them on top of each other in a
+  // compact column so they can sit next to a big price without taking
+  // much horizontal space.
+  orientation?: 'horizontal' | 'vertical';
 }
 
 // localStorage keys
@@ -51,6 +56,7 @@ export default function PriceVoteButtons({
   stationId,
   fuelType,
   onRequestAuth,
+  orientation = 'horizontal',
 }: PriceVoteButtonsProps) {
   const { user } = useAuth();
   const key = `${stationId}:${fuelType}`;
@@ -179,13 +185,18 @@ export default function PriceVoteButtons({
         )}
 
         {/* Compact inline thumbs row — small footprint so the tile
-            stays tight. Just two pill buttons with a thumb + count. */}
-        <div className="flex items-center gap-1">
+            stays tight. Just two pill buttons with a thumb + count.
+            Horizontal (default) fills the tile width below the price;
+            vertical stacks them tightly so they can sit next to a big
+            price. */}
+        <div className={orientation === 'vertical' ? 'flex flex-col gap-0.5' : 'flex items-center gap-1'}>
           <button
             type="button"
             onClick={() => submit('up')}
             disabled={submitting}
-            className={`flex-1 flex items-center justify-center gap-0.5 py-0.5 rounded-md border text-[10px] font-black transition-all ${
+            className={`flex items-center justify-center gap-0.5 rounded-md border text-[10px] font-black transition-all ${
+              orientation === 'vertical' ? 'px-1.5 py-0 min-w-[28px]' : 'flex-1 py-0.5'
+            } ${
               localVote === 'up'
                 ? 'bg-emerald-600 border-emerald-600 text-white'
                 : 'bg-white border-gray-200 text-gray-500 hover:border-emerald-300 hover:text-emerald-600 active:scale-95'
@@ -211,7 +222,9 @@ export default function PriceVoteButtons({
             type="button"
             onClick={() => submit('down')}
             disabled={submitting}
-            className={`flex-1 flex items-center justify-center gap-0.5 py-0.5 rounded-md border text-[10px] font-black transition-all ${
+            className={`flex items-center justify-center gap-0.5 rounded-md border text-[10px] font-black transition-all ${
+              orientation === 'vertical' ? 'px-1.5 py-0 min-w-[28px]' : 'flex-1 py-0.5'
+            } ${
               localVote === 'down'
                 ? 'bg-red-600 border-red-600 text-white'
                 : 'bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-600 active:scale-95'

@@ -364,23 +364,31 @@ function FuelPopupContent({
                 return (
                   <div
                     key={f.key}
-                    className="flex flex-col gap-0.5 px-1 py-0.5 sm:px-1.5 sm:py-1.5 bg-gray-50 border border-gray-100 rounded-lg"
+                    className="flex items-center gap-1.5 px-1.5 py-1 sm:px-2 sm:py-1.5 bg-gray-50 border border-gray-100 rounded-lg"
                   >
-                    <div className="flex items-center justify-between gap-1">
-                      <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
-                        <span
-                          className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ring-1 sm:ring-2 ring-white"
-                          style={{ backgroundColor: FUEL_COLORS[f.key] }}
-                        />
-                        <span className="text-[8px] sm:text-[10px] font-bold text-gray-500 truncate">{f.label}</span>
+                    {/* Left: color dot + big bold price with the fuel
+                        label sat underneath it in small type. */}
+                    <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
+                      <span
+                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ring-1 sm:ring-2 ring-white"
+                        style={{ backgroundColor: FUEL_COLORS[f.key] }}
+                      />
+                      <div className="flex flex-col min-w-0 leading-none">
+                        <span className="text-sm sm:text-base font-black text-gray-900 tabular-nums">
+                          {price.toFixed(1)}p
+                        </span>
+                        <span className="text-[8px] sm:text-[9px] font-semibold text-gray-500 truncate mt-0.5">
+                          {f.label}
+                        </span>
                       </div>
-                      <span className="text-[9px] sm:text-[11px] font-black text-gray-900 tabular-nums flex-shrink-0">
-                        {price.toFixed(1)}p
-                      </span>
                     </div>
+                    {/* Right: tiny thumbs stacked up + down so they fit
+                        next to the big price without stretching the
+                        tile vertically. */}
                     <PriceVoteButtons
                       stationId={station.id}
                       fuelType={f.key}
+                      orientation="vertical"
                       onRequestAuth={onRequestAuth}
                     />
                   </div>
