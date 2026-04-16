@@ -781,15 +781,17 @@ export default function HomeApp() {
                 SDV: 'Super Diesel',
                 EV: 'EV charging',
               };
-              const nonEv = selectedFuels.filter(f => f !== 'EV');
-              const primary = nonEv[0] ?? 'EV';
+              // Prefer the first non-EV fuel as the primary label
+              // ("Unleaded", "Diesel", etc.) — if the user only has
+              // EV selected, fall back to showing that.
+              const nonEv = selectedFuels.filter((f): f is Exclude<FuelType, 'EV'> => f !== 'EV');
+              const primary: FuelType = nonEv[0] ?? 'EV';
               const label = FUEL_DISPLAY_NAMES[primary];
-              const isEvOnly = primary === 'EV';
               return (
                 <div className="bg-white/95 backdrop-blur px-2.5 py-1.5 md:px-3 md:py-2 rounded-lg shadow text-[11px] md:text-sm leading-none whitespace-nowrap pointer-events-none">
                   <span className="text-gray-500 font-medium">Showing </span>
                   <span className="font-black text-gray-900">{label}</span>
-                  {!isEvOnly && <span className="text-gray-500 font-medium"> prices</span>}
+                  <span className="text-gray-500 font-medium"> prices</span>
                 </div>
               );
             })()}
