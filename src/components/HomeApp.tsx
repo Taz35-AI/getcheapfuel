@@ -757,17 +757,43 @@ export default function HomeApp() {
             </div>
           )}
 
-          {/* Notification bell on map */}
-          <button
-            onClick={() => setNotifOpen(true)}
-            className="absolute top-2 left-2 md:top-12 md:left-1 z-20 bg-white/90 backdrop-blur p-2 rounded-lg shadow hover:bg-white transition-colors text-amber-500"
-            title="Price Alerts"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 01-3.46 0" />
-            </svg>
-          </button>
+          {/* Notification bell + "Showing <fuel> prices" caption.
+              The caption reinforces which fuel the map is currently
+              filtered to, so landing users don't confuse petrol vs
+              diesel prices when the default filter doesn't match
+              their vehicle. */}
+          <div className="absolute top-2 left-2 md:top-12 md:left-1 z-20 flex items-center gap-2">
+            <button
+              onClick={() => setNotifOpen(true)}
+              className="bg-white/90 backdrop-blur p-2 rounded-lg shadow hover:bg-white transition-colors text-amber-500"
+              title="Price Alerts"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 01-3.46 0" />
+              </svg>
+            </button>
+            {(() => {
+              const FUEL_DISPLAY_NAMES: Record<FuelType, string> = {
+                E10: 'Unleaded',
+                E5: 'Premium',
+                B7: 'Diesel',
+                SDV: 'Super Diesel',
+                EV: 'EV charging',
+              };
+              const nonEv = selectedFuels.filter(f => f !== 'EV');
+              const primary = nonEv[0] ?? 'EV';
+              const label = FUEL_DISPLAY_NAMES[primary];
+              const isEvOnly = primary === 'EV';
+              return (
+                <div className="bg-white/95 backdrop-blur px-2.5 py-1.5 md:px-3 md:py-2 rounded-lg shadow text-[11px] md:text-sm leading-none whitespace-nowrap pointer-events-none">
+                  <span className="text-gray-500 font-medium">Showing </span>
+                  <span className="font-black text-gray-900">{label}</span>
+                  {!isEvOnly && <span className="text-gray-500 font-medium"> prices</span>}
+                </div>
+              );
+            })()}
+          </div>
 
           {mapReady ? (
             <Map
@@ -860,7 +886,7 @@ export default function HomeApp() {
           <Link href="/about" className="hover:text-gray-700 hover:underline">About</Link>
           <Link href="/privacy" className="hover:text-gray-700 hover:underline">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-gray-700 hover:underline">Terms of Service</Link>
-          <a href="mailto:support@getcheapfuel.co.uk" className="hover:text-gray-700 hover:underline">Contact</a>
+          <a href="mailto:contact@getcheapfuel.co.uk" className="hover:text-gray-700 hover:underline">Contact</a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 text-[10px] text-gray-400">
           <span>Cheap fuel in:</span>

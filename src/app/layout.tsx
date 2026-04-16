@@ -96,7 +96,7 @@ export const metadata: Metadata = {
   other: {
     "geo.region": "GB",
     "geo.placename": "United Kingdom",
-    "contact": "support@getcheapfuel.co.uk",
+    "contact": "contact@getcheapfuel.co.uk",
   },
 };
 
@@ -133,7 +133,7 @@ export default function RootLayout({
               <li>Price alerts and favourites</li>
             </ul>
             <p>Please enable JavaScript to use GetCheapFuel.</p>
-            <p>Contact: <a href="mailto:support@getcheapfuel.co.uk">support@getcheapfuel.co.uk</a></p>
+            <p>Contact: <a href="mailto:contact@getcheapfuel.co.uk">contact@getcheapfuel.co.uk</a></p>
           </div>
         </noscript>
         <script

@@ -137,7 +137,7 @@ export default async function Home() {
         '@type': 'Organization',
         name: 'GetCheapFuel',
         url: 'https://getcheapfuel.co.uk',
-        email: 'support@getcheapfuel.co.uk',
+        email: 'contact@getcheapfuel.co.uk',
       },
       areaServed: {
         '@type': 'Country',

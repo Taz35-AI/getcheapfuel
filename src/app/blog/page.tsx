@@ -83,7 +83,7 @@ export default function BlogPage() {
           <span>&copy; {new Date().getFullYear()} GetCheapFuel</span>
           <Link href="/privacy" className="hover:text-gray-700 hover:underline">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-gray-700 hover:underline">Terms of Service</Link>
-          <a href="mailto:support@getcheapfuel.co.uk" className="hover:text-gray-700 hover:underline">Contact</a>
+          <a href="mailto:contact@getcheapfuel.co.uk" className="hover:text-gray-700 hover:underline">Contact</a>
         </footer>
       </div>
     </main>

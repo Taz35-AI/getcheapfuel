@@ -33,8 +33,8 @@ export default function PrivacyPage() {
             GetCheapFuel (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the website{' '}
             <strong>getcheapfuel.co.uk</strong>, a free fuel and EV charging price comparison
             service for the United Kingdom. For any privacy-related queries, contact us at{' '}
-            <a href="mailto:support@getcheapfuel.co.uk" className="text-green-600 hover:underline">
-              support@getcheapfuel.co.uk
+            <a href="mailto:contact@getcheapfuel.co.uk" className="text-green-600 hover:underline">
+              contact@getcheapfuel.co.uk
             </a>.
           </p>
         </section>
@@ -118,8 +118,8 @@ export default function PrivacyPage() {
           </ul>
           <p className="mt-2">
             To exercise any of these rights, email{' '}
-            <a href="mailto:support@getcheapfuel.co.uk" className="text-green-600 hover:underline">
-              support@getcheapfuel.co.uk
+            <a href="mailto:contact@getcheapfuel.co.uk" className="text-green-600 hover:underline">
+              contact@getcheapfuel.co.uk
             </a>.
           </p>
         </section>

@@ -125,8 +125,8 @@ export default function TermsPage() {
           <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-3">10. Contact</h2>
           <p>
             If you have any questions about these Terms, please contact us at{' '}
-            <a href="mailto:support@getcheapfuel.co.uk" className="text-green-600 hover:underline">
-              support@getcheapfuel.co.uk
+            <a href="mailto:contact@getcheapfuel.co.uk" className="text-green-600 hover:underline">
+              contact@getcheapfuel.co.uk
             </a>.
           </p>
         </section>

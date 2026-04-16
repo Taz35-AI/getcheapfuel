@@ -85,10 +85,10 @@ export default function AboutPage() {
             I read everything. If something&apos;s broken or you&apos;ve got an idea, drop
             me a line at{' '}
             <a
-              href="mailto:support@getcheapfuel.co.uk"
+              href="mailto:contact@getcheapfuel.co.uk"
               className="text-green-600 hover:text-green-700 underline"
             >
-              support@getcheapfuel.co.uk
+              contact@getcheapfuel.co.uk
             </a>
             . It&apos;s literally just me on the other end.
           </p>
@@ -100,7 +100,7 @@ export default function AboutPage() {
           <span>&copy; {new Date().getFullYear()} GetCheapFuel</span>
           <Link href="/privacy" className="hover:text-gray-700 hover:underline">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-gray-700 hover:underline">Terms of Service</Link>
-          <a href="mailto:support@getcheapfuel.co.uk" className="hover:text-gray-700 hover:underline">Contact</a>
+          <a href="mailto:contact@getcheapfuel.co.uk" className="hover:text-gray-700 hover:underline">Contact</a>
         </footer>
       </div>
     </main>
