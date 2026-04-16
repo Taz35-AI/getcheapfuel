@@ -32,7 +32,7 @@ function isValidVote(v: string): v is (typeof VALID_VOTES)[number] {
 // the retailer's last price update (per fuel), or 24 hours ago.
 // This means the moment the daily cron syncs fresh prices from the
 // UK gov feed, old thumbs-down votes against the previous stale
-// price stop being shown — the user never sees a false "price may
+// price stop being shown - the user never sees a false "price may
 // be outdated" warning on a freshly-verified price.
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -93,7 +93,7 @@ export async function GET(request: Request) {
 }
 
 // POST /api/price-vote { stationId, fuelType, vote, voterEmail }
-// Records a vote on price accuracy. The client must be signed in —
+// Records a vote on price accuracy. The client must be signed in -
 // the UI opens the auth modal for anonymous visitors before the
 // vote ever reaches this endpoint. The email is validated as a real
 // shape but the server trusts what the authenticated client sends.
@@ -122,9 +122,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid fuelType' }, { status: 400 });
   }
   if (!isValidVote(vote)) {
-    return NextResponse.json({ error: 'invalid vote — must be up or down' }, { status: 400 });
+    return NextResponse.json({ error: 'invalid vote - must be up or down' }, { status: 400 });
   }
-  // Cheap shape check — prevents empty / absurdly long inputs
+  // Cheap shape check - prevents empty / absurdly long inputs
   if (!voterEmail.includes('@') || voterEmail.length > 320) {
     return NextResponse.json({ error: 'invalid voterEmail' }, { status: 400 });
   }

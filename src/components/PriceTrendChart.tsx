@@ -9,7 +9,7 @@ interface PricePoint {
   snapshot_date: string;
 }
 
-// Fuels we plot on the trend chart (EV excluded — no price-history data).
+// Fuels we plot on the trend chart (EV excluded - no price-history data).
 const CHART_FUELS: Exclude<FuelType, 'EV'>[] = ['E10', 'E5', 'B7', 'SDV'];
 
 // Short labels used in the legend row so the 4 fuel chips fit under
@@ -23,13 +23,13 @@ const SHORT_LABEL: Record<Exclude<FuelType, 'EV'>, string> = {
 
 interface PriceTrendChartProps {
   stationId: string;
-  // Fuel to emphasise on the chart — drawn in bold with a price dot
+  // Fuel to emphasise on the chart - drawn in bold with a price dot
   // and a header label. Other fuel lines are rendered faded. Accepts
   // either the new prop name or the legacy `fuelType` alias so
   // existing callers keep working without a change.
   highlightFuel?: FuelType;
   // Limit which fuel lines to plot. Pass the user's current filter
-  // selection so the chart only shows what the user asked for — one
+  // selection so the chart only shows what the user asked for - one
   // selected → one line, four selected → four lines. When omitted,
   // defaults to all four fuels.
   fuels?: Exclude<FuelType, 'EV'>[];
@@ -39,7 +39,7 @@ interface PriceTrendChartProps {
   compact?: boolean;
   /** @deprecated Use `highlightFuel` instead. */
   fuelType?: string;
-  /** @deprecated no longer used — each line uses its own FUEL_COLORS. */
+  /** @deprecated no longer used - each line uses its own FUEL_COLORS. */
   color?: string;
 }
 
@@ -59,12 +59,12 @@ export default function PriceTrendChart({
   const [error, setError] = useState(false);
   // Defer the price-history fetch until the card is actually near the
   // viewport. Without this, every station card in the list fires its
-  // own /api/price-history request on mount — when the landing page
+  // own /api/price-history request on mount - when the landing page
   // pre-fetches ~60 London stations, that's ~60 parallel requests for
   // charts the user may never scroll to.
   const [inView, setInView] = useState(false);
 
-  // Effective fuel set — respect the caller's `fuels` prop so the
+  // Effective fuel set - respect the caller's `fuels` prop so the
   // chart only plots and fetches what the user currently has
   // selected in the filter. Fall back to all four if unspecified.
   // Stable across renders unless the caller actually changes it.
@@ -152,7 +152,7 @@ export default function PriceTrendChart({
     const h = rect.height;
 
     // Shared Y-axis across all plotted fuels so their relative levels
-    // stay meaningful — if E10 is 138p and Super Diesel is 168p they
+    // stay meaningful - if E10 is 138p and Super Diesel is 168p they
     // shouldn't collapse onto the same baseline.
     let min = Infinity;
     let max = -Infinity;
@@ -170,7 +170,7 @@ export default function PriceTrendChart({
     const padBottom = 10;
     const padLeft = 4;
     // Reserve room on the right so each line can park its own price
-    // label at the end — the user's question is "which line is which
+    // label at the end - the user's question is "which line is which
     // price?", so we answer that directly next to the line.
     const padRight = 52;
     const chartH = h - padTop - padBottom;
@@ -216,11 +216,11 @@ export default function PriceTrendChart({
       ctx.stroke();
       ctx.globalAlpha = 1;
 
-      // Actual muted line — still visible, not faded to invisibility
+      // Actual muted line - still visible, not faded to invisibility
       ctx.beginPath();
       ctx.moveTo(points[0][0], points[0][1]);
       for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
-      ctx.strokeStyle = color + 'b3'; // ~70% alpha — bold enough to read
+      ctx.strokeStyle = color + 'b3'; // ~70% alpha - bold enough to read
       ctx.lineWidth = 2;
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
@@ -235,7 +235,7 @@ export default function PriceTrendChart({
       ctx.fill();
     }
 
-    // Highlighted fuel — gradient fill + thick stroke + glowing dot.
+    // Highlighted fuel - gradient fill + thick stroke + glowing dot.
     if (plottable.includes(highlight) && histories[highlight]!.length >= 2) {
       const color = FUEL_COLORS[highlight];
       const points = buildPoints(histories[highlight]!);
@@ -358,7 +358,7 @@ export default function PriceTrendChart({
   }
 
   if (error || plottable.length === 0) {
-    return null; // No history data at all — hide the chart
+    return null; // No history data at all - hide the chart
   }
 
   // Delta label for the highlighted fuel (shown as a chip in the header)
@@ -415,7 +415,7 @@ export default function PriceTrendChart({
 
       <canvas ref={canvasRef} className="w-full" style={{ height: compact ? 48 : 96 }} />
 
-      {/* Legend — pill chips, highlighted one filled, rest outline.
+      {/* Legend - pill chips, highlighted one filled, rest outline.
           (End-of-line price labels on the chart already show the
           current price for every fuel, so no separate "Today" row.) */}
       <div className={`flex items-center gap-1 flex-wrap ${compact ? 'mt-1.5' : 'mt-2.5'}`}>

@@ -326,7 +326,7 @@ export default function RoutePlanner({ stations, selectedFuels, open, onClose, o
             {/* Results */}
             {result && (
               <div className="pt-2">
-                {/* Journey cost — uses the cheapest primary-fuel price
+                {/* Journey cost - uses the cheapest primary-fuel price
                     on the route and the user's real-world MPG (written
                     by the Fuel Tracker) if available, otherwise a
                     sensible default per fuel type. */}

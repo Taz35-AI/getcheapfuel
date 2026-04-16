@@ -21,7 +21,7 @@ function isDiesel(f: FuelType): boolean {
   return DIESEL_GROUP.includes(f);
 }
 
-/** Small colored chip showing the fuel code — acts as the visual anchor. */
+/** Small colored chip showing the fuel code - acts as the visual anchor. */
 function FuelCodeChip({ code, isActive, activeBg, inactiveText }: { code: string; isActive: boolean; activeBg: string; inactiveText: string }) {
   return (
     <span
@@ -96,14 +96,14 @@ const FUEL_CONFIG: { key: FuelType; label: string; mobileLabel: string; color: s
 ];
 
 export default function FuelFilter({ selected, onChange }: FuelFilterProps) {
-  // Which fuel group is currently "active" — i.e. has at least one
+  // Which fuel group is currently "active" - i.e. has at least one
   // member selected. Drives the dimming so the other (non-active)
   // group is visually muted but still tappable.
   const hasPetrolSelected = selected.some(isPetrol);
   const hasDieselSelected = selected.some(isDiesel);
 
   const toggle = (fuel: FuelType) => {
-    // EV is orthogonal — toggle independently, no group swapping.
+    // EV is orthogonal - toggle independently, no group swapping.
     if (fuel === 'EV') {
       if (selected.includes('EV')) {
         if (selected.length === 1) return;
@@ -118,7 +118,7 @@ export default function FuelFilter({ selected, onChange }: FuelFilterProps) {
     const otherGroupHasMembers = clickedIsPetrol ? hasDieselSelected : hasPetrolSelected;
 
     if (otherGroupHasMembers) {
-      // Swap groups — drop everything from the other fuel group and
+      // Swap groups - drop everything from the other fuel group and
       // replace with just the clicked fuel. EV stays if it was on.
       const next: FuelType[] = [fuel];
       if (selected.includes('EV')) next.push('EV');
@@ -128,7 +128,7 @@ export default function FuelFilter({ selected, onChange }: FuelFilterProps) {
 
     // Normal in-group toggle
     if (selected.includes(fuel)) {
-      // Prevent dropping the last fuel — always leave at least one
+      // Prevent dropping the last fuel - always leave at least one
       // member of the active group selected.
       const next = selected.filter(f => f !== fuel);
       const nonEv = next.filter(f => f !== 'EV');
@@ -142,7 +142,7 @@ export default function FuelFilter({ selected, onChange }: FuelFilterProps) {
   const renderChip = (fuel: typeof FUEL_CONFIG[number]) => {
     const isActive = selected.includes(fuel.key);
     // Fuels in the OTHER group get dimmed so users can see at a
-    // glance which group is currently active. Still clickable —
+    // glance which group is currently active. Still clickable -
     // tapping one triggers a clean group swap.
     const isDimmed =
       (fuel.key === 'B7' || fuel.key === 'SDV') && hasPetrolSelected ||

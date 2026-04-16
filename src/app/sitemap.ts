@@ -2,10 +2,15 @@ import type { MetadataRoute } from 'next'
 import { UK_CITIES } from '@/lib/cities'
 import { BRAND_SLUGS } from '@/lib/brand-slugs'
 import { UNIQUE_POSTCODE_AREAS } from '@/lib/uk-postcodes'
+import { fetchAllStations } from '@/lib/fuel-data'
+import { stationToSlug } from '@/lib/station-slug'
 
-export const dynamic = 'force-static';
+// Revalidate once per day - keeps the sitemap fresh as stations come
+// and go from the Fuel Finder dataset, without re-querying Supabase on
+// every Googlebot hit.
+export const revalidate = 86400;
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://getcheapfuel.co.uk'
   const now = new Date()
 
@@ -30,6 +35,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }))
 
+  // Per-station pages - one entry per Fuel Finder station. De-duped by
+  // slug so that if two stations happen to produce the same slug (very
+  // rare, same brand + same postcode + same street) Google only sees
+  // one URL. Slugs are lowercased and match the canonical exactly.
+  let stationPages: MetadataRoute.Sitemap = [];
+  try {
+    const stations = await fetchAllStations(86400);
+    const seen = new Set<string>();
+    stationPages = stations
+      .map(s => ({ slug: stationToSlug(s), lastUpdated: s.lastUpdated }))
+      .filter(s => s.slug && !seen.has(s.slug) && (seen.add(s.slug), true))
+      .map(s => ({
+        url: `${baseUrl}/petrol-station/${s.slug}`,
+        lastModified: s.lastUpdated ? new Date(s.lastUpdated) : now,
+        changeFrequency: 'daily' as const,
+        priority: 0.5,
+      }));
+  } catch (err) {
+    // Never fail the sitemap over a Supabase hiccup - serve the rest.
+    console.error('[sitemap] failed to fetch stations:', err);
+  }
+
   return [
     {
       url: baseUrl,
@@ -46,6 +73,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...cityPages,
     ...brandPages,
     ...postcodePages,
+    ...stationPages,
     {
       url: `${baseUrl}/blog`,
       lastModified: now,

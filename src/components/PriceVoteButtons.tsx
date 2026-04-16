@@ -92,7 +92,7 @@ export default function PriceVoteButtons({
         setDown(Number(json.down) || 0);
       })
       .catch(() => {
-        // Silently fail — buttons still work for voting, just no count
+        // Silently fail - buttons still work for voting, just no count
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -141,7 +141,7 @@ export default function PriceVoteButtons({
           }),
         });
       } catch {
-        // Server failed — roll back the optimistic update
+        // Server failed - roll back the optimistic update
         setLocalVote(previous);
         setUp((prev) =>
           vote === 'up' ? Math.max(0, prev - 1) : previous === 'up' ? prev + 1 : prev,
@@ -161,7 +161,7 @@ export default function PriceVoteButtons({
   return (
     <>
       <div>
-        {/* Warning banner — only when down >= threshold in window */}
+        {/* Warning banner - only when down >= threshold in window */}
         {showWarning && (
           <div className="mb-1 flex items-start gap-1 px-1.5 py-0.5 rounded-md bg-amber-50 border border-amber-200">
             <svg
@@ -179,12 +179,12 @@ export default function PriceVoteButtons({
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
             <p className="text-[8px] text-amber-800 font-semibold leading-tight">
-              Price may be outdated — verify at the station
+              Price may be outdated - verify at the station
             </p>
           </div>
         )}
 
-        {/* Compact inline thumbs row — small footprint so the tile
+        {/* Compact inline thumbs row - small footprint so the tile
             stays tight. Just two pill buttons with a thumb + count.
             Horizontal (default) fills the tile width below the price;
             vertical stacks them tightly so they can sit next to a big
@@ -195,7 +195,7 @@ export default function PriceVoteButtons({
             onClick={() => submit('up')}
             disabled={submitting}
             className={`flex items-center justify-center gap-0.5 rounded-md border text-[10px] font-black transition-all ${
-              orientation === 'vertical' ? 'px-1.5 py-0 min-w-[28px]' : 'flex-1 py-0.5'
+              orientation === 'vertical' ? 'px-1 py-0 text-[9px]' : 'flex-1 py-0.5'
             } ${
               localVote === 'up'
                 ? 'bg-emerald-600 border-emerald-600 text-white'
@@ -223,7 +223,7 @@ export default function PriceVoteButtons({
             onClick={() => submit('down')}
             disabled={submitting}
             className={`flex items-center justify-center gap-0.5 rounded-md border text-[10px] font-black transition-all ${
-              orientation === 'vertical' ? 'px-1.5 py-0 min-w-[28px]' : 'flex-1 py-0.5'
+              orientation === 'vertical' ? 'px-1 py-0 text-[9px]' : 'flex-1 py-0.5'
             } ${
               localVote === 'down'
                 ? 'bg-red-600 border-red-600 text-white'
@@ -287,7 +287,7 @@ export default function PriceVoteButtons({
                 Help fellow drivers 🙌
               </h3>
               <p className="text-[12px] text-gray-600 leading-snug mt-2">
-                Only signed-up users can rate fuel prices. It takes <span className="font-bold text-gray-900">10 seconds</span> — your vote keeps prices accurate for everyone on the road.
+                Only signed-up users can rate fuel prices. It takes <span className="font-bold text-gray-900">10 seconds</span> - your vote keeps prices accurate for everyone on the road.
               </p>
 
               {/* Actions */}

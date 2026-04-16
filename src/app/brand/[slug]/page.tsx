@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { fetchAllStations } from '@/lib/fuel-data';
 import { BRAND_SLUGS, findBrandBySlug } from '@/lib/brand-slugs';
+import { stationToSlug } from '@/lib/station-slug';
 import { toTitleCase } from '@/lib/format-text';
 import BrandLogo from '@/components/BrandLogo';
 
@@ -271,7 +272,14 @@ export default async function BrandPage({
                   {cheapestE10.map((s, i) => (
                     <tr key={s.id} className={i === 0 ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}>
                       <td className="px-4 py-3 text-gray-400 tabular-nums">{i + 1}</td>
-                      <td className="px-4 py-3 font-medium text-gray-900">{toTitleCase(s.address).slice(0, 55)}</td>
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/petrol-station/${stationToSlug(s)}`}
+                          className="font-medium text-gray-900 hover:text-green-700 hover:underline"
+                        >
+                          {toTitleCase(s.address).slice(0, 55)}
+                        </Link>
+                      </td>
                       <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{s.postcode}</td>
                       <td className="px-4 py-3 text-right font-bold text-gray-900 tabular-nums">{fmtPence(s.prices.E10)}</td>
                     </tr>
@@ -305,7 +313,14 @@ export default async function BrandPage({
                   {cheapestB7.map((s, i) => (
                     <tr key={s.id} className={i === 0 ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}>
                       <td className="px-4 py-3 text-gray-400 tabular-nums">{i + 1}</td>
-                      <td className="px-4 py-3 font-medium text-gray-900">{toTitleCase(s.address).slice(0, 55)}</td>
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/petrol-station/${stationToSlug(s)}`}
+                          className="font-medium text-gray-900 hover:text-green-700 hover:underline"
+                        >
+                          {toTitleCase(s.address).slice(0, 55)}
+                        </Link>
+                      </td>
                       <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{s.postcode}</td>
                       <td className="px-4 py-3 text-right font-bold text-gray-900 tabular-nums">{fmtPence(s.prices.B7)}</td>
                     </tr>

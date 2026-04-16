@@ -48,7 +48,7 @@ body {
     transform: translate(-50%, -50%) !important;
     max-width: 82vw !important;
     /* Sit above every other map overlay (the location-name chip,
-       the notification bell, the loading indicator — all of which
+       the notification bell, the loading indicator - all of which
        can be as high as z-[1000]) so the modal is always on top. */
     z-index: 1100 !important;
   }
@@ -62,7 +62,7 @@ body {
   }
 }
 
-/* Close button — styled as a small neutral circular icon button so it
+/* Close button - styled as a small neutral circular icon button so it
    looks intentional rather than the default browser "×" glyph. */
 .maplibregl-popup-close-button {
   position: absolute !important;
@@ -150,7 +150,7 @@ body {
   animation: slide-up 0.3s ease-out;
 }
 
-/* Hide scrollbar but keep scrollability — for mobile fuel filter row */
+/* Hide scrollbar but keep scrollability - for mobile fuel filter row */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

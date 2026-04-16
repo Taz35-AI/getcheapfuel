@@ -11,7 +11,7 @@ interface Props {
 interface IconDef {
   label: string;
   tone?: string;
-  /** Path under /public — preferred over inline svg if both are set. */
+  /** Path under /public - preferred over inline svg if both are set. */
   src?: string;
   /** Inline SVG fallback for amenities without a custom image. */
   svg?: React.ReactNode;

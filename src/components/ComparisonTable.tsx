@@ -77,7 +77,7 @@ export default function ComparisonTable({ stations, compareIds, onRemove, open, 
                             )}
                           </span>
                         ) : (
-                          <span className="text-gray-300">—</span>
+                          <span className="text-gray-300">-</span>
                         )}
                       </td>
                     );

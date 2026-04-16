@@ -3,7 +3,7 @@ import type { OpeningHours, StationAmenities } from './types';
 
 // ─── Fuel Finder (read from Supabase cache) ──────────────────────────────────
 // FF data is synced once a day to the fuel_stations_ff table by the
-// /api/cron/sync-fuel-finder route (Vercel Cron). We just read it here —
+// /api/cron/sync-fuel-finder route (Vercel Cron). We just read it here -
 // instant, no 30s cold-start fetch.
 
 interface FuelStationRow {
@@ -111,7 +111,7 @@ function rowToStation(row: FuelStationRow): FuelStation {
 }
 
 async function fetchFuelFinderStations(bbox?: BBox): Promise<FuelStation[]> {
-  // Bounded queries — use per-bbox cache
+  // Bounded queries - use per-bbox cache
   if (bbox) {
     const key = `${bbox.lat.toFixed(2)}|${bbox.lng.toFixed(2)}|${bbox.radiusKm}`;
     const cached = ffBboxCache.get(key);
@@ -128,7 +128,7 @@ async function fetchFuelFinderStations(bbox?: BBox): Promise<FuelStation[]> {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Build the query — bounding box if provided, otherwise full dataset
+    // Build the query - bounding box if provided, otherwise full dataset
     let stations: FuelStation[];
 
     if (bbox) {
@@ -164,7 +164,7 @@ async function fetchFuelFinderStations(bbox?: BBox): Promise<FuelStation[]> {
         if (firstKey) ffBboxCache.delete(firstKey);
       }
     } else {
-      // Full dataset — paginate through all rows
+      // Full dataset - paginate through all rows
       const allRows: FuelStationRow[] = [];
       const pageSize = 1000;
       for (let from = 0; from < 20000; from += pageSize) {

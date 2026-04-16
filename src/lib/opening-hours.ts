@@ -17,7 +17,7 @@ function isDayOpen(d: DayHours | undefined): boolean {
   if (d.is_24_hours) return true;
   const open = parseTimeToMinutes(d.open_time);
   const close = parseTimeToMinutes(d.close_time);
-  // 00:00–00:00 is the placeholder for "closed/no data"
+  // 00:00-00:00 is the placeholder for "closed/no data"
   if (open == null || close == null) return false;
   if (open === 0 && close === 0) return false;
   return open !== close;
@@ -121,7 +121,7 @@ export function getOpenStatus(hours: OpeningHours | undefined, now: Date = new D
         todayHours,
       };
     }
-    // After close — find next day
+    // After close - find next day
     for (let i = 1; i <= 7; i++) {
       const next = hours[DAY_KEYS[(dayIdx + i) % 7]];
       if (isDayOpen(next)) {
@@ -141,7 +141,7 @@ export function getWeekSchedule(hours: OpeningHours | undefined): { day: string;
   const todayIdx = new Date().getDay();
   return DAY_KEYS.map((key, i) => {
     const d = hours[key];
-    let text = '—'; // unknown/no data
+    let text = '-'; // unknown/no data
     if (d?.is_24_hours) text = '24 hours';
     else if (isDayOpen(d)) text = `${(d?.open_time || '').slice(0, 5)} - ${(d?.close_time || '').slice(0, 5)}`;
     else if (d && (d.open_time || d.close_time)) text = 'Closed'; // explicitly closed day

@@ -55,7 +55,7 @@ export default function ProfilePage() {
         }
       })
       .catch(() => {
-        // silent — leaderboard is non-critical
+        // silent - leaderboard is non-critical
       })
       .finally(() => setLoadingLeaderboard(false));
   }, [user]);
@@ -293,7 +293,7 @@ export default function ProfilePage() {
                 {leaderboard.map((entry, i) => {
                   const isMe = user?.email && entry.email.toLowerCase() === user.email.toLowerCase();
                   const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
-                  // Truncate the email for display — first part only
+                  // Truncate the email for display - first part only
                   const display = entry.email.split('@')[0];
                   return (
                     <li

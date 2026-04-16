@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { UK_CITIES } from '@/lib/cities';
 import { fetchAllStations, getStationsNear, haversineDistance } from '@/lib/fuel-data';
 import { BRAND_SLUGS } from '@/lib/brand-slugs';
+import { stationToSlug } from '@/lib/station-slug';
 import { toTitleCase } from '@/lib/format-text';
 import { isFreshFuelPrice } from '@/lib/freshness';
 
@@ -69,6 +70,10 @@ export default async function CityPage({
     price: number;
     address: string;
     dist: string;
+    // Carry the station's SEO slug so each table row can link through to
+    // /petrol-station/[slug] — feeds Google crawl budget from this
+    // indexed city page into the individual station pages.
+    slug: string;
   }
   interface FuelStat {
     fuel: FuelKey;
@@ -107,6 +112,7 @@ export default async function CityPage({
         price: s.prices[fuel]!,
         address: s.postcode || s.address,
         dist: (haversineDistance(city.lat, city.lng, s.latitude, s.longitude) * 0.6214).toFixed(1),
+        slug: stationToSlug(s),
       })),
     };
   }).filter((s): s is FuelStat => s !== null);
@@ -121,7 +127,7 @@ export default async function CityPage({
     .sort((a, b) => a.dist - b.dist)
     .slice(0, 6);
 
-  // Brand breakdown for this city — average unleaded by retailer
+  // Brand breakdown for this city - average unleaded by retailer
   const brandStatsMap = new Map<string, { count: number; e10Sum: number; e10Count: number; b7Sum: number; b7Count: number }>();
   for (const s of nearbyStations) {
     if (!brandStatsMap.has(s.brand)) {
@@ -338,7 +344,14 @@ export default async function CityPage({
                   {s.top5.map((station, i) => (
                     <tr key={i} className={i === 0 ? 'bg-green-50' : i % 2 === 0 ? 'bg-gray-50/50' : ''}>
                       <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
-                      <td className="px-4 py-2.5 font-medium text-gray-900">{station.brand}</td>
+                      <td className="px-4 py-2.5">
+                        <Link
+                          href={`/petrol-station/${station.slug}`}
+                          className="font-medium text-gray-900 hover:text-green-700 hover:underline"
+                        >
+                          {station.brand}
+                        </Link>
+                      </td>
                       <td className="px-4 py-2.5 text-gray-500 hidden sm:table-cell">{station.address}</td>
                       <td className="px-4 py-2.5 text-right font-bold text-gray-900">{station.price.toFixed(1)}p</td>
                       <td className="px-4 py-2.5 text-right text-gray-500 hidden sm:table-cell">{station.dist} mi</td>
@@ -386,10 +399,10 @@ export default async function CityPage({
                       </td>
                       <td className="px-4 py-2.5 text-right text-gray-600 tabular-nums">{b.count}</td>
                       <td className="px-4 py-2.5 text-right font-semibold text-gray-900 tabular-nums">
-                        {b.avgE10 != null ? `${b.avgE10.toFixed(1)}p` : '—'}
+                        {b.avgE10 != null ? `${b.avgE10.toFixed(1)}p` : '-'}
                       </td>
                       <td className="px-4 py-2.5 text-right font-semibold text-gray-900 tabular-nums">
-                        {b.avgB7 != null ? `${b.avgB7.toFixed(1)}p` : '—'}
+                        {b.avgB7 != null ? `${b.avgB7.toFixed(1)}p` : '-'}
                       </td>
                     </tr>
                   ))}
@@ -410,7 +423,7 @@ export default async function CityPage({
             </li>
             <li className="flex gap-3">
               <span className="flex-shrink-0 w-7 h-7 rounded-full bg-green-100 text-green-700 font-bold text-sm flex items-center justify-center">2</span>
-              <span>Select your fuel type — Unleaded (E10), Premium (E5), Diesel (B7), or Super Diesel</span>
+              <span>Select your fuel type - Unleaded (E10), Premium (E5), Diesel (B7), or Super Diesel</span>
             </li>
             <li className="flex gap-3">
               <span className="flex-shrink-0 w-7 h-7 rounded-full bg-green-100 text-green-700 font-bold text-sm flex items-center justify-center">3</span>
@@ -536,7 +549,7 @@ export default async function CityPage({
           <p className="text-sm text-gray-600">
             GetCheapFuel is a free fuel price comparison tool for the UK. We show real-time
             petrol, diesel, and EV charging prices from 8,200+ stations across the country.
-            Prices come directly from the retailers — the same prices you see at
+            Prices come directly from the retailers - the same prices you see at
             the pump. No sign-up needed.
           </p>
         </section>

@@ -89,7 +89,7 @@ export function isFreshFuelPrice(
   return (now.getTime() - ts) <= maxAgeDays * DAY;
 }
 
-/** Tailwind classes per tier — used by the popup badge. */
+/** Tailwind classes per tier - used by the popup badge. */
 export function freshnessClasses(tier: FreshnessTier): { bg: string; text: string; dot: string } {
   switch (tier) {
     case 'fresh':

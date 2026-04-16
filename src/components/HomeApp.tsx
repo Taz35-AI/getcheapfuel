@@ -16,14 +16,14 @@ import { apiUrl } from '@/lib/api';
 const FillUpAdvice = dynamic(() => import('@/components/FillUpAdvice'), { ssr: false });
 
 // StationList pulls in PriceTrendChart, StationAmenityIcons, OpenStatusBadge,
-// BrandLogo and the TitleCase helper. Defer it — only needed when the
+// BrandLogo and the TitleCase helper. Defer it - only needed when the
 // sidebar opens (mobile bottom sheet, desktop sidebar).
 const StationList = dynamic(() => import('@/components/StationList'), { ssr: false });
 import { useFavourites } from '@/hooks/useFavourites';
 import Link from 'next/link';
 import type { FuelStation, EVCharger, FuelType } from '@/lib/types';
 
-// Map is heavy (~80KB MapLibre + tiles) — defer until after first paint
+// Map is heavy (~80KB MapLibre + tiles) - defer until after first paint
 const Map = dynamic(() => import('@/components/Map'), { ssr: false });
 
 // Modal components only render when their `open` state is true.
@@ -38,7 +38,7 @@ const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false }
 
 type MapStyle = 'dark' | 'bright' | 'positron' | 'liberty';
 
-// Mutually-exclusive fuel groups — kept in sync with FuelFilter.
+// Mutually-exclusive fuel groups - kept in sync with FuelFilter.
 // Used to clean up any legacy "all 4 fuels" selection saved before
 // this rule existed so returning users don't land on an invalid mix.
 const PETROL_FUELS: FuelType[] = ['E10', 'E5'];
@@ -69,13 +69,13 @@ function normaliseFuelSelection(raw: unknown): FuelType[] {
 }
 
 export default function HomeApp() {
-  // Default landing region — central London at street-level zoom so
+  // Default landing region - central London at street-level zoom so
   // first paint shows a real city with visible pins, not a blank UK map.
   const [center, setCenter] = useState<[number, number]>([51.5074, -0.1278]);
   const [zoom, setZoom] = useState(11);
   const [stations, setStations] = useState<FuelStation[]>([]);
   const [evChargers, setEvChargers] = useState<EVCharger[]>([]);
-  // Default to Unleaded only — the petrol/diesel groups are now
+  // Default to Unleaded only - the petrol/diesel groups are now
   // mutually exclusive, so ['E10', 'B7'] is no longer a valid initial
   // state. Users with a diesel vehicle tap the Diesel chip once.
   const [selectedFuels, setSelectedFuels] = useState<FuelType[]>(['E10']);
@@ -227,7 +227,7 @@ export default function HomeApp() {
       Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
     }
     try {
-      // Use browser geolocation API — works in both web browsers and the
+      // Use browser geolocation API - works in both web browsers and the
       // Capacitor WebView. The Android app requests runtime permission
       // natively on startup (MainActivity.java), so this will succeed
       // without needing the Capacitor bridge for geolocation.
@@ -261,7 +261,7 @@ export default function HomeApp() {
   }, []);
 
   // Click a station card from the sidebar list. We only set
-  // selectedStation here — the Map component's selectedStation effect
+  // selectedStation here - the Map component's selectedStation effect
   // handles BOTH the popup open AND the smart pan-with-offset that
   // makes the popup land centred. Setting center/zoom here as well
   // would trigger a competing flyTo with no offset, leaving the popup
@@ -283,7 +283,7 @@ export default function HomeApp() {
   // Read URL params (from city pages) and navigate to location.
   // If no URL params are present, pre-fetch London stations so the
   // default landing view shows real pins on the map instead of a blank
-  // canvas — the biggest bounce-rate lever on the homepage.
+  // canvas - the biggest bounce-rate lever on the homepage.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const lat = parseFloat(params.get('lat') || '');
@@ -296,7 +296,7 @@ export default function HomeApp() {
       setLocationName(params.get('name') || '');
       // fetchStations is fired by the effect below that watches userLocation.
     } else {
-      // Default landing — setting userLocation triggers the re-fetch
+      // Default landing - setting userLocation triggers the re-fetch
       // effect below, which loads stations around central London so
       // visitors see pins immediately on first paint.
       setUserLocation({ lat: 51.5074, lng: -0.1278 });
@@ -332,7 +332,7 @@ export default function HomeApp() {
   }, []);
 
   // Auto-open the desktop sidebar once we actually have results to show.
-  // (Don't open it on first load — that triggers the StationList chunk
+  // (Don't open it on first load - that triggers the StationList chunk
   // download immediately and hurts the desktop Lighthouse score.)
   useEffect(() => {
     if (
@@ -782,7 +782,7 @@ export default function HomeApp() {
                 EV: 'EV charging',
               };
               // Prefer the first non-EV fuel as the primary label
-              // ("Unleaded", "Diesel", etc.) — if the user only has
+              // ("Unleaded", "Diesel", etc.) - if the user only has
               // EV selected, fall back to showing that.
               const nonEv = selectedFuels.filter((f): f is Exclude<FuelType, 'EV'> => f !== 'EV');
               const primary: FuelType = nonEv[0] ?? 'EV';
@@ -827,7 +827,7 @@ export default function HomeApp() {
         </div>
       </div>
 
-      {/* Modals — only mount when opened so the JS chunk isn't fetched until needed */}
+      {/* Modals - only mount when opened so the JS chunk isn't fetched until needed */}
       {calcOpen && (
         <FuelCalculator
           stations={stations}
@@ -881,7 +881,7 @@ export default function HomeApp() {
         />
       )}
 
-      {/* Footer — hidden on mobile to avoid overlap with station list */}
+      {/* Footer - hidden on mobile to avoid overlap with station list */}
       <footer className="hidden md:block flex-shrink-0 bg-gray-50 border-t border-gray-200 px-4 py-3">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-gray-500 mb-2">
           <span>&copy; {new Date().getFullYear()} GetCheapFuel</span>

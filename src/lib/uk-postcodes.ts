@@ -98,6 +98,61 @@ export const POSTCODE_AREAS: PostcodeArea[] = [
   { area: 'WR',  name: 'Worcester',          region: 'Worcestershire',  lat: 52.1920, lng: -2.2200 },
   { area: 'WV',  name: 'Wolverhampton',      region: 'West Midlands',   lat: 52.5870, lng: -2.1288 },
   { area: 'YO',  name: 'York',               region: 'North Yorkshire', lat: 53.9590, lng: -1.0815 },
+
+  // England - Lancashire & North West
+  { area: 'BL',  name: 'Bolton',             region: 'Greater Manchester', lat: 53.5789, lng: -2.4290 },
+  { area: 'CA',  name: 'Carlisle',           region: 'Cumbria',         lat: 54.8925, lng: -2.9329 },
+  { area: 'FY',  name: 'Blackpool',          region: 'Lancashire',      lat: 53.8175, lng: -3.0357 },
+  { area: 'HU',  name: 'Hull',               region: 'East Yorkshire',  lat: 53.7446, lng: -0.3352 },
+  { area: 'LA',  name: 'Lancaster',          region: 'Lancashire',      lat: 54.0466, lng: -2.8007 },
+  { area: 'OL',  name: 'Oldham',             region: 'Greater Manchester', lat: 53.5409, lng: -2.1114 },
+  { area: 'WF',  name: 'Wakefield',          region: 'West Yorkshire',  lat: 53.6833, lng: -1.4977 },
+
+  // England - South & South West
+  { area: 'CT',  name: 'Canterbury',         region: 'Kent',            lat: 51.2802, lng: 1.0789  },
+  { area: 'DT',  name: 'Dorchester',         region: 'Dorset',          lat: 50.7156, lng: -2.4371 },
+  { area: 'RH',  name: 'Redhill',            region: 'Surrey',          lat: 51.2398, lng: -0.1700 },
+  { area: 'TA',  name: 'Taunton',            region: 'Somerset',        lat: 51.0145, lng: -3.1068 },
+  { area: 'TQ',  name: 'Torquay',            region: 'Devon',           lat: 50.4619, lng: -3.5253 },
+  { area: 'TR',  name: 'Truro',              region: 'Cornwall',        lat: 50.2632, lng: -5.0510 },
+
+  // England - Midlands, Yorkshire & North East
+  { area: 'CW',  name: 'Crewe',              region: 'Cheshire',        lat: 53.0975, lng: -2.4436 },
+  { area: 'DL',  name: 'Darlington',         region: 'County Durham',   lat: 54.5254, lng: -1.5528 },
+  { area: 'DN',  name: 'Doncaster',          region: 'South Yorkshire', lat: 53.5227, lng: -1.1335 },
+  { area: 'DY',  name: 'Dudley',             region: 'West Midlands',   lat: 52.5088, lng: -2.0893 },
+  { area: 'HD',  name: 'Huddersfield',       region: 'West Yorkshire',  lat: 53.6458, lng: -1.7850 },
+  { area: 'HG',  name: 'Harrogate',          region: 'North Yorkshire', lat: 53.9920, lng: -1.5418 },
+  { area: 'HP',  name: 'Hemel Hempstead',    region: 'Hertfordshire',   lat: 51.7536, lng: -0.4673 },
+  { area: 'HR',  name: 'Hereford',           region: 'Herefordshire',   lat: 52.0565, lng: -2.7160 },
+  { area: 'TF',  name: 'Telford',            region: 'Shropshire',      lat: 52.6766, lng: -2.4458 },
+  { area: 'TS',  name: 'Middlesbrough',      region: 'Teesside',        lat: 54.5742, lng: -1.2349 },
+  { area: 'WS',  name: 'Walsall',            region: 'West Midlands',   lat: 52.5862, lng: -2.0101 },
+
+  // Wales
+  { area: 'LD',  name: 'Llandrindod Wells',  region: 'Wales',           lat: 52.2421, lng: -3.3800 },
+  { area: 'LL',  name: 'Llandudno',          region: 'Wales',           lat: 53.3244, lng: -3.8242 },
+  { area: 'NP',  name: 'Newport',            region: 'Wales',           lat: 51.5881, lng: -2.9971 },
+  { area: 'SY',  name: 'Shrewsbury',         region: 'Shropshire',      lat: 52.7069, lng: -2.7527 },
+
+  // Scotland
+  { area: 'AB',  name: 'Aberdeen',           region: 'Scotland',        lat: 57.1497, lng: -2.0943 },
+  { area: 'DD',  name: 'Dundee',             region: 'Scotland',        lat: 56.4620, lng: -2.9707 },
+  { area: 'DG',  name: 'Dumfries',           region: 'Scotland',        lat: 55.0705, lng: -3.6083 },
+  { area: 'FK',  name: 'Falkirk',            region: 'Scotland',        lat: 56.0019, lng: -3.7839 },
+  { area: 'HS',  name: 'Stornoway',          region: 'Outer Hebrides',  lat: 58.2094, lng: -6.3782 },
+  { area: 'IV',  name: 'Inverness',          region: 'Highlands',       lat: 57.4778, lng: -4.2247 },
+  { area: 'KA',  name: 'Kilmarnock',         region: 'Scotland',        lat: 55.6117, lng: -4.4958 },
+  { area: 'KW',  name: 'Kirkwall',           region: 'Orkney',          lat: 58.9809, lng: -2.9602 },
+  { area: 'KY',  name: 'Kirkcaldy',          region: 'Scotland',        lat: 56.1166, lng: -3.1575 },
+  { area: 'ML',  name: 'Motherwell',         region: 'Scotland',        lat: 55.7832, lng: -3.9918 },
+  { area: 'PA',  name: 'Paisley',            region: 'Scotland',        lat: 55.8399, lng: -4.4261 },
+  { area: 'PH',  name: 'Perth',              region: 'Scotland',        lat: 56.3950, lng: -3.4308 },
+  { area: 'TD',  name: 'Galashiels',         region: 'Scottish Borders', lat: 55.6172, lng: -2.8100 },
+  { area: 'ZE',  name: 'Lerwick',            region: 'Shetland',        lat: 60.1547, lng: -1.1494 },
+
+  // Northern Ireland
+  { area: 'BT',  name: 'Belfast',            region: 'Northern Ireland', lat: 54.5973, lng: -5.9301 },
 ];
 
 // Dedupe by area (in case of accidental duplicates above)

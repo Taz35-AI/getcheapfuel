@@ -12,7 +12,7 @@ export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
-  // Already installed as a native app — don't show install prompt
+  // Already installed as a native app - don't show install prompt
   if (isNative()) return null;
 
   useEffect(() => {

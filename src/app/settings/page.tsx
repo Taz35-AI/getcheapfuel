@@ -24,7 +24,7 @@ const FUEL_OPTIONS = [
   { key: 'EV', label: 'EV Charging', color: 'bg-violet-500' },
 ];
 
-// Allowed search radii — stored internally in kilometres with
+// Allowed search radii - stored internally in kilometres with
 // imperial-first labels to match the dropdown on the home page.
 const RADIUS_OPTIONS = [
   { value: 2.5, label: '1.5 miles' },
@@ -111,8 +111,8 @@ export default function SettingsPage() {
           <div className="space-y-4 mb-8">
             {[
               { icon: '🗺️', title: 'Map Theme', desc: 'Choose between Light, Dark, Bright, or Liberty map styles' },
-              { icon: '⛽', title: 'Default Fuel Types', desc: 'Set which fuels show by default — Unleaded, Diesel, Premium, or EV' },
-              { icon: '📍', title: 'Search Radius', desc: 'Set your preferred search distance — from 3 to 30 miles' },
+              { icon: '⛽', title: 'Default Fuel Types', desc: 'Set which fuels show by default - Unleaded, Diesel, Premium, or EV' },
+              { icon: '📍', title: 'Search Radius', desc: 'Set your preferred search distance - from 3 to 30 miles' },
               { icon: '🔄', title: 'Sort Preference', desc: 'Show nearest stations first or cheapest first' },
               { icon: '📏', title: 'Distance Units', desc: 'Switch between miles and kilometres' },
               { icon: '❤️', title: 'Favourite Stations', desc: 'Save your go-to stations and access them from any device' },

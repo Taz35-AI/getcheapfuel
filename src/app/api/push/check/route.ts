@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
       const currentPrice = cheapest[alert.fuel_type];
       if (currentPrice == null) continue;
 
-      // Price is below threshold — send notification
+      // Price is below threshold - send notification
       if (currentPrice < alert.threshold) {
         const sub = alert.push_subscriptions;
         const pushSub = {
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
 
         const payload = JSON.stringify({
           title: 'Price Drop Alert!',
-          body: `${fuelLabels[alert.fuel_type] || alert.fuel_type} dropped to ${currentPrice.toFixed(1)}p — below your ${alert.threshold}p target`,
+          body: `${fuelLabels[alert.fuel_type] || alert.fuel_type} dropped to ${currentPrice.toFixed(1)}p - below your ${alert.threshold}p target`,
           url: '/',
         });
 

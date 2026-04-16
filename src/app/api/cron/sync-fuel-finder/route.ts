@@ -121,7 +121,7 @@ async function fetchWithRetry(url: string, token: string, retries = 2): Promise<
         signal: AbortSignal.timeout(30000),
       });
       if (res.ok) return res;
-      // 429 / 5xx — retry after a short pause
+      // 429 / 5xx - retry after a short pause
       if (attempt < retries && (res.status === 429 || res.status >= 500)) {
         console.warn(`[sync] ${url} returned ${res.status}, retrying (${attempt + 1}/${retries})...`);
         await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
@@ -295,7 +295,7 @@ export async function GET(request: Request) {
     }
 
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-    console.log(`[sync-ff] Done in ${elapsed}s — ${rows.length} stations synced`);
+    console.log(`[sync-ff] Done in ${elapsed}s - ${rows.length} stations synced`);
 
     return NextResponse.json({
       success: true,

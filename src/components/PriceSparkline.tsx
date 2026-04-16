@@ -145,7 +145,7 @@ export default function PriceSparkline({ stationId, fuel }: PriceSparklineProps)
     );
   }
 
-  // Not enough history — collapse the row
+  // Not enough history - collapse the row
   if (data && data.length < 2) return null;
 
   // Still fetching

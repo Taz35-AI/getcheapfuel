@@ -74,7 +74,7 @@ export default function StationList({
     return 0;
   });
 
-  // Cheapest price for the primary fuel — used to mark the #1 card when
+  // Cheapest price for the primary fuel - used to mark the #1 card when
   // sorted by price, and to show "save X.Xp vs worst" deltas.
   const primaryPrices = primaryFuel
     ? sortedStations
@@ -273,7 +273,7 @@ export default function StationList({
                   </div>
                 )}
 
-                {/* Compact sparkline — single-line trend for the user's
+                {/* Compact sparkline - single-line trend for the user's
                     primary selected fuel. Full multi-fuel chart with
                     grid, labels and legend lives in the map popup
                     (click a pin) so the list stays snappy. */}

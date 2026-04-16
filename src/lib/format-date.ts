@@ -10,7 +10,7 @@ export function formatUKDateTime(input: string | undefined | null): string {
   // Try ISO first
   let date = new Date(input);
 
-  // "DD/MM/YYYY HH:mm:ss" format — JS Date parses this inconsistently across browsers
+  // "DD/MM/YYYY HH:mm:ss" format - JS Date parses this inconsistently across browsers
   if (isNaN(date.getTime())) {
     const m = input.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/);
     if (m) {
@@ -26,7 +26,7 @@ export function formatUKDateTime(input: string | undefined | null): string {
     }
   }
 
-  if (isNaN(date.getTime())) return input; // give up — show raw
+  if (isNaN(date.getTime())) return input; // give up - show raw
 
   return new Intl.DateTimeFormat('en-GB', {
     day: '2-digit',

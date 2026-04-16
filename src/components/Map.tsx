@@ -23,6 +23,7 @@ import BrandLogo from './BrandLogo';
 import { toTitleCase } from '@/lib/format-text';
 import { getBrandLogo } from '@/lib/brand-logos';
 import { getStationFreshness, freshnessClasses, freshnessLabel } from '@/lib/freshness';
+import { stationToSlug } from '@/lib/station-slug';
 
 // Free vector tile styles from OpenFreeMap - no API key needed
 const MAP_STYLES = {
@@ -317,7 +318,7 @@ function FuelPopupContent({
     ? ['B7', 'SDV']
     : hasPetrolSelected
       ? ['E10', 'E5']
-      : ['E10', 'E5']; // EV-only fallback — show petrol by default
+      : ['E10', 'E5']; // EV-only fallback - show petrol by default
   // Primary fuel to highlight within the group: first selected fuel
   // that's in the same group, otherwise the first of the group.
   const highlightFuel: Exclude<FuelType, 'EV'> =
@@ -340,7 +341,7 @@ function FuelPopupContent({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="font-black text-[12px] sm:text-base text-gray-900 leading-tight truncate">{station.brand}</div>
-            {/* Header status pill removed — the full "Open 24 hours"
+            {/* Header status pill removed - the full "Open 24 hours"
                 badge in the right column already shows the same info,
                 and the pill was sitting behind the circular close
                 button in the top-right corner. */}
@@ -354,7 +355,7 @@ function FuelPopupContent({
 
       {/* ─── Two-column body on desktop, stacked on mobile ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-4 mt-1 sm:mt-3">
-        {/* LEFT column — prices + trend chart */}
+        {/* LEFT column - prices + trend chart */}
         <div className="space-y-1 sm:space-y-1.5">
           <div className="grid grid-cols-2 gap-1 sm:gap-1.5">
             {fuels
@@ -366,21 +367,20 @@ function FuelPopupContent({
                     key={f.key}
                     className="flex items-center gap-1.5 px-1.5 py-1 sm:px-2 sm:py-1.5 bg-gray-50 border border-gray-100 rounded-lg"
                   >
-                    {/* Left: color dot + big bold price with the fuel
-                        label sat underneath it in small type. */}
-                    <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
+                    {/* Left-aligned price + fuel label. Colour dot removed
+                        so the price sits flush to the left edge with no
+                        overlap against the stacked thumbs on the right.
+                        Fuel identity now comes from the label colour. */}
+                    <div className="flex flex-col min-w-0 flex-1 leading-none">
+                      <span className="text-sm sm:text-base font-black text-gray-900 tabular-nums">
+                        {price.toFixed(1)}p
+                      </span>
                       <span
-                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ring-1 sm:ring-2 ring-white"
-                        style={{ backgroundColor: FUEL_COLORS[f.key] }}
-                      />
-                      <div className="flex flex-col min-w-0 leading-none">
-                        <span className="text-sm sm:text-base font-black text-gray-900 tabular-nums">
-                          {price.toFixed(1)}p
-                        </span>
-                        <span className="text-[8px] sm:text-[9px] font-semibold text-gray-500 truncate mt-0.5">
-                          {f.label}
-                        </span>
-                      </div>
+                        className="text-[8px] sm:text-[9px] font-bold truncate mt-0.5"
+                        style={{ color: FUEL_COLORS[f.key] }}
+                      >
+                        {f.label}
+                      </span>
                     </div>
                     {/* Right: tiny thumbs stacked up + down so they fit
                         next to the big price without stretching the
@@ -420,7 +420,7 @@ function FuelPopupContent({
           )}
         </div>
 
-        {/* RIGHT column — hours, amenities, freshness */}
+        {/* RIGHT column - hours, amenities, freshness */}
         <div className="space-y-1 sm:space-y-3">
           {station.openingHours && (
             <div>
@@ -459,14 +459,27 @@ function FuelPopupContent({
 
       {/* ─── Actions (full-width) ──────────────────────────── */}
       <div className="mt-1 sm:mt-3 pt-1 sm:pt-3 border-t border-gray-100">
-        <div className="flex gap-1 sm:gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5">
           <FavouriteButton id={station.id} isFav={isFav} onToggle={onToggleFav} />
           <ShareButton
             title={station.brand}
-            text={`${station.brand} — ${station.postcode}`}
+            text={`${station.brand} - ${station.postcode}`}
             lat={station.latitude}
             lng={station.longitude}
           />
+          <a
+            href={`/petrol-station/${stationToSlug(station)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-auto inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-green-700 hover:text-green-900 hover:bg-green-50 transition-colors"
+            title="Open the full station page (new tab)"
+          >
+            View full page
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-2.5 h-2.5 sm:w-3 sm:h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M7 17L17 7" />
+              <path d="M7 7h10v10" />
+            </svg>
+          </a>
         </div>
         <DirectionButtons lat={station.latitude} lng={station.longitude} label={`${station.brand} ${station.postcode}`} />
       </div>
@@ -514,7 +527,7 @@ function EVPopupContent({ charger, isFav, onToggleFav }: { charger: EVCharger; i
         <FavouriteButton id={charger.id} isFav={isFav} onToggle={onToggleFav} />
         <ShareButton
           title={charger.title}
-          text={`${charger.title}${charger.operator !== 'Unknown' ? ` — ${charger.operator}` : ''}`}
+          text={`${charger.title}${charger.operator !== 'Unknown' ? ` - ${charger.operator}` : ''}`}
           lat={charger.latitude}
           lng={charger.longitude}
         />
@@ -612,7 +625,7 @@ export default function Map({
 
     let offsetY: number;
     if (isMobile) {
-      // Mobile is already working with this constant — leave it alone
+      // Mobile is already working with this constant - leave it alone
       offsetY = 180;
     } else {
       // Place the marker at roughly 78% from the top of the visible map
@@ -638,11 +651,11 @@ export default function Map({
   // smart offset that marker clicks use, so the popup is properly centred.
   useEffect(() => {
     if (!selectedStation) {
-      // Don't auto-close the popup here — closing happens via the
+      // Don't auto-close the popup here - closing happens via the
       // popup's onClose callback so we don't fight the user.
       return;
     }
-    // Already showing this one? Skip — the original click already panned.
+    // Already showing this one? Skip - the original click already panned.
     if (popupStation?.id === selectedStation || popupCharger?.id === selectedStation) return;
 
     const matchingStation = stations.find(s => s.id === selectedStation);
@@ -700,7 +713,7 @@ export default function Map({
       <NavigationControl position="bottom-right" showCompass visualizePitch />
       <GeolocateControl position="bottom-right" trackUserLocation />
 
-      {/* Planned-route polyline — glowing emerald trail from start to end.
+      {/* Planned-route polyline - glowing emerald trail from start to end.
           Rendered as two stacked line layers: a soft outer halo and a
           solid inner line, so it stays readable over any map style. */}
       {routeGeometry && routeGeometry.length >= 2 && (

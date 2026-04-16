@@ -4,7 +4,7 @@ import { fetchAllStations } from '@/lib/fuel-data';
 import { BRAND_SLUGS } from '@/lib/brand-slugs';
 import { isFreshFuelPrice } from '@/lib/freshness';
 
-// Rebuild 3 times a day (every 8 hours) — same cadence as city pages
+// Rebuild 3 times a day (every 8 hours) - same cadence as city pages
 export const revalidate = 28800;
 
 type FuelKey = 'E10' | 'E5' | 'B7' | 'SDV';
@@ -209,14 +209,14 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* The only H1 on the page — server-rendered, visible to Google immediately */}
+      {/* The only H1 on the page - server-rendered, visible to Google immediately */}
       <h1 className="sr-only">
         GetCheapFuel - Compare Cheap Petrol, Diesel &amp; EV Charging Prices UK
       </h1>
 
       <HomeApp />
 
-      {/* Server-rendered crawlable content for SEO — visible below the fold */}
+      {/* Server-rendered crawlable content for SEO - visible below the fold */}
       <section className="bg-white border-t border-gray-200 px-6 py-12 md:px-12 md:py-16 max-w-5xl mx-auto">
 
         {/* ── Live national fuel prices ─────────────────────────────────── */}
@@ -245,7 +245,7 @@ export default async function Home() {
                 </div>
                 <div className="text-sm text-gray-600 mt-2 leading-relaxed">
                   Prices range from {e10Stat.cheapestPrice.toFixed(1)}p to {e10Stat.highestPrice.toFixed(1)}p across
-                  the UK — a spread of {(e10Stat.highestPrice - e10Stat.cheapestPrice).toFixed(1)}p per litre.
+                  the UK - a spread of {(e10Stat.highestPrice - e10Stat.cheapestPrice).toFixed(1)}p per litre.
                   {e10Saving && ` Supermarkets are on average ${e10Saving}p cheaper than branded forecourts.`}
                 </div>
               </div>
@@ -261,7 +261,7 @@ export default async function Home() {
                 </div>
                 <div className="text-sm text-gray-600 mt-2 leading-relaxed">
                   Diesel ranges from {b7Stat.cheapestPrice.toFixed(1)}p to {b7Stat.highestPrice.toFixed(1)}p across
-                  the UK — a spread of {(b7Stat.highestPrice - b7Stat.cheapestPrice).toFixed(1)}p per litre.
+                  the UK - a spread of {(b7Stat.highestPrice - b7Stat.cheapestPrice).toFixed(1)}p per litre.
                   {b7Saving && ` Supermarket diesel averages ${b7Saving}p less than branded stations.`}
                 </div>
               </div>
@@ -386,10 +386,10 @@ export default async function Home() {
                       </td>
                       <td className="px-4 py-2.5 text-right text-gray-600 tabular-nums">{b.count}</td>
                       <td className="px-4 py-2.5 text-right font-semibold text-gray-900 tabular-nums">
-                        {b.avgE10 != null ? `${b.avgE10.toFixed(1)}p` : '—'}
+                        {b.avgE10 != null ? `${b.avgE10.toFixed(1)}p` : '-'}
                       </td>
                       <td className="px-4 py-2.5 text-right font-semibold text-gray-900 tabular-nums">
-                        {b.avgB7 != null ? `${b.avgB7.toFixed(1)}p` : '—'}
+                        {b.avgB7 != null ? `${b.avgB7.toFixed(1)}p` : '-'}
                       </td>
                     </tr>
                   ))}

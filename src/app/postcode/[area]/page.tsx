@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { fetchAllStations } from '@/lib/fuel-data';
 import { UNIQUE_POSTCODE_AREAS, findPostcodeArea, postcodeMatchesArea } from '@/lib/uk-postcodes';
+import { stationToSlug } from '@/lib/station-slug';
 import { toTitleCase } from '@/lib/format-text';
 import BrandLogo from '@/components/BrandLogo';
 
@@ -138,7 +139,7 @@ export default async function PostcodePage({
         <nav className="mb-6 text-sm">
           <Link href="/" className="text-green-700 hover:text-green-900 hover:underline">GetCheapFuel</Link>
           <span className="text-gray-400 mx-2">/</span>
-          <span className="text-gray-600">{pc.area} — {pc.name}</span>
+          <span className="text-gray-600">{pc.area} - {pc.name}</span>
         </nav>
 
         {/* Header */}
@@ -229,10 +230,13 @@ export default async function PostcodePage({
                     <tr key={s.id} className={i === 0 ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}>
                       <td className="px-4 py-3 text-gray-400 tabular-nums">{i + 1}</td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                        <Link
+                          href={`/petrol-station/${stationToSlug(s)}`}
+                          className="flex items-center gap-2 group"
+                        >
                           <BrandLogo brand={s.brand} size={24} />
-                          <span className="font-medium text-gray-900">{s.brand}</span>
-                        </div>
+                          <span className="font-medium text-gray-900 group-hover:text-green-700 group-hover:underline">{s.brand}</span>
+                        </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-500 tabular-nums">{s.postcode}</td>
                       <td className="px-4 py-3 text-right font-bold text-gray-900 tabular-nums">{fmtPence(s.prices.E10)}</td>
@@ -268,10 +272,13 @@ export default async function PostcodePage({
                     <tr key={s.id} className={i === 0 ? 'bg-green-50' : i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}>
                       <td className="px-4 py-3 text-gray-400 tabular-nums">{i + 1}</td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                        <Link
+                          href={`/petrol-station/${stationToSlug(s)}`}
+                          className="flex items-center gap-2 group"
+                        >
                           <BrandLogo brand={s.brand} size={24} />
-                          <span className="font-medium text-gray-900">{s.brand}</span>
-                        </div>
+                          <span className="font-medium text-gray-900 group-hover:text-green-700 group-hover:underline">{s.brand}</span>
+                        </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-500 tabular-nums">{s.postcode}</td>
                       <td className="px-4 py-3 text-right font-bold text-gray-900 tabular-nums">{fmtPence(s.prices.B7)}</td>

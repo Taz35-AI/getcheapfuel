@@ -36,7 +36,7 @@ const LITRES_PER_IMPERIAL_GALLON = 4.546;
 interface FuelTrackerProps {
   open: boolean;
   onClose: () => void;
-  // Called when the user taps "Sync across devices" — host should open
+  // Called when the user taps "Sync across devices" - host should open
   // the sign-up / sign-in modal. After authentication the tracker will
   // automatically adopt the user's email as its sync key.
   onRequestAuth?: () => void;
@@ -62,7 +62,7 @@ const LOCAL_LOGS_KEY = 'gcf-fuel-logs-local';
 const SYNC_EMAIL_KEY = 'gcf-sync-email';
 const VEHICLES_KEY = 'gcf-vehicles';
 const ACTIVE_VEHICLE_KEY = 'gcf-active-vehicle';
-// Shared across the app — written by the tracker when the user has
+// Shared across the app - written by the tracker when the user has
 // enough fill-ups to compute real-world MPG, read by the Route
 // Planner's journey cost calculator.
 const USER_MPG_KEY = 'gcf-user-mpg';
@@ -75,7 +75,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
   const [logs, setLogs] = useState<FuelLog[]>([]);
   // Local-only logs, saved to localStorage so visitors can try the
   // tracker without any email/account at all (fix #3 from the
-  // bounce-rate analysis — value first, account second).
+  // bounce-rate analysis - value first, account second).
   const [localLogs, setLocalLogs] = useState<FuelLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'log' | 'history' | 'stats'>('log');
@@ -83,7 +83,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
   // user, so we don't try to upload local logs on every render.
   const autoSyncedRef = useRef(false);
 
-  // Vehicle state — local-only for v1. Cloud sync of vehicle_id will
+  // Vehicle state - local-only for v1. Cloud sync of vehicle_id will
   // come in a follow-up once the UX is proven.
   const [vehicles, setVehicles] = useState<Vehicle[]>([DEFAULT_VEHICLE]);
   const [activeVehicleId, setActiveVehicleId] = useState<string>(DEFAULT_VEHICLE.id);
@@ -187,7 +187,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
     }
   }, [vehicles, activeVehicleId, localLogs, persistVehicles, selectVehicle]);
 
-  // Helper — persist local logs to both state and localStorage
+  // Helper - persist local logs to both state and localStorage
   const persistLocalLogs = useCallback((next: FuelLog[]) => {
     setLocalLogs(next);
     try {
@@ -230,7 +230,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
 
     // If there are local-only logs accumulated before the user opted
     // in to sync, push them all to the cloud and then clear local.
-    // Fire-and-forget — any individual failure is silently ignored.
+    // Fire-and-forget - any individual failure is silently ignored.
     if (localLogs.length > 0) {
       const toUpload = localLogs;
       persistLocalLogs([]);
@@ -281,7 +281,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
     const odoNum = odometer ? parseFloat(odometer) : null;
 
     if (synced && email) {
-      // Cloud path — save to API, then refetch
+      // Cloud path - save to API, then refetch
       try {
         await fetch(apiUrl('/api/fuel-logs'), {
           method: 'POST',
@@ -301,7 +301,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
         // ignore
       }
     } else {
-      // Local path — save to localStorage, no account required
+      // Local path - save to localStorage, no account required
       const log: FuelLog = {
         id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         station_name: station,
@@ -327,7 +327,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
 
   const handleDelete = async (id: string) => {
     // Local logs are identified by a `local-` prefix and only live in
-    // localStorage — no API round-trip required.
+    // localStorage - no API round-trip required.
     if (id.startsWith('local-')) {
       persistLocalLogs(localLogs.filter(l => l.id !== id));
       return;
@@ -338,7 +338,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
     setLogs(prev => prev.filter(l => l.id !== id));
   };
 
-  // Active source of logs — cloud when opted in, local otherwise.
+  // Active source of logs - cloud when opted in, local otherwise.
   // Filter by the currently-selected vehicle so the user only sees
   // fill-ups for the car they're currently tracking. Legacy logs
   // with no vehicle_id are treated as belonging to the default.
@@ -348,7 +348,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
     [rawLogs, activeVehicleId],
   );
 
-  // MPG computation — for each fill-up with an odometer, look at the
+  // MPG computation - for each fill-up with an odometer, look at the
   // previous fill-up (same vehicle, ordered by date) and compute:
   //    MPG = (miles_between_fills × 4.546) / current_litres
   // Returns a map keyed by log id so each history card can show its
@@ -466,7 +466,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
             </button>
           </div>
 
-          {/* Headline stat — only shown when the user has logs */}
+          {/* Headline stat - only shown when the user has logs */}
           {activeLogs.length > 0 && (
             <div className="relative mt-4 flex items-end gap-4">
               <div>
@@ -750,7 +750,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
                 <div className="flex items-start gap-1.5 mt-1.5 px-1">
                   <span className="text-[11px] flex-shrink-0">💡</span>
                   <p className="text-[10px] text-gray-500 leading-snug">
-                    Save your odometer on each fill-up — we&apos;ll auto-calculate your real-world MPG from the next one onwards.
+                    Save your odometer on each fill-up - we&apos;ll auto-calculate your real-world MPG from the next one onwards.
                   </p>
                 </div>
               </div>
@@ -890,7 +890,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
                     </div>
                   </div>
 
-                  {/* Real-world MPG card — only shown once the user has
+                  {/* Real-world MPG card - only shown once the user has
                       logged at least two fill-ups with odometer readings
                       so we have an actual number to display. */}
                   {lifetimeMpg != null && (
@@ -972,7 +972,7 @@ export default function FuelTracker({ open, onClose, onRequestAuth }: FuelTracke
         </div>
 
         {/* ─── Footer (only when cloud-synced) ──────────────────────── */}
-        {/* Sign-out has intentionally been moved to the Profile page —
+        {/* Sign-out has intentionally been moved to the Profile page -
             users shouldn't be able to sign out from here. The footer
             stays as a pure "you are synced as X" status row. */}
         {synced && (
