@@ -27,9 +27,9 @@ function FuelCodeChip({ code, isActive, activeBg, inactiveText }: { code: string
     <span
       className={`
         inline-flex items-center justify-center
-        min-w-[28px] px-1.5 py-0.5
-        rounded text-[9px] md:text-[10px] font-black tracking-wide leading-none
-        ${isActive ? `${activeBg} text-white` : `${inactiveText} bg-white/80 ring-1 ring-current/20`}
+        min-w-[30px] px-1.5 py-0.5
+        rounded text-[10px] md:text-[11px] font-black tracking-wide leading-none
+        ${isActive ? `bg-white/25 text-white` : `${inactiveText} bg-white/80 ring-1 ring-current/20`}
       `}
     >
       {code}
@@ -154,15 +154,15 @@ export default function FuelFilter({ selected, onChange }: FuelFilterProps) {
         onClick={() => toggle(fuel.key)}
         className={`
           inline-flex items-center gap-1.5
-          px-1.5 py-1 md:px-2.5 md:py-1.5
-          rounded-lg
-          text-[10px] md:text-xs font-semibold
-          border transition-all whitespace-nowrap
+          px-2 py-1.5 md:px-3 md:py-2
+          rounded-xl
+          text-xs md:text-sm font-bold
+          border-2 transition-all whitespace-nowrap
           ${isActive
-            ? `${fuel.inactiveBg} ${fuel.inactiveText} ${fuel.inactiveBorder} shadow-sm`
+            ? `${fuel.activeBg} text-white ${fuel.inactiveBorder} shadow-md`
             : isDimmed
-              ? 'bg-white text-gray-300 border-gray-200 opacity-40 hover:opacity-70'
-              : 'bg-white/50 text-gray-400 border-gray-200 opacity-60 hover:opacity-100'
+              ? `bg-white ${fuel.inactiveText} ${fuel.inactiveBorder} opacity-60 hover:opacity-100`
+              : `bg-white ${fuel.inactiveText} ${fuel.inactiveBorder} hover:${fuel.inactiveBg}`
           }
         `}
         aria-pressed={isActive}
