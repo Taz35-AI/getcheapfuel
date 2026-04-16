@@ -392,7 +392,9 @@ export default function PriceTrendChart({
           <span className={`${compact ? 'text-[10px]' : 'text-[11px]'} font-bold text-gray-800`}>
             {SHORT_LABEL[highlight]} trend
           </span>
-          {!compact && <span className="text-[10px] text-gray-400 font-medium">· 30 days</span>}
+          <span className={`${compact ? 'text-[9px]' : 'text-[10px]'} text-gray-400 font-medium`}>
+            · {compact ? '30d' : '30 days'}
+          </span>
         </div>
         {diffLabel && plottable.includes(highlight) && (
           <div
@@ -411,7 +413,7 @@ export default function PriceTrendChart({
         )}
       </div>
 
-      <canvas ref={canvasRef} className="w-full" style={{ height: compact ? 64 : 96 }} />
+      <canvas ref={canvasRef} className="w-full" style={{ height: compact ? 48 : 96 }} />
 
       {/* Legend — pill chips, highlighted one filled, rest outline.
           (End-of-line price labels on the chart already show the

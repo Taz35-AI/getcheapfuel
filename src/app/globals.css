@@ -11,9 +11,10 @@ body {
 
 /* MapLibre GL popup styling */
 .maplibregl-popup {
-  /* Wider on desktop so the popup can lay out as two columns and fit
-     everything in one glance. Mobile stays capped to the viewport. */
-  max-width: min(94vw, 600px) !important;
+  /* Narrower than the default MapLibre cap so the popup never feels
+     bulky on either desktop or mobile. The two-column layout inside
+     still breathes at 500 px. */
+  max-width: min(90vw, 500px) !important;
   /* Prevent browser pinch-zoom on the popup; only the map handles zoom */
   touch-action: pan-x pan-y;
 }
@@ -37,10 +38,15 @@ body {
 @media (max-width: 640px) {
   .maplibregl-popup {
     position: fixed !important;
+    /* Anchor to the *dynamic* viewport centre so that the modal is
+       truly centred on mobile browsers where the address bar shrinks
+       or expands the visible area. Fallback to 50% for older UAs. */
     top: 50% !important;
+    top: 50dvh !important;
     left: 50% !important;
+    left: 50dvw !important;
     transform: translate(-50%, -50%) !important;
-    max-width: 92vw !important;
+    max-width: 82vw !important;
     /* Sit above every other map overlay (the location-name chip,
        the notification bell, the loading indicator — all of which
        can be as high as z-[1000]) so the modal is always on top. */
@@ -50,21 +56,42 @@ body {
     display: none !important;
   }
   .maplibregl-popup-content {
-    padding: 12px 14px !important;
-    max-height: 86vh;
-    width: 92vw;
+    padding: 10px 12px !important;
+    max-height: 82dvh;
+    width: 82vw;
   }
 }
 
+/* Close button — styled as a small neutral circular icon button so it
+   looks intentional rather than the default browser "×" glyph. */
 .maplibregl-popup-close-button {
-  font-size: 18px;
-  padding: 4px 8px;
-  color: #9ca3af;
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 26px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6 !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: background 120ms ease, color 120ms ease, transform 120ms ease;
 }
 
 .maplibregl-popup-close-button:hover {
-  color: #374151;
-  background: transparent;
+  color: #111827;
+  background: #e5e7eb !important;
+}
+
+.maplibregl-popup-close-button:active {
+  transform: scale(0.94);
 }
 
 /* Navigation controls */

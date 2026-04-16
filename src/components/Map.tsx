@@ -241,7 +241,7 @@ function DirectionButtons({ lat, lng, label }: { lat: number; lng: number; label
   const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes&q=${encodeURIComponent(label)}`;
 
   return (
-    <div className="flex gap-1.5 sm:gap-2 mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-gray-100">
+    <div className="flex gap-1.5 mt-1.5">
       <a
         href={googleUrl}
         target="_blank"
@@ -331,20 +331,21 @@ function FuelPopupContent({
   const hasAmenities = station.amenities && Object.values(station.amenities).some(Boolean);
 
   return (
-    <div className="w-full sm:w-[560px] sm:max-w-[560px]">
+    <div className="w-full sm:max-w-[560px]">
       {/* ─── Header (full-width) ─────────────────────────────── */}
       <div className="flex items-start gap-2 sm:gap-3">
         <div className="flex-shrink-0">
-          <BrandLogo brand={station.brand} size={36} />
+          <BrandLogo brand={station.brand} size={32} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <div className="font-black text-sm sm:text-base text-gray-900 leading-tight truncate">{station.brand}</div>
-            {station.openingHours && (
-              <OpenStatusBadge hours={station.openingHours} variant="badge" />
-            )}
+            <div className="font-black text-[13px] sm:text-base text-gray-900 leading-tight truncate">{station.brand}</div>
+            {/* Header status pill removed — the full "Open 24 hours"
+                badge in the right column already shows the same info,
+                and the pill was sitting behind the circular close
+                button in the top-right corner. */}
           </div>
-          <div className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 leading-snug">
+          <div className="text-[10px] sm:text-[11px] text-gray-500 leading-snug">
             {toTitleCase(station.address)}
             {station.postcode && <> · <span className="font-semibold text-gray-700">{station.postcode}</span></>}
           </div>
@@ -352,9 +353,9 @@ function FuelPopupContent({
       </div>
 
       {/* ─── Two-column body on desktop, stacked on mobile ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mt-2 sm:mt-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-4 mt-1.5 sm:mt-3">
         {/* LEFT column — prices + trend chart */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="grid grid-cols-2 gap-1 sm:gap-1.5">
             {fuels
               .filter(f => station.prices[f.key] != null)
@@ -363,7 +364,7 @@ function FuelPopupContent({
                 return (
                   <div
                     key={f.key}
-                    className="flex flex-col gap-1 px-1.5 sm:px-2 py-1 sm:py-1.5 bg-gray-50 border border-gray-100 rounded-lg"
+                    className="flex flex-col gap-0.5 px-1.5 py-1 sm:py-1.5 bg-gray-50 border border-gray-100 rounded-lg"
                   >
                     <div className="flex items-center justify-between gap-1">
                       <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
@@ -412,7 +413,7 @@ function FuelPopupContent({
         </div>
 
         {/* RIGHT column — hours, amenities, freshness */}
-        <div className="space-y-2 sm:space-y-3">
+        <div className="space-y-1.5 sm:space-y-3">
           {station.openingHours && (
             <div>
               <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1">
@@ -422,22 +423,24 @@ function FuelPopupContent({
             </div>
           )}
 
-          {hasAmenities && (
-            <div>
-              <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1.5">
-                Amenities
+          {/* Mobile: amenities + freshness on ONE row so we save a
+              whole row of vertical space. Desktop: separate sections
+              with their own labels like before. */}
+          <div className="flex items-center justify-between gap-2 sm:block">
+            {hasAmenities && (
+              <div className="min-w-0">
+                <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1.5">
+                  Amenities
+                </div>
+                <StationAmenityIcons amenities={station.amenities!} size="sm" />
               </div>
-              <StationAmenityIcons amenities={station.amenities!} size="sm" />
-            </div>
-          )}
+            )}
 
-          {/* Data freshness badge */}
-          <div>
-            <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1.5">
-              Data freshness
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold ${freshnessStyle.bg} ${freshnessStyle.text}`}>
+            <div className={hasAmenities ? 'sm:mt-3' : ''}>
+              <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1.5">
+                Data freshness
+              </div>
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold ${freshnessStyle.bg} ${freshnessStyle.text}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${freshnessStyle.dot}`} />
                 {freshnessLabel(freshness.tier)}
               </span>
@@ -447,8 +450,8 @@ function FuelPopupContent({
       </div>
 
       {/* ─── Actions (full-width) ──────────────────────────── */}
-      <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100">
-        <div className="flex gap-2">
+      <div className="mt-1.5 sm:mt-3 pt-1.5 sm:pt-3 border-t border-gray-100">
+        <div className="flex gap-1.5">
           <FavouriteButton id={station.id} isFav={isFav} onToggle={onToggleFav} />
           <ShareButton
             title={station.brand}

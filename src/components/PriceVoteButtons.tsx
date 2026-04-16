@@ -154,10 +154,10 @@ export default function PriceVoteButtons({
 
   return (
     <>
-      <div className="mt-1.5">
+      <div>
         {/* Warning banner — only when down >= threshold in window */}
         {showWarning && (
-          <div className="mb-1 flex items-start gap-1 px-1.5 py-1 rounded-md bg-amber-50 border border-amber-200">
+          <div className="mb-1 flex items-start gap-1 px-1.5 py-0.5 rounded-md bg-amber-50 border border-amber-200">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="w-2.5 h-2.5 text-amber-600 flex-shrink-0 mt-0.5"
@@ -185,7 +185,7 @@ export default function PriceVoteButtons({
             type="button"
             onClick={() => submit('up')}
             disabled={submitting}
-            className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-md border text-[10px] font-black transition-all ${
+            className={`flex-1 flex items-center justify-center gap-0.5 py-0.5 rounded-md border text-[10px] font-black transition-all ${
               localVote === 'up'
                 ? 'bg-emerald-600 border-emerald-600 text-white'
                 : 'bg-white border-gray-200 text-gray-500 hover:border-emerald-300 hover:text-emerald-600 active:scale-95'
@@ -194,7 +194,7 @@ export default function PriceVoteButtons({
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="w-3 h-3"
+              className="w-2.5 h-2.5"
               viewBox="0 0 24 24"
               fill={localVote === 'up' ? 'currentColor' : 'none'}
               stroke="currentColor"
@@ -211,7 +211,7 @@ export default function PriceVoteButtons({
             type="button"
             onClick={() => submit('down')}
             disabled={submitting}
-            className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-md border text-[10px] font-black transition-all ${
+            className={`flex-1 flex items-center justify-center gap-0.5 py-0.5 rounded-md border text-[10px] font-black transition-all ${
               localVote === 'down'
                 ? 'bg-red-600 border-red-600 text-white'
                 : 'bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-600 active:scale-95'
@@ -220,7 +220,7 @@ export default function PriceVoteButtons({
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="w-3 h-3"
+              className="w-2.5 h-2.5"
               viewBox="0 0 24 24"
               fill={localVote === 'down' ? 'currentColor' : 'none'}
               stroke="currentColor"
