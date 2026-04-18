@@ -17,6 +17,15 @@ export const metadata: Metadata = {
 
 const POSTS = [
   {
+    slug: 'diesel-outrunning-petrol-april-2026',
+    title: 'Diesel is outrunning petrol again. Here is why, and what to do this week.',
+    excerpt:
+      'Unleaded is at 158.0p, diesel at 192.1p and climbing faster. The Strait of Hormuz, European supply, and the 4.2p supermarket gap explained, plus three things that actually save you money at the pump this week.',
+    date: '2026-04-18',
+    readTime: '5 min read',
+    category: 'Market Analysis',
+  },
+  {
     slug: 'trump-strait-of-hormuz-blockade-uk-fuel-prices',
     title: "Trump's Strait of Hormuz Blockade: What It Means for UK Petrol and Diesel Prices",
     excerpt:

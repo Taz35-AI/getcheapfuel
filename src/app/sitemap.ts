@@ -81,6 +81,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
+      url: `${baseUrl}/blog/diesel-outrunning-petrol-april-2026`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/blog/trump-strait-of-hormuz-blockade-uk-fuel-prices`,
       lastModified: now,
       changeFrequency: 'weekly',
