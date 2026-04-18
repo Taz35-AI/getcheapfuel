@@ -22,7 +22,7 @@ import StationAmenityIcons from './StationAmenityIcons';
 import BrandLogo from './BrandLogo';
 import { toTitleCase } from '@/lib/format-text';
 import { getBrandLogo } from '@/lib/brand-logos';
-import { getStationFreshness, freshnessClasses, freshnessLabel } from '@/lib/freshness';
+import { getStationFreshness, freshnessClasses } from '@/lib/freshness';
 import { stationToSlug } from '@/lib/station-slug';
 
 // Free vector tile styles from OpenFreeMap - no API key needed
@@ -448,10 +448,12 @@ function FuelPopupContent({
               <div className="hidden sm:block text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-1.5">
                 Data freshness
               </div>
-              <span className={`inline-flex items-center gap-1 px-1.5 py-0 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[11px] font-bold ${freshnessStyle.bg} ${freshnessStyle.text}`}>
-                <span className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${freshnessStyle.dot}`} />
-                {freshnessLabel(freshness.tier)}
-              </span>
+              <div className="flex items-start gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0 ${freshnessStyle.dot}`} />
+                <p className="text-[10px] sm:text-[11px] font-semibold text-gray-700 leading-snug">
+                  {freshness.label}
+                </p>
+              </div>
             </div>
           </div>
         </div>

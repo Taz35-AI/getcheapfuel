@@ -60,16 +60,34 @@ export function getStationFreshness(station: FuelStation, now: Date = new Date()
   };
 }
 
+// User-facing phrasing. Two templates only:
+//   0-30 days - "Reported today - No change for the last N days"
+//               (day 0 shortens to just "Reported today")
+//   > 30 days - "Petrol station reported last on [date]"
+// Retailer framing throughout so it's clear GetCheapFuel is syncing
+// daily and any age is the retailer's own reporting cadence.
 function formatRelative(ageMs: number, mostRecentMs: number): string {
-  const hours = Math.floor(ageMs / (60 * 60 * 1000));
   const days = Math.floor(ageMs / DAY);
-
-  if (hours < 24) return 'Reported by station today';
-  if (days === 1) return 'Reported today · Price changed yesterday';
-
   const date = new Date(mostRecentMs);
-  const formatted = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(date);
-  return `Reported today · Price unchanged since ${formatted}`;
+  const formatted = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+  }).format(date);
+
+  // Petrol station hasn't reported in over a month - drop the "today"
+  // framing and just tell the user the exact last-report date.
+  if (days > 30) {
+    return `Petrol station reported last on ${formatted}`;
+  }
+
+  // Same day: just "Reported today" - no need to add "no change".
+  if (days === 0) return 'Reported today';
+
+  // Day-1 special case for grammar ("last day" not "last 1 days").
+  if (days === 1) return 'Reported today - No change for the last day';
+
+  // 2-30 days: standard template.
+  return `Reported today - No change for the last ${days} days`;
 }
 
 /**

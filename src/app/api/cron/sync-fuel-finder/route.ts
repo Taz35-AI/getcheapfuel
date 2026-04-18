@@ -27,9 +27,17 @@ interface FFStation {
   permanent_closure?: boolean | null;
   location?: FFLocation;
   amenities?: string[];
+  // Per Fuel Finder API docs the daily entries use `open`/`close`, but
+  // the bank_holiday block uses `open_time`/`close_time`. Accept both on
+  // either side so we're tolerant if the upstream field naming shifts.
   opening_times?: {
-    usual_days?: Record<string, { open_time?: string; close_time?: string; is_24_hours?: boolean }>;
-    bank_holiday?: { standard?: { open_time?: string; close_time?: string; is_24_hours?: boolean } };
+    usual_days?: Record<
+      string,
+      { open?: string; close?: string; open_time?: string; close_time?: string; is_24_hours?: boolean }
+    >;
+    bank_holiday?: {
+      standard?: { open?: string; close?: string; open_time?: string; close_time?: string; is_24_hours?: boolean };
+    };
   };
 }
 
@@ -243,15 +251,33 @@ export async function GET(request: Request) {
       const addressParts = [loc.address_line_1, loc.address_line_2, loc.city, loc.county]
         .filter((p): p is string => Boolean(p && p.trim()));
 
-      // Parse opening hours into a simple per-day shape we can use in the UI
+      // Parse opening hours into a simple per-day shape we can use in the
+      // UI. Fuel Finder's daily entries come back as { open, close,
+      // is_24_hours } - NOT open_time/close_time, which is only used on
+      // bank holidays. If we only read open_time/close_time, every
+      // non-24h station ends up with just { is_24_hours: false } in the
+      // DB and no times to display. Normalise to open_time/close_time on
+      // the way into the DB so downstream parsing has one consistent
+      // shape.
       const usualDays = s.opening_times?.usual_days ?? {};
       const openingTimes: Record<string, unknown> = {};
       for (const day of ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']) {
         const d = usualDays[day];
-        if (d) openingTimes[day] = { open_time: d.open_time, close_time: d.close_time, is_24_hours: d.is_24_hours };
+        if (d) {
+          openingTimes[day] = {
+            open_time: d.open ?? d.open_time,
+            close_time: d.close ?? d.close_time,
+            is_24_hours: d.is_24_hours,
+          };
+        }
       }
-      if (s.opening_times?.bank_holiday?.standard) {
-        openingTimes.bank_holiday = s.opening_times.bank_holiday.standard;
+      const bh = s.opening_times?.bank_holiday?.standard;
+      if (bh) {
+        openingTimes.bank_holiday = {
+          open_time: bh.open_time ?? bh.open,
+          close_time: bh.close_time ?? bh.close,
+          is_24_hours: bh.is_24_hours,
+        };
       }
 
       rows.push({
