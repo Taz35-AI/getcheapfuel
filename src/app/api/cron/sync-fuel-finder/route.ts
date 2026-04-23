@@ -121,27 +121,44 @@ async function getToken(): Promise<string> {
   return token;
 }
 
-async function fetchWithRetry(url: string, token: string, retries = 2): Promise<Response> {
+async function fetchWithRetry(url: string, token: string, retries = 3): Promise<Response> {
+  // Backoff schedule in ms: 3s, 6s, 12s (capped). Gives Fuel Finder
+  // up to 21 seconds of recovery room across three retries, which
+  // covers transient slow responses and the common adaptive-throttle
+  // bursts that gov APIs sometimes apply to clients polling every
+  // 15-30 min.
+  const backoffFor = (attempt: number): number => Math.min(3000 * Math.pow(2, attempt), 15000);
+
   for (let attempt = 0; attempt <= retries; attempt++) {
+    const startedAt = Date.now();
     try {
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-        signal: AbortSignal.timeout(30000),
+        // 60s per-request timeout (up from 30s). Vercel function cap is
+        // 300s, and a single slow batch shouldn't tank the whole sync.
+        signal: AbortSignal.timeout(60000),
       });
       if (res.ok) return res;
       // 429 / 5xx - retry after a short pause
       if (attempt < retries && (res.status === 429 || res.status >= 500)) {
-        console.warn(`[sync] ${url} returned ${res.status}, retrying (${attempt + 1}/${retries})...`);
-        await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+        const wait = backoffFor(attempt);
+        console.warn(`[sync] ${url} returned ${res.status} after ${Date.now() - startedAt}ms, retry ${attempt + 1}/${retries} in ${wait}ms...`);
+        await new Promise(r => setTimeout(r, wait));
         continue;
       }
       return res; // non-retryable error
     } catch (err) {
+      const elapsed = Date.now() - startedAt;
+      const msg = (err as Error).message;
       if (attempt < retries) {
-        console.warn(`[sync] ${url} failed, retrying (${attempt + 1}/${retries})...`, (err as Error).message);
-        await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+        const wait = backoffFor(attempt);
+        console.warn(`[sync] ${url} failed after ${elapsed}ms (${msg}), retry ${attempt + 1}/${retries} in ${wait}ms...`);
+        await new Promise(r => setTimeout(r, wait));
         continue;
       }
+      // Final attempt exhausted - log which URL died so we can spot
+      // patterns (always the same batch? always prices vs stations?).
+      console.error(`[sync] ${url} FINAL FAILURE after ${retries + 1} attempts and ${elapsed}ms on the last attempt: ${msg}`);
       throw err;
     }
   }
