@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { fetchAllStations, haversineDistance } from '@/lib/fuel-data';
 import { findPostcodeArea } from '@/lib/uk-postcodes';
+import { findBrandBySlug } from '@/lib/brand-slugs';
 import { findStationBySlug, stationToSlug } from '@/lib/station-slug';
 import { FUEL_COLORS } from '@/lib/types';
 import { toTitleCase } from '@/lib/format-text';
@@ -172,6 +173,13 @@ export default async function PetrolStationPage({ params }: { params: PageParams
   // would 404. When the area isn't covered we render the label as
   // plain text so the breadcrumb still reads correctly.
   const postcodeAreaHasPage = !!findPostcodeArea(postcodeArea.toLowerCase());
+  // Same defensive check for brand: many Fuel Finder stations come in
+  // with one-off brand names ("Toomey Filling Station Basildon",
+  // "Nicholl Fuels") that don't have a dedicated /brand/[slug] page.
+  // Linking the breadcrumb to a brand page that 404s is exactly the
+  // pattern that filled up Google's 404 report.
+  const brandSlug = (station.brand || '').toLowerCase().replace(/\s+/g, '-');
+  const brandHasPage = brandSlug ? !!findBrandBySlug(brandSlug) : false;
   const addressPretty = toTitleCase(station.address);
   // Station addresses come as "STREET, CITY, COUNTY" - the second
   // segment is nearly always the locality for schema.org purposes.
@@ -219,19 +227,29 @@ export default async function PetrolStationPage({ params }: { params: PageParams
     url: `${SITE_ORIGIN}/petrol-station/${slug}`,
   };
 
-  const breadcrumbLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'GetCheapFuel', item: SITE_ORIGIN },
-      { '@type': 'ListItem', position: 2, name: 'Petrol stations', item: `${SITE_ORIGIN}/` },
-      { '@type': 'ListItem', position: 3, name: station.brand, item: `${SITE_ORIGIN}/brand/${(station.brand || '').toLowerCase().replace(/\s+/g, '-')}` },
-      ...(postcodeAreaHasPage
-        ? [{ '@type': 'ListItem', position: 4, name: postcodeArea, item: `${SITE_ORIGIN}/postcode/${postcodeArea.toLowerCase()}` }]
-        : []),
-      { '@type': 'ListItem', position: postcodeAreaHasPage ? 5 : 4, name: `${station.brand} ${station.postcode}`, item: `${SITE_ORIGIN}/petrol-station/${slug}` },
-    ],
-  };
+  // Build the BreadcrumbList dynamically so we only include the brand
+  // and postcode-area steps when those pages actually exist. Google's
+  // BreadcrumbList spec requires every 'item' URL to return a 200 -
+  // linking to a 404 was the other half of our Search Console noise.
+  const breadcrumbLd = (() => {
+    const items: Array<{
+      '@type': 'ListItem';
+      position: number;
+      name: string;
+      item: string;
+    }> = [];
+    let position = 1;
+    items.push({ '@type': 'ListItem', position: position++, name: 'GetCheapFuel', item: SITE_ORIGIN });
+    items.push({ '@type': 'ListItem', position: position++, name: 'Petrol stations', item: `${SITE_ORIGIN}/` });
+    if (brandHasPage) {
+      items.push({ '@type': 'ListItem', position: position++, name: station.brand, item: `${SITE_ORIGIN}/brand/${brandSlug}` });
+    }
+    if (postcodeAreaHasPage) {
+      items.push({ '@type': 'ListItem', position: position++, name: postcodeArea, item: `${SITE_ORIGIN}/postcode/${postcodeArea.toLowerCase()}` });
+    }
+    items.push({ '@type': 'ListItem', position: position++, name: `${station.brand} ${station.postcode}`, item: `${SITE_ORIGIN}/petrol-station/${slug}` });
+    return { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items };
+  })();
 
   const faqLd = {
     '@context': 'https://schema.org',
@@ -302,7 +320,13 @@ export default async function PetrolStationPage({ params }: { params: PageParams
         <ol className="flex items-center gap-1.5 text-xs text-gray-500">
           <li><Link href="/" className="hover:text-green-700">Home</Link></li>
           <li className="text-gray-300">/</li>
-          <li><Link href={`/brand/${(station.brand || '').toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-green-700">{station.brand}</Link></li>
+          <li>
+            {brandHasPage ? (
+              <Link href={`/brand/${brandSlug}`} className="hover:text-green-700">{station.brand}</Link>
+            ) : (
+              <span className="text-gray-600">{station.brand}</span>
+            )}
+          </li>
           <li className="text-gray-300">/</li>
           <li>
             {postcodeAreaHasPage ? (

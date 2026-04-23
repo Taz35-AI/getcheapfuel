@@ -37,26 +37,56 @@ export function stationToSlug(station: Pick<FuelStation, 'brand' | 'address' | '
   return parts.join('-');
 }
 
-// Look up a single station by its slug. We first try to extract the
-// postcode from the last two segments of the slug and narrow the search
-// to stations in that postcode - this avoids scanning all 8k stations
-// for every request.
+// Look up a single station by its slug. Most Fuel Finder stations store
+// their postcode with a space ("CV9 1HY"), which slugifies to two
+// dash-separated segments ("cv9-1hy"). A minority of stations come
+// through with the postcode glued ("CV91HY"), which slugifies to a
+// single segment. We need to handle both shapes so Google's indexed
+// URLs from either case keep resolving.
 export async function findStationBySlug(slug: string): Promise<FuelStation | null> {
   if (!slug) return null;
   const clean = slug.toLowerCase().trim();
   if (!/^[a-z0-9-]+$/.test(clean)) return null;
 
   const segments = clean.split('-');
-  if (segments.length < 2) return null;
+  if (segments.length < 1) return null;
 
-  // UK postcodes are always two segments: outcode + incode (e.g. n7 9qe).
-  const postcodeSlug = segments.slice(-2).join(' ').toUpperCase();
-  const isValidPostcode = /^[A-Z]{1,2}\d[A-Z\d]?\s\d[A-Z]{2}$/.test(postcodeSlug);
-  if (!isValidPostcode) return null;
+  const candidatePostcodes: string[] = [];
+
+  // Shape A: last 2 segments form the postcode with a space.
+  //   "cv9-1hy" -> "CV9 1HY"
+  if (segments.length >= 2) {
+    const twoSeg = segments.slice(-2).join(' ').toUpperCase();
+    if (/^[A-Z]{1,2}\d[A-Z\d]?\s\d[A-Z]{2}$/.test(twoSeg)) {
+      candidatePostcodes.push(twoSeg);
+    }
+  }
+
+  // Shape B: the entire last segment is an unbroken postcode that we
+  // split back into outcode + incode on the common UK pattern.
+  //   "cv91hy" -> "CV9 1HY"
+  const lastSeg = segments[segments.length - 1].toUpperCase();
+  const oneSegMatch = lastSeg.match(/^([A-Z]{1,2}\d[A-Z\d]?)(\d[A-Z]{2})$/);
+  if (oneSegMatch) {
+    candidatePostcodes.push(`${oneSegMatch[1]} ${oneSegMatch[2]}`);
+  }
+
+  if (candidatePostcodes.length === 0) return null;
 
   const allStations = await fetchAllStations(86400);
-  const candidates = allStations.filter(
-    (s) => s.postcode?.toUpperCase() === postcodeSlug,
-  );
-  return candidates.find((s) => stationToSlug(s) === clean) || null;
+
+  // Normalise both sides (strip internal whitespace) so "CV9 1HY" in the
+  // DB matches a candidate of "CV91HY" generated from Shape B, and vice
+  // versa. Final authority on the match is stationToSlug === clean.
+  for (const postcode of candidatePostcodes) {
+    const normalized = postcode.replace(/\s+/g, '');
+    const matched = allStations.find((s) => {
+      if (!s.postcode) return false;
+      const dbNormalized = s.postcode.toUpperCase().replace(/\s+/g, '');
+      if (dbNormalized !== normalized) return false;
+      return stationToSlug(s) === clean;
+    });
+    if (matched) return matched;
+  }
+  return null;
 }
