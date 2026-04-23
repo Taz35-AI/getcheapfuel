@@ -39,6 +39,14 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   }
 
   const streetTitle = streetNameOnly(station.address);
+  const locality = extractLocality(station.address);
+  // Clean up SHOUTY brand names from raw Fuel Finder rows ("TOTAL",
+  // "GULF"). Length >3 keeps real acronyms like "BP" intact, and the
+  // all-upper check leaves already-cased brands like "Shell" and
+  // "TotalEnergies" alone.
+  const brandDisplay = station.brand.length > 3 && station.brand === station.brand.toUpperCase()
+    ? toTitleCase(station.brand)
+    : station.brand;
   const priceE10 = station.prices.E10;
   const priceB7 = station.prices.B7;
 
@@ -49,11 +57,33 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
     .filter(Boolean)
     .join(', ');
 
+  // Check if this station is open 24/7 for the "Open 24h" signal.
+  const is24hMeta = station.openingHours
+    ? (['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const).every(
+        (d) => station.openingHours?.[d]?.is_24_hours === true,
+      )
+    : false;
+
+  // Locality-aware SEO copy. Title leads with the intent keyword
+  // ("Cheap petrol [town]") so the page lines up with the highest-volume
+  // long-tail searches. Falls back to a clean brand+street+postcode form
+  // when the address doesn't yield a reliable town name.
   // No trailing " | GetCheapFuel" - layout.tsx's title.template adds it.
-  const title = `${station.brand} ${station.postcode} - ${streetTitle} fuel prices today`;
-  const description = pricePreview
-    ? `Live fuel prices at ${station.brand} on ${streetTitle}, ${station.postcode}. ${pricePreview}. Updated today.`
-    : `Live fuel prices at ${station.brand} on ${streetTitle}, ${station.postcode}. Updated today.`;
+  const title = locality
+    ? `Cheap petrol ${locality} - ${brandDisplay} ${streetTitle} ${station.postcode}`
+    : `${brandDisplay} ${streetTitle} ${station.postcode} - Cheap petrol & diesel`;
+
+  // Description mirrors the title intent and packs in the actual prices,
+  // the 24h signal when true, and ends with a live-prices tail.
+  const descriptionLead = locality
+    ? `Cheap petrol & diesel in ${locality} - ${brandDisplay} ${streetTitle} (${station.postcode}).`
+    : `${brandDisplay} ${streetTitle} (${station.postcode}) - cheap petrol & diesel prices.`;
+
+  const priceLine = pricePreview ? ` ${pricePreview} today.` : '';
+  const openTail = is24hMeta ? ' Open 24h.' : '';
+  const tail = ' Live fuel prices across UK stations.';
+
+  const description = `${descriptionLead}${priceLine}${openTail}${tail}`;
 
   const canonical = `${SITE_ORIGIN}/petrol-station/${slug}`;
 
@@ -91,6 +121,34 @@ function streetNameOnly(address: string | undefined): string {
   const first = address.split(',')[0] || '';
   const stripped = first.replace(/^[\d\s\-/]+/, '').trim();
   return toTitleCase(stripped);
+}
+
+// Pick the locality (town/city) out of a Fuel Finder address. Addresses
+// come as "STREET, LOCALITY, COUNTY" most of the time, but some stations
+// use "SERVICES NAME, STREET, TOWN, COUNTY" or lead with a brand name.
+// We skip any segment that looks like a road/services/facility to avoid
+// outputting "Cheap petrol Brompton Road" etc.
+const ROAD_LIKE_PATTERN = /\b(road|rd|street|st|avenue|ave|way|lane|ln|close|services|drive|dr|crescent|place|pl|court|ct|gardens|terrace|ter|grove|mews|parade|walk|broadway|rise|hill|garage|park|filling|station|service|motorway|m\d)\b/i;
+
+function extractLocality(address: string | undefined): string | null {
+  if (!address) return null;
+  const segs = address
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  // Skip segs[0] (always street) and walk forward, returning the first
+  // segment that doesn't look like a road/facility and isn't trivial.
+  for (let i = 1; i < segs.length; i++) {
+    const seg = segs[i];
+    if (seg.length < 3) continue;
+    if (ROAD_LIKE_PATTERN.test(seg)) continue;
+    // Strip any trailing postcode fragment (some addresses tack the
+    // postcode onto the locality segment in free-form).
+    const cleaned = seg.replace(/\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/i, '').trim();
+    if (!cleaned) continue;
+    return toTitleCase(cleaned);
+  }
+  return null;
 }
 
 type Fuel = 'E10' | 'E5' | 'B7' | 'SDV';

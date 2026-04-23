@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/sync-fuel-finder",
-      "schedule": "0 5 * * *"
+      "schedule": "*/15 * * * *"
     }
   ]
 }
